@@ -554,198 +554,107 @@ defaultBackground.onload = () => {
     }
 
     function draw() {
-      if (backgroundImage) ctx.drawImage(backgroundImage, 0, 0, width, height);
-      else ctx.clearRect(0, 0, width, height);
-
-      for (let i = 0; i < ideas.length; i++) {
-        let a = ideas[i];
-        const actualSpeed = movementDelayActive ? 0 : speedMultiplier;
-        a.x += a.vx * actualSpeed;
-        a.y += a.vy * actualSpeed;
-
-        if (a.x - a.radius < border) { a.x = border + a.radius; a.vx *= -1; }
-        if (a.x + a.radius > width - border) { a.x = width - border - a.radius; a.vx *= -1; }
-        if (a.y - a.radius < border + 50) { a.y = border + 50 + a.radius; a.vy *= -1; }
-        if (a.y + a.radius > height - border) { a.y = height - border - a.radius; a.vy *= -1; }
-
-        for (let j = i + 1; j < ideas.length; j++) {
-          let b = ideas[j];
-          let dx = a.x - b.x;
-          let dy = a.y - b.y;
-          let dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < a.radius + b.radius) {
-            let angle = Math.atan2(dy, dx);
-            let tx = a.x - Math.cos(angle) * (a.radius + b.radius);
-            let ty = a.y - Math.sin(angle) * (a.radius + b.radius);
-            b.x = tx;
-            b.y = ty;
-            [a.vx, b.vx] = [b.vx, a.vx];
-            [a.vy, b.vy] = [b.vy, a.vy];
-          }
-        }
-
-        const gradient = ctx.createRadialGradient(a.x, a.y, a.radius * 0.6, a.x, a.y, a.radius);
-        gradient.addColorStop(0, a.color);
-        gradient.addColorStop(1, "black");
-        
-      if (a.image) {
-        const img = new Image();
-        img.src = a.image;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(img, a.x - a.radius * 0.9, a.y - a.radius * 0.9, a.radius * 1.8, a.radius * 1.8);
-        ctx.restore();
-      } else {
-        ctx.fillStyle = a.color;
-        if (a.animateColors) {
-          const time = Date.now() * 0.002;
-          ctx.fillStyle = `hsl(${(time * 40) % 360}, 100%, 70%)`;
-        } else if (a.transparent) {
-          ctx.fillStyle = "rgba(255,255,255,0.1)";
-        }
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      if (a.glow || a.flash) {
-        ctx.save();
-        ctx.shadowColor = "white";
-        ctx.shadowBlur = a.glow ? 20 : 0;
-        if (a.flash) ctx.globalAlpha = 0.5 + 0.5 * Math.sin(Date.now() / 100);
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.restore();
-      }
-    
-      ctx.beginPath();
-        ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-        ctx.save();
-
-      if (a.image) {
-        const img = new Image();
-        img.src = a.image;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(img, a.x - a.radius * 0.9, a.y - a.radius * 0.9, a.radius * 1.8, a.radius * 1.8);
-        ctx.restore();
-      } else {
-        ctx.fillStyle = a.color;
-        if (a.animateColors) {
-          const time = Date.now() * 0.002;
-          ctx.fillStyle = `hsl(${(time * 40) % 360}, 100%, 70%)`;
-        } else if (a.transparent) {
-          ctx.fillStyle = "rgba(255,255,255,0.1)";
-        }
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      if (a.glow || a.flash) {
-        ctx.save();
-        ctx.shadowColor = "white";
-        ctx.shadowBlur = a.glow ? 20 : 0;
-        if (a.flash) ctx.globalAlpha = 0.5 + 0.5 * Math.sin(Date.now() / 100);
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.restore();
-      }
-    
-      ctx.beginPath();
-ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-ctx.clip();
-
-if (a.image) {
-  const img = new Image();
-  img.onload = () => ctx.drawImage(img, a.x - a.radius, a.y - a.radius, a.radius * 2, a.radius * 2);
-  img.src = a.image;
-} else {
-  ctx.save();
-
-      if (a.image) {
-        const img = new Image();
-        img.src = a.image;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(img, a.x - a.radius * 0.9, a.y - a.radius * 0.9, a.radius * 1.8, a.radius * 1.8);
-        ctx.restore();
-      } else {
-        ctx.fillStyle = a.color;
-        if (a.animateColors) {
-          const time = Date.now() * 0.002;
-          ctx.fillStyle = `hsl(${(time * 40) % 360}, 100%, 70%)`;
-        } else if (a.transparent) {
-          ctx.fillStyle = "rgba(255,255,255,0.1)";
-        }
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      if (a.glow || a.flash) {
-        ctx.save();
-        ctx.shadowColor = "white";
-        ctx.shadowBlur = a.glow ? 20 : 0;
-        if (a.flash) ctx.globalAlpha = 0.5 + 0.5 * Math.sin(Date.now() / 100);
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.restore();
-      }
-    
-      ctx.beginPath();
-ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-ctx.clip();
-
-if (a.image) {
-  const src = a.image;
-  if (loadedImages[src]) {
-    ctx.drawImage(loadedImages[src], a.x - a.radius, a.y - a.radius, a.radius * 2, a.radius * 2);
+  if (backgroundImage) {
+    ctx.drawImage(backgroundImage, 0, 0, width, height);
   } else {
-    const img = new Image();
-    img.onload = () => {
-      loadedImages[src] = img;
-      ctx.drawImage(img, a.x - a.radius, a.y - a.radius, a.radius * 2, a.radius * 2);
-    };
-    img.src = src;
+    ctx.clearRect(0, 0, width, height);
   }
-} else {
-  ctx.fillStyle = gradient;
-  ctx.shadowBlur = 10;
-  ctx.shadowColor = a.color;
-  ctx.fill();
-}
-ctx.restore();
-ctx.shadowBlur = 0;
-}
-ctx.restore();
-ctx.shadowBlur = 0;
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = a.textColor || "white";
-        ctx.font = "bold 14px " + (a.font || "Tahoma");
-        ctx.textAlign = "center";
-        const words = a.title.split(" ");
-        words.forEach((word, idx) => {
-          ctx.fillText(word, a.x, a.y + idx * 16 - (words.length - 1) * 8);
-        });
+
+  for (let i = 0; i < ideas.length; i++) {
+    const a = ideas[i];
+    const actualSpeed = movementDelayActive ? 0 : speedMultiplier;
+
+    // Movement
+    a.x += a.vx * actualSpeed;
+    a.y += a.vy * actualSpeed;
+
+    // Boundary bounce
+    if (a.x - a.radius < border) { a.x = border + a.radius; a.vx *= -1; }
+    if (a.x + a.radius > width - border) { a.x = width - border - a.radius; a.vx *= -1; }
+    if (a.y - a.radius < border + 50) { a.y = border + 50 + a.radius; a.vy *= -1; }
+    if (a.y + a.radius > height - border) { a.y = height - border - a.radius; a.vy *= -1; }
+
+    // Collision detection
+    for (let j = i + 1; j < ideas.length; j++) {
+      const b = ideas[j];
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < a.radius + b.radius) {
+        const angle = Math.atan2(dy, dx);
+        const tx = a.x - Math.cos(angle) * (a.radius + b.radius);
+        const ty = a.y - Math.sin(angle) * (a.radius + b.radius);
+        b.x = tx;
+        b.y = ty;
+        [a.vx, b.vx] = [b.vx, a.vx];
+        [a.vy, b.vy] = [b.vy, a.vy];
       }
-      requestAnimationFrame(draw);
     }
+
+    // Gradient glow background (optional)
+    const gradient = ctx.createRadialGradient(a.x, a.y, a.radius * 0.6, a.x, a.y, a.radius);
+    gradient.addColorStop(0, a.color);
+    gradient.addColorStop(1, "black");
+
+    // Begin rendering
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
+    ctx.clip();
+
+    if (a.image) {
+      const src = a.image;
+      if (loadedImages[src]) {
+        ctx.drawImage(loadedImages[src], a.x - a.radius, a.y - a.radius, a.radius * 2, a.radius * 2);
+      } else {
+        const img = new Image();
+        img.onload = () => {
+          loadedImages[src] = img;
+          ctx.drawImage(img, a.x - a.radius, a.y - a.radius, a.radius * 2, a.radius * 2);
+        };
+        img.src = src;
+      }
+    } else {
+      ctx.fillStyle = a.animateColors
+        ? `hsl(${(Date.now() * 0.08) % 360}, 100%, 70%)`
+        : a.transparent
+          ? "rgba(255,255,255,0.1)"
+          : gradient;
+
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = a.color;
+      ctx.fill();
+    }
+
+    ctx.restore();
+
+    // Glow or flash
+    if (a.glow || a.flash) {
+      ctx.save();
+      ctx.shadowColor = "white";
+      ctx.shadowBlur = a.glow ? 20 : 0;
+      if (a.flash) ctx.globalAlpha = 0.5 + 0.5 * Math.sin(Date.now() / 100);
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Text
+    ctx.fillStyle = a.textColor || "white";
+    ctx.font = `bold 14px ${a.font || "Tahoma"}`;
+    ctx.textAlign = "center";
+    const words = a.title.split(" ");
+    words.forEach((word, idx) => {
+      ctx.fillText(word, a.x, a.y + idx * 16 - (words.length - 1) * 8);
+    });
+  }
+
+  requestAnimationFrame(draw);
+}
     draw();
 
     function saveIdeas() {
