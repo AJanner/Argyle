@@ -387,7 +387,7 @@ input[type="text"] {
 </style>
 </head>
 <body>
-<div id="toolbar"><button onclick="togglePlaybackToolbar()">🎛️</button><button onclick="rollDice()">🎲</button><span id="diceResult" style="color: gold; margin: 0 10px; font-weight: bold;"></span><button onclick="location.reload()">🔁</button><button onclick="toggleMusicPanel()">🎵</button><button onclick="cycleBackground()" style="margin-left:10px;">🖼️</button><button onclick="rotateBackground()" style="margin-left:10px;">🔄</button>
+<div id="toolbar"><button onclick="togglePlaybackToolbar()">🎛️</button><button onclick="rollDice()">🎲</button><span id="diceResult" style="color: gold; margin: 0 10px; font-weight: bold;"></span><button onclick="location.reload()">🔁</button><button onclick="toggleMusicPanel()">🎶</button><button onclick="cycleBackground()" style="margin-left:10px;">🖼️</button><button onclick="rotateBackground()" style="margin-left:10px;">🔄</button>
 <div><strong>💭MindsEye💬~Ideas-Incidents-Events-Concerns-Logger😎JSON-Exporter-V1</strong> ➡️ <select id="themeSelector" onchange="switchTheme(this.value)" style="background: rgba(0, 0, 0, 0.6); color: gold; border: 2px solid darkgreen; font-family: 'Monaco', serif; padding: 6px; border-radius: 6px;">
 <option value="default">Start 😀</option>
 <option value="argyle">Argyle ♻️</option>
@@ -407,13 +407,13 @@ input[type="text"] {
 <label style="margin-left: 10px;">🚦Motion:⚡️
         <input max="3" min="0.0" onchange="speedMultiplier = parseFloat(this.value)" step="0.1" type="range" value="1"/>
 </label>
-<label style="margin-left: 10px;">Image:
+<label style="margin-left: 10px;">🖼️:
         <input accept="image/*" id="bgLoader" type="file"/>
 </label>
-<label style="margin-left: 10px;">🎬 Video File:
+<label style="margin-left: 10px;">📀:
         <input accept="video/*" id="videoLoader" type="file"/>
 </label>
-<label style="margin-left: 10px;">📺 Video Link:
+<label style="margin-left: 10px;">🎥:
         <input id="youtubeLink" placeholder="Paste Video URL" style="width:50px;" type="text"/>
 <button onclick="loadYouTubeVideo()">Load</button>
 </label>
