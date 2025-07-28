@@ -27,16 +27,32 @@
       z-index: 1000;
       transition: opacity 0.5s ease;
     }
+#toolbar button {
+  background-color: rgba(0, 0, 0, 0.7); /* black with opacity */
+  color: gold; /* gold text */
+  border: 2px solid darkgreen; /* dark green border */
+  font-family: 'Monaco', serif;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-right: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#toolbar button:hover {
+  background-color: rgba(0, 0, 0, 0.9); /* darker on hover */
+  transform: scale(1.05);
+}
     #canvas {
       display: block;
     }
     .panel {
       position: fixed;
-      top: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 500px;
-      background: rgba(34, 34, 34, 0.92);
+      top: 130px;
+      left: 15px;
+      transform: none;
+      width: 300px;
+      background: rgba(34, 34, 34, 0.90);
       color: white;
       padding: 20px;
       border-radius: 16px;
@@ -52,13 +68,43 @@
       padding: 5px;
     }
     .panel button {
-      margin-right: 10px;
-      padding: 6px 12px;
-      background: #444;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
+     margin-right: 10px;
+     padding: 6px 12px;
+     background-color: rgba(0, 0, 0, 0.7); /* black with opacity */
+     color: gold; /* gold text */
+     border: 2px solid darkgreen; /* dark green border */
+     font-family: 'Monaco', serif; /* more elegant serif font */
+     border-radius: 8px; /* optional: rounder corners */
+     cursor: pointer;
+     transition: background-color 0.3s ease, transform 0.2s ease;
+}
+    .panel button:hover {
+     background-color: rgba(0, 0, 0, 0.9); /* darker on hover */
+     transform: scale(1.05); /* subtle zoom effect */
+}
+#playbackToolbar button {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: gold;
+  border: 2px solid darkgreen;
+  font-family: 'Monaco', serif;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#playbackToolbar button:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+  transform: scale(1.05);
+}
+#playbackToolbar select, #playbackToolbar input[type="range"] {
+  background-color: rgba(0, 0, 0, 0.6);
+  color: gold;
+  border: 1px solid darkgreen;
+  font-family: 'Monaco', serif;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
     #bgVideo {
     position: fixed;
     top: 0;
@@ -79,11 +125,128 @@
 }
 </style>
 <style>
-#bottomToolbar {
+#playbackToolbar {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #111;
+  color: white;
+  display: flex;
+  justify-content: center; /* This centers all children horizontally */
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  z-index: 1000;
   display: none;
+  flex-wrap: wrap; /* Optional: allows wrapping on small screens */
 }
-#bottomToolbar.visible {
-  display: flex !important;
+
+#playbackToolbar button {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: gold;
+  border: 2px solid darkgreen;
+  font-family: 'Monaco', serif;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+#playbackToolbar button:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+  transform: scale(1.05);
+}
+
+#playbackToolbar input[type="range"],
+#playbackToolbar select {
+  background-color: rgba(0, 0, 0, 0.6);
+  color: gold;
+  border: 1px solid darkgreen;
+  font-family: 'Monaco', serif;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+#themeSelector {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: gold;
+  border: 2px solid darkgreen;
+  font-family: 'Monaco', serif;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  appearance: none; /* Hide default OS styles */
+}
+
+#themeSelector:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 150px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.6); /* black with opacity */
+  border: 2px solid darkgreen;
+  border-radius: 5px;
+  outline: none;
+  margin-left: 10px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: gold;
+  cursor: pointer;
+  border: 2px solid darkgreen;
+  box-shadow: 0 0 4px gold;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: gold;
+  cursor: pointer;
+  border: 2px solid darkgreen;
+  box-shadow: 0 0 4px gold;
+}
+/* File inputs (Image + Video File) */
+input[type="file"] {
+  background-color: rgba(0, 0, 0, 0.6);
+  color: gold;
+  border: 2px solid darkgreen;
+  font-family: 'Monaco', serif;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Text input (YouTube Link) */
+input[type="text"] {
+  background-color: rgba(0, 0, 0, 0.6);
+  color: gold;
+  border: 2px solid darkgreen;
+  font-family: 'Monaco', serif;
+  padding: 6px;
+  border-radius: 6px;
+  width: 120px; /* optional override for placeholder readability */
+}
+
+/* Button next to YouTube input */
+#toolbar button, #playbackToolbar button {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: gold;
+  border: 2px solid darkgreen;
+  font-family: 'Monaco', serif;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+#toolbar button:hover, #playbackToolbar button:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+  transform: scale(1.05);
 }
 </style>
 <style>
@@ -153,7 +316,7 @@
         <input accept="video/*" id="videoLoader" type="file"/>
 </label>
 <label style="margin-left: 10px;">Video Link:
-        <input id="youtubeLink" placeholder="Paste Video URL" style="width:100px;" type="text"/>
+        <input id="youtubeLink" placeholder="Paste Video URL" style="width:50px;" type="text"/>
 <button onclick="loadYouTubeVideo()">Load</button>
 </label>
 
@@ -164,15 +327,15 @@
 <option value="cqc">Games 🎮</option>
 <option value="blank">Blank 😶</option>
 <option value="meme">Memes 🙄</option>
-<option value="recipes">Recipes 😋</option>
+<option value="recipes">Food 😋</option>
 <option value="season">🏟️S25⚽️</option>
 <option value="sleep">🥱 😴</option>
 <option value="credits"> 💚</option>
 </select>
 </label>
-<button onclick="cycleBackground()" style="margin-left:10px;">🔄 Cycle 🖼️</button>
+<button onclick="cycleBackground()" style="margin-left:10px;">🔄IMG🖼️</button>
 <button onclick="rotateBackground()">🔄</button>
-<button onclick="deleteAllIdeas()" style="margin-left:10px;">🚮Delete 💭 Ideas🗑️</button>
+<button onclick="deleteAllIdeas()" style="margin-left:10px;">🚮Delete💭Ideas🗑️</button>
 </div>
 </div>
 <video autoplay="" id="bgVideo" loop="" muted="" playsinline="" style="position:fixed; top:0; left:0; width:100vw; height:100vh; object-fit:cover; z-index:-2; display:none; pointer-events: none;"></video>
@@ -184,8 +347,8 @@
 <div style="margin-top: 1px;">
 <input accept="image/png" id="uploadImage" type="file"/>
 </div>
-<label style="margin-left: 10px;">☝️ Upload PNG | Change 💭 Size 👇 
-<label><input id="sizeSlider" max="100" min="10" oninput="selectedIdea.radius = parseInt(this.value)" type="range" value="80"/>
+<label style="margin-left: 10px;">☝️ Upload PNG | Change 💭 Size 👇 | 
+<label><input id="sizeSlider" max="200" min="10" oninput="selectedIdea.radius = parseInt(this.value)" type="range" value="75"/>
 </label>
 <div style="margin-bottom: 10px;">
 <label>Current📋:
@@ -307,18 +470,10 @@ defaultBackground.onload = () => {
    
     const fonts = [
   "Arial",
+  "Monaco",
   "Verdana",
   "Tahoma",
   "Trebuchet MS",
-  "Times New Roman",
-  "Georgia",
-  "Garamond",
-  "Courier New",
-  "Lucida Console",
-  "Lucida Sans Unicode",
-  "Palatino Linotype",
-  "Segoe UI",
-  "Segoe Print",
   "Comic Sans MS",
   "Impact",
   "Franklin Gothic Medium",
@@ -330,6 +485,12 @@ defaultBackground.onload = () => {
   "Arial Black",
   "System-ui",         // Default OS font
   "Sans-serif",
+  "Times New Roman",
+  "Georgia",
+  "Garamond",
+  "Courier New",
+  "Lucida Sans Unicode",
+  "Palatino Linotype",
   "Serif",
   "Monospace"
 ];
@@ -2246,24 +2407,7 @@ function captureCanvas() {
   link.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
   link.click();
 }
-</script>
-<div id="bottomToolbar" style="
-  position: fixed; bottom: 0; width: 100%; background: #111; color: white;
-  display: flex; justify-content: center; align-items: center; padding: 10px; z-index: 1000; display: none;">
-<button onclick="recordState('start')">🎬Mark-Start</button>
-<button onclick="recordState('end')">🏁Mark-End</button>
-<button onclick="startPlayback()">▶️Play</button>
-<input id="playbackSlider" max="1" min="0" step="0.01" style="margin-left: 10px; width: 200px;" type="range" value="0"/>
-<select id="playbackDuration" style="margin-left: 10px;">
-<option value="5000">5s</option>
-<option selected="" value="10000">10s</option>
-<option value="15000">15s</option>
-<option value="20000">20s</option>
-<option value="30000">30s</option>
-</select>
-<button onclick="captureCanvas()">📷 Snapshot</button>
-</div>
-<script>
+
 const imageInput = document.getElementById('bubbleImage');
 const styleSelect = document.getElementById('styleSelect');
 
@@ -2344,7 +2488,7 @@ document.getElementById('uploadImage').addEventListener('change', function (e) {
 });
 </script>
 </label></div>
-<div id="playbackToolbar" style="position: fixed; bottom: 0; width: 100%; background: #111; color: white;display: flex; justify-content: center; align-items: center; gap: 10px; padding: 10px; z-index: 1000; display: none;"><button onclick="recordState('start')">🎬Mark-Start</button><button onclick="recordState('end')">🏁Mark-End</button><button onclick="startPlayback()">▶️Play</button><input id="playbackSlider" max="1" min="0" step="0.01" style="margin-left: 10px; width: 200px;" type="range" value="0"/><select id="playbackDuration" style="margin-left: 10px;">
+<div id="playbackToolbar" style="position: fixed; bottom: 0; width: 100%; background: #111; color: white;display: flex; justify-content: center; align-items: center; gap: 10px; padding: 10px; z-index: 1000; display: none;"><button onclick="recordState('start')">🎬Mark-Start</button><button onclick="recordState('end')">Mark-Fin🏁</button><button onclick="startPlayback()">▶️Play</button><input id="playbackSlider" max="1" min="0" step="0.01" style="margin-left: 10px; width: 200px;" type="range" value="0"/><select id="playbackDuration" style="margin-left: 10px;">
 <option value="5000">5s</option>
 <option selected="" value="10000">10s</option>
 <option value="15000">15s</option>
