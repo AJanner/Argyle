@@ -163,7 +163,10 @@
 <option value="argyle">Argyle</option>
 <option value="cqc">Games</option>
 <option value="blank">Blank</option>
-<option value="lakers">Lakers</option>
+<option value="meme">Memes</option>
+<option value="recipes">Recipes</option>
+<option value="season">Season</option>
+<option value="web">🔗</option>
 </select>
 </label>
 <button onclick="cycleBackground()" style="margin-left:10px;">🔄 Cycle 🖼️</button>
@@ -1355,10 +1358,10 @@ showToolbar();
         ideas: [],
         bg: "blank1.png"
       },
-     lakers: {
-  ideas: [
+     meme: {
+        ideas: [
     {
-      title: "🏀 Lakers",
+      title: "💚",
       description: "Playoff Push",
       x: 1604.1220264398876,
       y: 774.6661552027556,
@@ -1370,7 +1373,7 @@ showToolbar();
       font: "Arial"
     },
     {
-      title: "Shaq 34",
+      title: "Meme",
       description: "",
       x: 1143.661675666017,
       y: 448,
@@ -1382,7 +1385,7 @@ showToolbar();
       font: "Arial"
     },
     {
-      title: "24 🐍 8",
+      title: "",
       description: "",
       x: 520.8516322910205,
       y: 574.7903135181778,
@@ -1394,9 +1397,21 @@ showToolbar();
       font: "Arial"
     }
   ],
-  bg: "lakers1.png"
-}
-    };
+        bg: "meme1.png"
+      },
+recipes:  {
+        ideas: [],
+        bg: "recipes1.png"
+      },
+season:  {
+        ideas: [],
+        bg: "season1.png"
+      },
+web:  {
+        ideas: [],
+        bg: "web1.png"
+      }
+};
 
     function switchTheme(themeName) {
       currentTheme = themeName;
