@@ -45,6 +45,7 @@
 }
     #canvas {
       display: block;
+      z-index: -1;
     }
     .panel {
       position: fixed;
@@ -52,12 +53,96 @@
       left: 15px;
       transform: none;
       width: 300px;
+      min-width: 250px;
+      max-width: 1000px;
       background: rgba(34, 34, 34, 0.90);
       color: white;
       padding: 20px;
       border-radius: 16px;
       z-index: 999;
       display: none;
+      resize: both;
+      overflow: auto;
+    }
+    
+    .resize-handle {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      width: 20px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+      cursor: se-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    
+    .dice-overlay {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: gold;
+      font-size: 120px;
+      font-weight: bold;
+      padding: 40px;
+      border-radius: 20px;
+      border: 3px solid darkgreen;
+      z-index: 2000;
+      display: none;
+      animation: diceFadeIn 0.3s ease-in;
+    }
+    
+    .music-panel {
+      position: fixed;
+      top: 130px;
+      right: 15px;
+      width: 300px;
+      background: rgba(34, 34, 34, 0.90);
+      color: white;
+      padding: 20px;
+      border-radius: 16px;
+      z-index: 999;
+      display: none;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    
+    .music-panel h3 {
+      color: gold;
+      margin-top: 0;
+      text-align: center;
+    }
+    
+    .music-item {
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      border: 1px solid darkgreen;
+      padding: 8px 12px;
+      margin: 5px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    
+    .music-item:hover {
+      background: rgba(0, 0, 0, 0.8);
+      color: gold;
+    }
+    
+    .music-item.playing {
+      background: rgba(0, 100, 0, 0.6);
+      color: gold;
+      border-color: gold;
+    }
+    
+    @keyframes diceFadeIn {
+      from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     }
     .panel input, .panel textarea {
       width: 100%;
@@ -115,6 +200,7 @@
     z-index: -2;
     pointer-events: none;
     display: none; /* default hidden, shown when video is loaded */
+    background: black;
 }
   
 #bubblePanel {
@@ -139,6 +225,7 @@
   z-index: 1000;
   display: none;
   flex-wrap: wrap; /* Optional: allows wrapping on small screens */
+  opacity: 0.9;
 }
 
 #playbackToolbar button {
@@ -300,28 +387,8 @@ input[type="text"] {
 </style>
 </head>
 <body>
-<div id="toolbar"><button onclick="togglePlaybackToolbar()">🎛️</button><button onclick="location.reload()">🔁</button>
-<div><strong>💭MindsEye💬~Ideas-Incidents-Events-Concerns-Logger😎JSON-Exporter-V1</strong></div>
-<button onclick="saveIdeas()">💾Save.json</button>
-<input accept=".json" id="fileLoader" style="display:none" type="file"/>
-<button onclick="document.getElementById('fileLoader').click()">🆙 Load.json</button>
-<div>
-<label style="margin-left: 10px;">🚦Motion:⚡️
-        <input max="3" min="0.0" onchange="speedMultiplier = parseFloat(this.value)" step="0.1" type="range" value="1"/>
-</label>
-<label style="margin-left: 10px;">Image:
-        <input accept="image/*" id="bgLoader" type="file"/>
-</label>
-<label style="margin-left: 10px;">Video File:
-        <input accept="video/*" id="videoLoader" type="file"/>
-</label>
-<label style="margin-left: 10px;">Video Link:
-        <input id="youtubeLink" placeholder="Paste Video URL" style="width:50px;" type="text"/>
-<button onclick="loadYouTubeVideo()">Load</button>
-</label>
-
-<label style="margin-left: 10px;">🎨 Style:
-        <select id="themeSelector" onchange="switchTheme(this.value)">
+<div id="toolbar"><button onclick="togglePlaybackToolbar()">🎛️</button><button onclick="rollDice()">🎲</button><span id="diceResult" style="color: gold; margin: 0 10px; font-weight: bold;"></span><button onclick="location.reload()">🔁</button><button onclick="toggleMusicPanel()">🎵</button><button onclick="cycleBackground()" style="margin-left:10px;">🖼️</button><button onclick="rotateBackground()" style="margin-left:10px;">🔄</button>
+<div><strong>💭MindsEye💬~Ideas-Incidents-Events-Concerns-Logger😎JSON-Exporter-V1</strong> ➡️ <select id="themeSelector" onchange="switchTheme(this.value)" style="background: rgba(0, 0, 0, 0.6); color: gold; border: 2px solid darkgreen; font-family: 'Monaco', serif; padding: 6px; border-radius: 6px;">
 <option value="default">Start 😀</option>
 <option value="argyle">Argyle ♻️</option>
 <option value="cqc">Games 🎮</option>
@@ -331,108 +398,130 @@ input[type="text"] {
 <option value="season">🏟️S25⚽️</option>
 <option value="sleep">🥱 😴</option>
 <option value="credits"> 💚</option>
-</select>
-</label>
-<button onclick="cycleBackground()" style="margin-left:10px;">🔄IMG🖼️</button>
-<button onclick="rotateBackground()">🔄</button>
+</select></div>
+<button onclick="saveIdeas()">💾Save.json</button>
+<input accept=".json" id="fileLoader" style="display:none" type="file"/>
+<button onclick="document.getElementById('fileLoader').click()">🆙 Load.json</button>
 <button onclick="deleteAllIdeas()" style="margin-left:10px;">🚮Delete💭Ideas🗑️</button>
+<div>
+<label style="margin-left: 10px;">🚦Motion:⚡️
+        <input max="3" min="0.0" onchange="speedMultiplier = parseFloat(this.value)" step="0.1" type="range" value="1"/>
+</label>
+<label style="margin-left: 10px;">Image:
+        <input accept="image/*" id="bgLoader" type="file"/>
+</label>
+<label style="margin-left: 10px;">🎬 Video File:
+        <input accept="video/*" id="videoLoader" type="file"/>
+</label>
+<label style="margin-left: 10px;">📺 Video Link:
+        <input id="youtubeLink" placeholder="Paste Video URL" style="width:50px;" type="text"/>
+<button onclick="loadYouTubeVideo()">Load</button>
+</label>
 </div>
 </div>
 <video autoplay="" id="bgVideo" loop="" muted="" playsinline="" style="position:fixed; top:0; left:0; width:100vw; height:100vh; object-fit:cover; z-index:-2; display:none; pointer-events: none;"></video>
 <iframe allow="autoplay" allowfullscreen="" frameborder="0" id="ytFrame" style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:-3; display:none;"></iframe>
+<div class="dice-overlay" id="diceOverlay"></div>
 <canvas id="canvas"></canvas>
+<div class="music-panel" id="musicPanel">
+  <h3>🎵 Music Player</h3>
+  <div id="musicList">
+    <!-- Music items will be loaded here -->
+  </div>
+  <button onclick="stopMusic()" style="background: linear-gradient(45deg, #f44336, #da190b); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 100%;">🔇 Stop Music</button>
+</div>
 <div class="panel" id="panel">
 <input id="title" placeholder="Title"/>
 <textarea id="description" placeholder="Description" rows="5"></textarea>
+<div class="resize-handle">⤡</div>
 <div style="margin-top: 1px;">
-<input accept="image/png" id="uploadImage" type="file"/>
+<input accept="image/*" id="uploadImage" type="file"/>
 </div>
 <label style="margin-left: 10px;">☝️ Upload PNG | Change 💭 Size 👇 | 
 <label><input id="sizeSlider" max="200" min="10" oninput="selectedIdea.radius = parseInt(this.value)" type="range" value="75"/>
 </label>
 <div style="margin-bottom: 10px;">
-<label>Current📋:
-    <select id="imageSelector" onchange="selectImageFromList()">
+<label>Select Image:
+    <select id="imageSelector" onchange="selectImageFromList()" style="background-color: rgba(0, 0, 0, 0.6); color: gold; border: 2px solid darkgreen; font-family: 'Monaco', serif; padding: 6px; border-radius: 6px; width: 100%; margin-top: 5px;">
 <option value="">None</option>
-<option value="a1.png">a1.png</option>
-<option value="a2.png">a2.png</option>
-<option value="a3.png">a3.png</option>
-<option value="a4.png">a4.png</option>
-<option value="a5.png">a5.png</option>
-<option value="a6.png">a6.png</option>
-<option value="a7.png">a7.png</option>
-<option value="a8.png">a8.png</option>
-<option value="a9.png">a9.png</option>
-<option value="a10.png">a10.png</option>
-<option value="a11.png">a11.png</option>
-<option value="a12.png">a12.png</option>
-<option value="a13.png">a13.png</option>
-<option value="a14.png">a14.png</option>
-<option value="a15.png">a15.png</option>
-<option value="a16.png">a16.png</option>
-<option value="a17.png">a17.png</option>
-<option value="a18.png">a18.png</option>
-<option value="a19.png">a19.png</option>
-<option value="a20.png">a20.png</option>
-<option value="a21.png">a21.png</option>
-<option value="a22.png">a22.png</option>
-<option value="a23.png">a23.png</option>
-<option value="a24.png">a24.png</option>
-<option value="a25.png">a25.png</option>
-<option value="a26.png">a26.png</option>
-<option value="a27.png">a27.png</option>
-<option value="a28.png">a28.png</option>
-<option value="a29.png">a29.png</option>
-</select>
-</label>
-<label>RE:Tired💚:
-    <select id="imageSelect" onchange="selectImageFromList()">
-<option value="">None</option>
-<option value="l1.png">l1.png</option>
-<option value="l2.png">l2.png</option>
-<option value="l3.png">l3.png</option>
-<option value="l4.png">l4.png</option>
-<option value="l5.png">l5.png</option>
-<option value="l6.png">l6.png</option>
-<option value="l7.png">l7.png</option>
-<option value="l8.png">l8.png</option>
-<option value="l9.png">l9.png</option>
-<option value="l10.png">l10.png</option>
-<option value="l11.png">l11.png</option>
-<option value="l12.png">l12.png</option>
-<option value="l13.png">l13.png</option>
-<option value="l14.png">l14.png</option>
-<option value="l15.png">l15.png</option>
-<option value="l16.png">l16.png</option>
-<option value="l17.png">l17.png</option>
-<option value="l18.png">l18.png</option>
-<option value="l19.png">l19.png</option>
-<option value="l20.png">l20.png</option>
-<option value="l21.png">l21.png</option>
-<option value="l22.png">l22.png</option>
-<option value="l23.png">l23.png</option>
-<option value="l24.png">l24.png</option>
-<option value="l25.png">l25.png</option>
-<option value="l26.png">l26.png</option>
-<option value="l27.png">l27.png</option>
-<option value="l28.png">l28.png</option>
-<option value="l29.png">l29.png</option>
-<option value="l30.png">l30.png</option>
-<option value="l31.png">l31.png</option>
-<option value="l32.png">l32.png</option>
-<option value="l33.png">l33.png</option>
-<option value="l34.png">l34.png</option>
+<option value="images/a1.png">a1.png</option>
+<option value="images/a2.png">a2.png</option>
+<option value="images/a3.png">a3.png</option>
+<option value="images/a4.png">a4.png</option>
+<option value="images/a5.png">a5.png</option>
+<option value="images/a6.png">a6.png</option>
+<option value="images/a7.png">a7.png</option>
+<option value="images/a8.png">a8.png</option>
+<option value="images/a9.png">a9.png</option>
+<option value="images/a10.png">a10.png</option>
+<option value="images/a11.png">a11.png</option>
+<option value="images/a12.png">a12.png</option>
+<option value="images/a13.png">a13.png</option>
+<option value="images/a14.png">a14.png</option>
+<option value="images/a15.png">a15.png</option>
+<option value="images/a16.png">a16.png</option>
+<option value="images/a17.png">a17.png</option>
+<option value="images/a18.png">a18.png</option>
+<option value="images/a19.png">a19.png</option>
+<option value="images/a20.png">a20.png</option>
+<option value="images/a21.png">a21.png</option>
+<option value="images/a22.png">a22.png</option>
+<option value="images/a23.png">a23.png</option>
+<option value="images/a24.png">a24.png</option>
+<option value="images/a25.png">a25.png</option>
+<option value="images/a26.png">a26.png</option>
+<option value="images/a27.png">a27.png</option>
+<option value="images/a28.png">a28.png</option>
+<option value="images/a29.png">a29.png</option>
+  <option value="images/l1.png">l1.png</option>
+  <option value="images/l2.png">l2.png</option>
+  <option value="images/l3.png">l3.png</option>
+  <option value="images/l4.png">l4.png</option>
+  <option value="images/l5.png">l5.png</option>
+  <option value="images/l6.png">l6.png</option>
+  <option value="images/l7.png">l7.png</option>
+  <option value="images/l8.png">l8.png</option>
+  <option value="images/l9.png">l9.png</option>
+  <option value="images/l10.png">l10.png</option>
+  <option value="images/l11.png">l11.png</option>
+  <option value="images/l12.png">l12.png</option>
+  <option value="images/l13.png">l13.png</option>
+  <option value="images/l14.png">l14.png</option>
+  <option value="images/l15.png">l15.png</option>
+  <option value="images/l16.png">l16.png</option>
+  <option value="images/l17.png">l17.png</option>
+  <option value="images/l18.png">l18.png</option>
+  <option value="images/l19.png">l19.png</option>
+  <option value="images/l20.png">l20.png</option>
+  <option value="images/l21.png">l21.png</option>
+  <option value="images/l22.png">l22.png</option>
+  <option value="images/l23.png">l23.png</option>
+  <option value="images/l24.png">l24.png</option>
+  <option value="images/l25.png">l25.png</option>
+  <option value="images/l26.png">l26.png</option>
+  <option value="images/l27.png">l27.png</option>
+  <option value="images/l28.png">l28.png</option>
+  <option value="images/l29.png">l29.png</option>
+  <option value="images/l30.png">l30.png</option>
+  <option value="images/l31.png">l31.png</option>
+  <option value="images/l32.png">l32.png</option>
+  <option value="images/l33.png">l33.png</option>
+  <option value="images/l34.png">l34.png</option>
 </select>
 </label>
 <div style="margin-bottom: 10px;">
 <label><input id="toggleGlow" type="checkbox"/> Glow</label>
 <label><input id="toggleFlash" type="checkbox"/> Flash</label>
+<label><input id="toggleAnimateColors" type="checkbox"/> Animate Colors</label>
+<label><input id="toggleTransparent" type="checkbox"/> Transparent</label>
 </div>
 <div style="margin-top: 10px;">
 <button onclick="savePanel()">Save</button>
 <button onclick="changeColor()">💭️Color</button>
 <button onclick="changeTextColor()">💬Color</button>
 <button onclick="cycleFont()">Font</button>
+<button onclick="clearUploadedImage()">🗑️ Image</button>
+<button onclick="testImageUpload()">🧪 Test</button>
 <button onclick="deleteIdea()">Delete</button>
 <button onclick="closePanel()">Close</button>
 </div>
@@ -463,7 +552,7 @@ const border = 10;
     let selectedIdea = null;
     let backgroundImage = null;
     const defaultBackground = new Image();
-defaultBackground.src = "default1.png";
+      defaultBackground.src = "images/default1.png";
 defaultBackground.onload = () => {
   backgroundImage = defaultBackground;
 };
@@ -528,11 +617,39 @@ defaultBackground.onload = () => {
     });
 
     function showPanel() {
-      document.getElementById("title").value = selectedIdea.title;
-      document.getElementById("description").value = selectedIdea.description;
-      document.getElementById("sizeSlider").value = selectedIdea.radius || 80;
-      panel.style.display = "block";
+  document.getElementById("title").value = selectedIdea.title;
+  document.getElementById("description").value = selectedIdea.description;
+  document.getElementById("sizeSlider").value = selectedIdea.radius || 80;
+  
+  // Update image selector to show current image
+  if (selectedIdea.image) {
+    // Check if it's a data URL (uploaded image)
+    if (selectedIdea.image.startsWith('data:')) {
+      document.getElementById("imageSelector").value = "";
+      // Show indicator that custom image is uploaded
+      const uploadInput = document.getElementById('uploadImage');
+      uploadInput.style.border = '2px solid gold';
+      uploadInput.title = "Custom image uploaded";
+    } else {
+      // It's a file from the dropdown
+      document.getElementById("imageSelector").value = selectedIdea.image;
+      document.getElementById('uploadImage').style.border = '';
+      document.getElementById('uploadImage').title = "Upload custom image";
     }
+  } else {
+    document.getElementById("imageSelector").value = "";
+    document.getElementById('uploadImage').style.border = '';
+    document.getElementById('uploadImage').title = "Upload custom image";
+  }
+  
+  // Update checkboxes
+  document.getElementById("toggleGlow").checked = selectedIdea.glow || false;
+  document.getElementById("toggleFlash").checked = selectedIdea.flash || false;
+  document.getElementById("toggleAnimateColors").checked = selectedIdea.animateColors || false;
+  document.getElementById("toggleTransparent").checked = selectedIdea.transparent || false;
+  
+  panel.style.display = "block";
+}
     function savePanel() {
       selectedIdea.title = document.getElementById("title").value;
       selectedIdea.description = document.getElementById("description").value;
@@ -546,16 +663,70 @@ defaultBackground.onload = () => {
       }
     }
     function closePanel() { panel.style.display = "none"; }
-    function changeColor() { selectedIdea.color = randomColor(); }
-    function changeTextColor() { selectedIdea.textColor = randomTextColor(); }
-    function cycleFont() {
-      fontIndex = (fontIndex + 1) % fonts.length;
-      selectedIdea.font = fonts[fontIndex];
-    }
+function changeColor() { selectedIdea.color = randomColor(); }
+function changeTextColor() { selectedIdea.textColor = randomTextColor(); }
+function cycleFont() {
+  fontIndex = (fontIndex + 1) % fonts.length;
+  selectedIdea.font = fonts[fontIndex];
+}
+function clearUploadedImage() {
+  if (selectedIdea) {
+    selectedIdea.image = null;
+    document.getElementById("imageSelector").value = "";
+    document.getElementById('uploadImage').style.border = '';
+    document.getElementById('uploadImage').title = "Upload custom image";
+    console.log("🗑️ Image cleared from bubble");
+  }
+}
+
+// Test function to debug image upload
+function testImageUpload() {
+  if (!selectedIdea) {
+    alert("Please select a bubble first");
+    return;
+  }
+  
+  console.log("🧪 Testing image upload for bubble at:", selectedIdea.x, selectedIdea.y);
+  console.log("🧪 Current image:", selectedIdea.image ? "has image" : "no image");
+  console.log("🧪 Loaded images count:", Object.keys(loadedImages).length);
+  
+  // Force reload the current image if it exists
+  if (selectedIdea.image) {
+    const img = new Image();
+    img.onload = () => {
+      loadedImages[selectedIdea.image] = img;
+      console.log("🔄 Reloaded image for bubble");
+    };
+    img.src = selectedIdea.image;
+  }
+}
 
     function draw() {
   if (backgroundImage) {
-    ctx.drawImage(backgroundImage, 0, 0, width, height);
+    // Apply background rotation
+    if (backgroundRotation !== 0) {
+      ctx.save();
+      ctx.translate(width / 2, height / 2);
+      ctx.rotate((backgroundRotation * Math.PI) / 180);
+      // Calculate dimensions to cover the entire screen after rotation
+      // Force the image to fill the entire window regardless of aspect ratio
+      // For rotated backgrounds, we need to ensure complete coverage
+      const maxDimension = Math.max(width, height);
+      const minDimension = Math.min(width, height);
+      
+      // Calculate scale to ensure complete coverage
+      const scaleX = width / backgroundImage.width;
+      const scaleY = height / backgroundImage.height;
+      const scale = Math.max(scaleX, scaleY) * 1.2; // Add 20% extra to ensure coverage
+      
+      const scaledWidth = backgroundImage.width * scale;
+      const scaledHeight = backgroundImage.height * scale;
+      
+      ctx.drawImage(backgroundImage, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+      ctx.restore();
+    } else {
+      ctx.drawImage(backgroundImage, 0, 0, width, height);
+    }
   } else {
     ctx.clearRect(0, 0, width, height);
   }
@@ -608,12 +779,19 @@ defaultBackground.onload = () => {
       if (loadedImages[src]) {
         ctx.drawImage(loadedImages[src], a.x - a.radius, a.y - a.radius, a.radius * 2, a.radius * 2);
       } else {
+        // Handle both file paths and data URLs
         const img = new Image();
         img.onload = () => {
           loadedImages[src] = img;
-          ctx.drawImage(img, a.x - a.radius, a.y - a.radius, a.radius * 2, a.radius * 2);
+          console.log("🖼️ Image loaded successfully:", src.substring(0, 50) + "...");
+        };
+        img.onerror = () => {
+          console.error("❌ Failed to load image:", src.substring(0, 50) + "...");
+          // Remove the failed image reference
+          a.image = null;
         };
         img.src = src;
+        console.log("🔄 Loading image:", src.substring(0, 50) + "...");
       }
     } else {
       ctx.fillStyle = a.animateColors
@@ -629,7 +807,7 @@ defaultBackground.onload = () => {
 
     ctx.restore();
 
-    // Glow or flash
+    // Glow or flash (drawn after image so it's visible)
     if (a.glow || a.flash) {
       ctx.save();
       ctx.shadowColor = "white";
@@ -638,12 +816,25 @@ defaultBackground.onload = () => {
       ctx.beginPath();
       ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
       ctx.strokeStyle = "white";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+    }
+    
+    // Additional glow effect for better visibility
+    if (a.glow) {
+      ctx.save();
+      ctx.shadowColor = "white";
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, a.radius + 2, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+      ctx.lineWidth = 1;
       ctx.stroke();
       ctx.restore();
     }
 
-    // Text
+    // Text (drawn last so it's always on top)
     ctx.fillStyle = a.textColor || "white";
     ctx.font = `bold 14px ${a.font || "Tahoma"}`;
     ctx.textAlign = "center";
@@ -729,6 +920,9 @@ defaultBackground.onload = () => {
   setTimeout(() => {
   video.play().then(() => {
     console.log("Video playing as background.");
+    console.log("Video element:", video);
+    console.log("Video display:", video.style.display);
+    console.log("Video z-index:", video.style.zIndex);
   }).catch((err) => {
     console.warn("Autoplay blocked, trying again on user interaction:", err);
     document.body.addEventListener("click", () => video.play(), { once: true });
@@ -841,7 +1035,7 @@ let isDragging = false;
     "textColor": "black",
     "radius": 54,
     "font": "Arial",
-    "image": "a6.png",
+    "image": "images/a6.png",
     "flash": false
   },
   {
@@ -855,7 +1049,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 54,
     "font": "Arial",
-    "image": "a11.png"
+    "image": "images/a11.png"
   },
   {
     "title": "      Sorinola",
@@ -868,7 +1062,7 @@ let isDragging = false;
     "textColor": "lime",
     "radius": 50,
     "font": "Arial",
-    "image": "a29.png",
+    "image": "images/a29.png",
     "glow": true
   },
   {
@@ -882,7 +1076,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 49,
     "font": "Arial",
-    "image": "a18.png",
+    "image": "images/a18.png",
     "glow": true
   },
   {
@@ -896,7 +1090,7 @@ let isDragging = false;
     "textColor": "black",
     "radius": 50,
     "font": "Arial",
-    "image": "a4.png",
+    "image": "images/a4.png",
     "flash": false,
     "glow": true
   },
@@ -911,7 +1105,7 @@ let isDragging = false;
     "textColor": "yellow",
     "radius": 52,
     "font": "Trebuchet MS",
-    "image": "a5.png",
+    "image": "images/a5.png",
     "glow": true
   },
   {
@@ -925,7 +1119,7 @@ let isDragging = false;
     "textColor": "yellow",
     "radius": 48,
     "font": "Lucida Sans Unicode",
-    "image": "a2.png",
+    "image": "images/a2.png",
     "glow": true
   },
   {
@@ -939,7 +1133,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 49,
     "font": "Arial",
-    "image": "a10.png",
+    "image": "images/a10.png",
     "glow": true
   },
   {
@@ -953,7 +1147,7 @@ let isDragging = false;
     "textColor": "yellow",
     "radius": 55,
     "font": "Courier New",
-    "image": "a9.png"
+    "image": "images/a9.png"
   },
   {
     "title": "",
@@ -966,7 +1160,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 69,
     "font": "Arial",
-    "image": "a1.png",
+    "image": "images/a1.png",
     "glow": true
   },
   {
@@ -980,7 +1174,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 49,
     "font": "Arial",
-    "image": "a17.png",
+    "image": "images/a17.png",
     "glow": true
   },
   {
@@ -994,7 +1188,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 18,
     "font": "Arial",
-    "image": "a21.png",
+    "image": "images/a21.png",
     "glow": true
   },
   {
@@ -1008,7 +1202,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 53,
     "font": "Arial",
-    "image": "a7.png",
+    "image": "images/a7.png",
     "flash": false,
     "glow": true
   },
@@ -1023,7 +1217,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 57,
     "font": "Tahoma",
-    "image": "a8.png",
+    "image": "images/a8.png",
     "glow": false
   },
   {
@@ -1037,7 +1231,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 21,
     "font": "Arial",
-    "image": "a23.png",
+    "image": "images/a23.png",
     "glow": false,
     "flash": false
   },
@@ -1052,7 +1246,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 53,
     "font": "Arial",
-    "image": "a19.png"
+    "image": "images/a19.png"
   },
   {
     "title": "",
@@ -1065,7 +1259,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 49,
     "font": "Arial",
-    "image": "a16.png"
+    "image": "images/a16.png"
   },
   {
     "title": "",
@@ -1078,7 +1272,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 49,
     "font": "Arial",
-    "image": "a15.png",
+    "image": "images/a15.png",
     "glow": true
   },
   {
@@ -1092,7 +1286,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 19,
     "font": "Arial",
-    "image": "a21.png",
+    "image": "images/a21.png",
     "glow": true
   },
   {
@@ -1106,7 +1300,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 60,
     "font": "Arial",
-    "image": "a13.png",
+    "image": "images/a13.png",
     "glow": true
   },
   {
@@ -1120,7 +1314,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 53,
     "font": "Arial",
-    "image": "a27.png"
+    "image": "images/a27.png"
   },
   {
     "title": "",
@@ -1133,7 +1327,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 52,
     "font": "Arial",
-    "image": "a3.png",
+    "image": "images/a3.png",
     "glow": true
   },
   {
@@ -1147,7 +1341,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 51,
     "font": "Arial",
-    "image": "a12.png"
+    "image": "images/a12.png"
   },
   {
     "title": "",
@@ -1160,7 +1354,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 45,
     "font": "Arial",
-    "image": "a14.png",
+    "image": "images/a14.png",
     "glow": true
   },
   {
@@ -1174,7 +1368,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 47,
     "font": "Arial",
-    "image": "a24.png",
+    "image": "images/a24.png",
     "glow": true
   },
   {
@@ -1188,7 +1382,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 23,
     "font": "Arial",
-    "image": "a22.png"
+    "image": "images/a22.png"
   },
   {
     "title": "",
@@ -1201,7 +1395,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 25,
     "font": "Arial",
-    "image": "a20.png",
+    "image": "images/a20.png",
     "glow": true
   },
   {
@@ -1215,7 +1409,7 @@ let isDragging = false;
     "textColor": "white",
     "radius": 43,
     "font": "Arial",
-    "image": "a28.png",
+    "image": "images/a28.png",
     "glow": true
   }
 ]
@@ -1242,7 +1436,7 @@ showToolbar();
     const themePresets = {
       default: {
         ideas: [...ideas],
-        bg: "default1.png"
+        bg: "images/default1.png"
       },
       cqc: {
         ideas: [
@@ -1257,7 +1451,7 @@ showToolbar();
     "textColor": "white",
     "radius": 62,
     "font": "Arial",
-    "image": "l3.png",
+    "image": "images/l3.png",
     "glow": true
   },
   {
@@ -1271,7 +1465,7 @@ showToolbar();
     "textColor": "white",
     "radius": 68,
     "font": "Arial",
-    "image": "l4.png",
+    "image": "images/l4.png",
     "glow": true
   },
   {
@@ -1285,7 +1479,7 @@ showToolbar();
     "textColor": "white",
     "radius": 60,
     "font": "Arial",
-    "image": "l2.png",
+    "image": "images/l2.png",
     "glow": true
   },
   {
@@ -1299,7 +1493,7 @@ showToolbar();
     "textColor": "white",
     "radius": 63,
     "font": "Arial",
-    "image": "l5.png"
+    "image": "images/l5.png"
   },
   {
     "title": "",
@@ -1312,7 +1506,7 @@ showToolbar();
     "textColor": "white",
     "radius": 63,
     "font": "Arial",
-    "image": "l8.png",
+    "image": "images/l8.png",
     "glow": true
   },
   {
@@ -1326,7 +1520,7 @@ showToolbar();
     "textColor": "white",
     "radius": 69,
     "font": "Arial",
-    "image": "l7.png",
+    "image": "images/l7.png",
     "glow": true
   },
   {
@@ -1340,7 +1534,7 @@ showToolbar();
     "textColor": "white",
     "radius": 59,
     "font": "Arial",
-    "image": "l1.png",
+    "image": "images/l1.png",
     "glow": true
   },
   {
@@ -1354,7 +1548,7 @@ showToolbar();
     "textColor": "white",
     "radius": 80,
     "font": "Arial",
-    "image": "l26.png"
+    "image": "images/l26.png"
   },
   {
     "title": "",
@@ -1367,7 +1561,7 @@ showToolbar();
     "textColor": "white",
     "radius": 59,
     "font": "Arial",
-    "image": "l26.png"
+    "image": "images/l26.png"
   },
   {
     "title": "",
@@ -1380,11 +1574,11 @@ showToolbar();
     "textColor": "white",
     "radius": 55,
     "font": "Arial",
-    "image": "l12.png",
+    "image": "images/l12.png",
     "glow": true
   }
 ],
-        bg: "cqc1.png"
+        bg: "images/cqc1.png"
       },
       argyle: {
         ideas: [
@@ -1399,7 +1593,7 @@ showToolbar();
     "textColor": "black",
     "radius": 54,
     "font": "Arial",
-    "image": "a6.png",
+    "image": "images/a6.png",
     "flash": false
   },
   {
@@ -1413,7 +1607,7 @@ showToolbar();
     "textColor": "white",
     "radius": 54,
     "font": "Arial",
-    "image": "a11.png"
+    "image": "images/a11.png"
   },
   {
     "title": "      Sorinola",
@@ -1426,7 +1620,7 @@ showToolbar();
     "textColor": "lime",
     "radius": 50,
     "font": "Arial",
-    "image": "a29.png",
+    "image": "images/a29.png",
     "glow": true
   },
   {
@@ -1440,7 +1634,7 @@ showToolbar();
     "textColor": "white",
     "radius": 49,
     "font": "Arial",
-    "image": "a18.png",
+    "image": "images/a18.png",
     "glow": true
   },
   {
@@ -1454,7 +1648,7 @@ showToolbar();
     "textColor": "black",
     "radius": 50,
     "font": "Arial",
-    "image": "a4.png",
+    "image": "images/a4.png",
     "flash": false,
     "glow": true
   },
@@ -1469,7 +1663,7 @@ showToolbar();
     "textColor": "yellow",
     "radius": 52,
     "font": "Trebuchet MS",
-    "image": "a5.png",
+    "image": "images/a5.png",
     "glow": true
   },
   {
@@ -1483,7 +1677,7 @@ showToolbar();
     "textColor": "yellow",
     "radius": 48,
     "font": "Lucida Sans Unicode",
-    "image": "a2.png",
+    "image": "images/a2.png",
     "glow": true
   },
   {
@@ -1497,7 +1691,7 @@ showToolbar();
     "textColor": "white",
     "radius": 49,
     "font": "Arial",
-    "image": "a10.png",
+    "image": "images/a10.png",
     "glow": true
   },
   {
@@ -1511,7 +1705,7 @@ showToolbar();
     "textColor": "yellow",
     "radius": 55,
     "font": "Courier New",
-    "image": "a9.png"
+    "image": "images/a9.png"
   },
   {
     "title": "",
@@ -1524,7 +1718,7 @@ showToolbar();
     "textColor": "white",
     "radius": 69,
     "font": "Arial",
-    "image": "a1.png",
+    "image": "images/a1.png",
     "glow": true
   },
   {
@@ -1538,7 +1732,7 @@ showToolbar();
     "textColor": "white",
     "radius": 49,
     "font": "Arial",
-    "image": "a17.png",
+    "image": "images/a17.png",
     "glow": true
   },
   {
@@ -1552,7 +1746,7 @@ showToolbar();
     "textColor": "white",
     "radius": 18,
     "font": "Arial",
-    "image": "a21.png",
+    "image": "images/a21.png",
     "glow": true
   },
   {
@@ -1566,7 +1760,7 @@ showToolbar();
     "textColor": "white",
     "radius": 53,
     "font": "Arial",
-    "image": "a7.png",
+    "image": "images/a7.png",
     "flash": false,
     "glow": true
   },
@@ -1581,7 +1775,7 @@ showToolbar();
     "textColor": "white",
     "radius": 57,
     "font": "Tahoma",
-    "image": "a8.png",
+    "image": "images/a8.png",
     "glow": false
   },
   {
@@ -1595,7 +1789,7 @@ showToolbar();
     "textColor": "white",
     "radius": 21,
     "font": "Arial",
-    "image": "a23.png",
+    "image": "images/a23.png",
     "glow": false,
     "flash": false
   },
@@ -1610,7 +1804,7 @@ showToolbar();
     "textColor": "white",
     "radius": 53,
     "font": "Arial",
-    "image": "a19.png"
+    "image": "images/a19.png"
   },
   {
     "title": "",
@@ -1623,7 +1817,7 @@ showToolbar();
     "textColor": "white",
     "radius": 49,
     "font": "Arial",
-    "image": "a16.png"
+    "image": "images/a16.png"
   },
   {
     "title": "",
@@ -1636,7 +1830,7 @@ showToolbar();
     "textColor": "white",
     "radius": 49,
     "font": "Arial",
-    "image": "a15.png",
+    "image": "images/a15.png",
     "glow": true
   },
   {
@@ -1650,7 +1844,7 @@ showToolbar();
     "textColor": "white",
     "radius": 19,
     "font": "Arial",
-    "image": "a21.png",
+    "image": "images/a21.png",
     "glow": true
   },
   {
@@ -1664,7 +1858,7 @@ showToolbar();
     "textColor": "white",
     "radius": 60,
     "font": "Arial",
-    "image": "a13.png",
+    "image": "images/a13.png",
     "glow": true
   },
   {
@@ -1678,7 +1872,7 @@ showToolbar();
     "textColor": "white",
     "radius": 53,
     "font": "Arial",
-    "image": "a27.png"
+    "image": "images/a27.png"
   },
   {
     "title": "",
@@ -1691,7 +1885,7 @@ showToolbar();
     "textColor": "white",
     "radius": 52,
     "font": "Arial",
-    "image": "a3.png",
+    "image": "images/a3.png",
     "glow": true
   },
   {
@@ -1705,7 +1899,7 @@ showToolbar();
     "textColor": "white",
     "radius": 51,
     "font": "Arial",
-    "image": "a12.png"
+    "image": "images/a12.png"
   },
   {
     "title": "",
@@ -1718,7 +1912,7 @@ showToolbar();
     "textColor": "white",
     "radius": 45,
     "font": "Arial",
-    "image": "a14.png",
+    "image": "images/a14.png",
     "glow": true
   },
   {
@@ -1732,7 +1926,7 @@ showToolbar();
     "textColor": "white",
     "radius": 47,
     "font": "Arial",
-    "image": "a24.png",
+    "image": "images/a24.png",
     "glow": true
   },
   {
@@ -1746,7 +1940,7 @@ showToolbar();
     "textColor": "white",
     "radius": 23,
     "font": "Arial",
-    "image": "a22.png"
+    "image": "images/a22.png"
   },
   {
     "title": "",
@@ -1759,7 +1953,7 @@ showToolbar();
     "textColor": "white",
     "radius": 25,
     "font": "Arial",
-    "image": "a20.png",
+    "image": "images/a20.png",
     "glow": true
   },
   {
@@ -1773,7 +1967,7 @@ showToolbar();
     "textColor": "white",
     "radius": 43,
     "font": "Arial",
-    "image": "a28.png",
+    "image": "images/a28.png",
     "glow": true
   },
   {
@@ -1787,7 +1981,7 @@ showToolbar();
     "textColor": "white",
     "radius": 30,
     "font": "Arial",
-    "image": "l1.png"
+    "image": "images/l1.png"
   },
   {
     "title": "",
@@ -1800,7 +1994,7 @@ showToolbar();
     "textColor": "white",
     "radius": 26,
     "font": "Arial",
-    "image": "l2.png",
+    "image": "images/l2.png",
     "glow": true
   },
   {
@@ -1814,7 +2008,7 @@ showToolbar();
     "textColor": "white",
     "radius": 30,
     "font": "Arial",
-    "image": "l3.png"
+    "image": "images/l3.png"
   },
   {
     "title": "",
@@ -1827,7 +2021,7 @@ showToolbar();
     "textColor": "white",
     "radius": 30,
     "font": "Arial",
-    "image": "l4.png",
+    "image": "images/l4.png",
     "glow": false
   },
   {
@@ -1841,7 +2035,7 @@ showToolbar();
     "textColor": "white",
     "radius": 30,
     "font": "Arial",
-    "image": "l5.png"
+    "image": "images/l5.png"
   },
   {
     "title": "   💚",
@@ -1854,7 +2048,7 @@ showToolbar();
     "textColor": "white",
     "radius": 30,
     "font": "Arial",
-    "image": "l7.png",
+    "image": "images/l7.png",
     "glow": false
   },
   {
@@ -1868,7 +2062,7 @@ showToolbar();
     "textColor": "white",
     "radius": 25,
     "font": "Arial",
-    "image": "l12.png"
+    "image": "images/l12.png"
   },
   {
     "title": "",
@@ -1881,7 +2075,7 @@ showToolbar();
     "textColor": "white",
     "radius": 28,
     "font": "Arial",
-    "image": "l18.png"
+    "image": "images/l18.png"
   },
   {
     "title": "",
@@ -1894,7 +2088,7 @@ showToolbar();
     "textColor": "white",
     "radius": 26,
     "font": "Arial",
-    "image": "l19.png"
+    "image": "images/l19.png"
   },
   {
     "title": "",
@@ -1907,7 +2101,7 @@ showToolbar();
     "textColor": "white",
     "radius": 26,
     "font": "Arial",
-    "image": "l8.png",
+    "image": "images/l8.png",
     "glow": true
   },
   {
@@ -1921,7 +2115,7 @@ showToolbar();
     "textColor": "white",
     "radius": 30,
     "font": "Arial",
-    "image": "l21.png"
+    "image": "images/l21.png"
   },
   {
     "title": "",
@@ -1934,7 +2128,7 @@ showToolbar();
     "textColor": "white",
     "radius": 28,
     "font": "Arial",
-    "image": "l17.png",
+    "image": "images/l17.png",
     "glow": true
   },
   {
@@ -1948,7 +2142,7 @@ showToolbar();
     "textColor": "white",
     "radius": 27,
     "font": "Arial",
-    "image": "l16.png"
+    "image": "images/l16.png"
   },
   {
     "title": "",
@@ -1961,7 +2155,7 @@ showToolbar();
     "textColor": "white",
     "radius": 27,
     "font": "Arial",
-    "image": "l13.png",
+    "image": "images/l13.png",
     "glow": true
   },
   {
@@ -1975,7 +2169,7 @@ showToolbar();
     "textColor": "white",
     "radius": 29,
     "font": "Arial",
-    "image": "l15.png"
+    "image": "images/l15.png"
   },
   {
     "title": "",
@@ -1988,7 +2182,7 @@ showToolbar();
     "textColor": "white",
     "radius": 28,
     "font": "Arial",
-    "image": "l23.png"
+    "image": "images/l23.png"
   },
   {
     "title": "",
@@ -2001,7 +2195,7 @@ showToolbar();
     "textColor": "white",
     "radius": 29,
     "font": "Arial",
-    "image": "l24.png"
+    "image": "images/l24.png"
   },
   {
     "title": "",
@@ -2014,7 +2208,7 @@ showToolbar();
     "textColor": "white",
     "radius": 27,
     "font": "Arial",
-    "image": "l33.png"
+    "image": "images/l33.png"
   },
   {
     "title": "",
@@ -2027,7 +2221,7 @@ showToolbar();
     "textColor": "white",
     "radius": 22,
     "font": "Arial",
-    "image": "l29.png"
+    "image": "images/l29.png"
   },
   {
     "title": "",
@@ -2040,7 +2234,7 @@ showToolbar();
     "textColor": "white",
     "radius": 44,
     "font": "Arial",
-    "image": "l20.png"
+    "image": "images/l20.png"
   },
   {
     "title": "",
@@ -2053,7 +2247,7 @@ showToolbar();
     "textColor": "white",
     "radius": 30,
     "font": "Arial",
-    "image": "l9.png",
+    "image": "images/l9.png",
     "glow": false
   },
   {
@@ -2067,7 +2261,7 @@ showToolbar();
     "textColor": "white",
     "radius": 32,
     "font": "Arial",
-    "image": "l10.png",
+    "image": "images/l10.png",
     "glow": true
   },
   {
@@ -2081,14 +2275,14 @@ showToolbar();
     "textColor": "white",
     "radius": 29,
     "font": "Arial",
-    "image": "l11.png"
+    "image": "images/l11.png"
   }
 ],
-        bg: "argyle1.png"
+        bg: "images/argyle1.png"
       },
       blank: {
         ideas: [],
-        bg: "blank1.png"
+        bg: "images/blank1.png"
       },
      meme: {
         ideas: [
@@ -2129,23 +2323,23 @@ showToolbar();
       font: "Arial"
     }
   ],
-        bg: "meme1.png"
+        bg: "images/meme1.png"
       },
 recipes:  {
         ideas: [],
-        bg: "recipes1.png"
+        bg: "images/recipes1.png"
       },
 season:  {
         ideas: [],
-        bg: "season1.png"
+        bg: "images/season1.png"
       },
 sleep:  {
         ideas: [],
-        bg: "sleep1.png"
+        bg: "images/sleep1.png"
       },
 credits:  {
         ideas: [],
-        bg: "credits1.png"
+        bg: "images/credits1.png"
       }
 };
 
@@ -2164,7 +2358,7 @@ credits:  {
       img.onload = function () {
         backgroundImage = img;
       };
-      img.src = `${themeName}1.png`;
+      img.src = `images/${themeName}1.png`;
     }
 
     function cycleBackground() {
@@ -2175,9 +2369,9 @@ credits:  {
       };
       img.onerror = function () {
         backgroundIndex = 1;
-        img.src = `${currentTheme}1.png`;
+        img.src = `images/${currentTheme}1.png`;
       };
-      img.src = `${currentTheme}${backgroundIndex}.png`;
+      img.src = `images/${currentTheme}${backgroundIndex}.png`;
     }
     let gamepadIndex = null;
 let gamepadActive = false;
@@ -2206,6 +2400,7 @@ function gamepadLoop() {
     const nextIndex = (currentIndex + 1) % ideas.length;
     selectedIdea = ideas[nextIndex];
     showPanel();
+    console.log("🎮 Gamepad: Selected idea", nextIndex + 1, "of", ideas.length);
   }
 
   // Move selected idea with left stick (axes 0 and 1)
@@ -2213,12 +2408,57 @@ function gamepadLoop() {
     const dx = gp.axes[0]; // X-axis
     const dy = gp.axes[1]; // Y-axis
     const speed = 5;
-    selectedIdea.x += dx * speed;
-    selectedIdea.y += dy * speed;
+    
+    // Only move if stick is moved significantly (deadzone)
+    if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+      selectedIdea.x += dx * speed;
+      selectedIdea.y += dy * speed;
+      console.log("🎮 Gamepad: Moving idea to", selectedIdea.x.toFixed(1), selectedIdea.y.toFixed(1));
+    }
   }
 
   gamepadLoopId = requestAnimationFrame(gamepadLoop);
 }
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(event) {
+  // B key for cycle background
+  if (event.key.toLowerCase() === 'b') {
+    event.preventDefault();
+    cycleBackground();
+    console.log("⌨️ Keyboard: B pressed - cycling background");
+  }
+  
+  // M key for toggle motion
+  if (event.key.toLowerCase() === 'm') {
+    event.preventDefault();
+    speedMultiplier = speedMultiplier > 0 ? 0 : 1;
+    console.log("⌨️ Keyboard: M pressed - motion", speedMultiplier > 0 ? "ON" : "OFF");
+  }
+  
+  // Arrow keys for moving selected idea
+  if (selectedIdea && panel.style.display === "none") {
+    const moveSpeed = 10;
+    switch(event.key) {
+      case 'ArrowUp':
+        event.preventDefault();
+        selectedIdea.y -= moveSpeed;
+        break;
+      case 'ArrowDown':
+        event.preventDefault();
+        selectedIdea.y += moveSpeed;
+        break;
+      case 'ArrowLeft':
+        event.preventDefault();
+        selectedIdea.x -= moveSpeed;
+        break;
+      case 'ArrowRight':
+        event.preventDefault();
+        selectedIdea.x += moveSpeed;
+        break;
+    }
+  }
+});
 
 
 
@@ -2295,6 +2535,116 @@ document.getElementById('playbackSlider').addEventListener('input', (e) => {
 
 function rotateBackground() {
   backgroundRotation = (backgroundRotation + 90) % 360;
+  console.log("🔄 Background rotated to:", backgroundRotation + "°");
+}
+
+function rollDice() {
+  const result = Math.floor(Math.random() * 6) + 1;
+  const diceOverlay = document.getElementById('diceOverlay');
+  const diceResult = document.getElementById('diceResult');
+  
+  // Show the dice result in overlay
+  diceOverlay.textContent = result;
+  diceOverlay.style.display = 'block';
+  
+  // Show the dice result in toolbar
+  diceResult.textContent = `🎲 ${result}`;
+  
+  console.log("🎲 Dice roll result:", result);
+  
+  // Hide overlay after 5 seconds
+  setTimeout(() => {
+    diceOverlay.style.display = 'none';
+  }, 5000);
+}
+
+function toggleMusicPanel() {
+  const musicPanel = document.getElementById('musicPanel');
+  if (musicPanel.style.display === 'none' || musicPanel.style.display === '') {
+    musicPanel.style.display = 'block';
+    loadMusicList();
+    
+    // Auto-hide after 7 seconds
+    setTimeout(() => {
+      musicPanel.style.display = 'none';
+    }, 7000);
+  } else {
+    musicPanel.style.display = 'none';
+  }
+}
+
+function loadMusicList() {
+  const musicList = document.getElementById('musicList');
+  
+  // Get actual MP3 files from the mp3 folder
+  const musicFiles = [
+    'mp3/Test.mp3',
+    'mp3/Fairmont - Gazebo.mp3',
+    'mp3/Stereotype Anomaly - HEMPHILL (2025).mp3'
+  ];
+  
+  musicList.innerHTML = '';
+  
+  musicFiles.forEach(file => {
+    const musicItem = document.createElement('div');
+    musicItem.className = 'music-item';
+    musicItem.textContent = file.split('/').pop(); // Show just filename
+    musicItem.onclick = () => playMusic(file);
+    musicList.appendChild(musicItem);
+  });
+  
+  // Add a note about adding more files
+  if (musicFiles.length === 1) {
+    const noteItem = document.createElement('div');
+    noteItem.style.cssText = 'color: #888; font-style: italic; text-align: center; padding: 10px; font-size: 12px;';
+    noteItem.textContent = 'Add more MP3 files to the mp3/ folder to see them here';
+    musicList.appendChild(noteItem);
+  }
+}
+
+function playMusic(filename) {
+  // Remove playing class from all items
+  document.querySelectorAll('.music-item').forEach(item => {
+    item.classList.remove('playing');
+  });
+  
+  // Add playing class to clicked item
+  event.target.classList.add('playing');
+  
+  console.log(`🎵 Playing: ${filename}`);
+  
+  // Create audio element and play
+  const audio = new Audio(filename);
+  audio.volume = 0.5; // Set volume to 50%
+  
+  // Stop any currently playing audio
+  if (window.currentAudio) {
+    window.currentAudio.pause();
+    window.currentAudio = null;
+  }
+  
+  window.currentAudio = audio;
+  
+  audio.play().then(() => {
+    console.log(`🎵 Successfully started playing: ${filename}`);
+  }).catch(err => {
+    console.error(`❌ Error playing audio: ${err}`);
+    event.target.classList.remove('playing');
+  });
+}
+
+function stopMusic() {
+  // Stop any currently playing audio
+  if (window.currentAudio) {
+    window.currentAudio.pause();
+    window.currentAudio = null;
+    console.log("🔇 Music stopped");
+  }
+  
+  // Remove playing class from all items
+  document.querySelectorAll('.music-item').forEach(item => {
+    item.classList.remove('playing');
+  });
 }
 function togglePlaybackToolbar() {
   const toolbar = document.getElementById('bottomToolbar');
@@ -2344,10 +2694,16 @@ function applyToBubble(bubble) {
 
 
 document.getElementById('toggleGlow').addEventListener('change', (e) => {
-  if (selectedIdea) selectedIdea.glow = e.target.checked;
+  if (selectedIdea) {
+    selectedIdea.glow = e.target.checked;
+    console.log("✨ Glow:", e.target.checked ? "ON" : "OFF");
+  }
 });
 document.getElementById('toggleFlash').addEventListener('change', (e) => {
-  if (selectedIdea) selectedIdea.flash = e.target.checked;
+  if (selectedIdea) {
+    selectedIdea.flash = e.target.checked;
+    console.log("⚡ Flash:", e.target.checked ? "ON" : "OFF");
+  }
 });
 document.getElementById('toggleAnimateColors').addEventListener('change', (e) => {
   if (selectedIdea) selectedIdea.animateColors = e.target.checked;
@@ -2361,16 +2717,17 @@ document.getElementById('toggleTransparent').addEventListener('change', (e) => {
 document.getElementById('imageSelector').addEventListener('change', (e) => {
   if (selectedIdea) {
     selectedIdea.image = e.target.value || null;
+    console.log("🖼️ Selected from dropdown 1:", e.target.value || "none");
   }
 });
 let lastChangedDropdown = null;
 
+
+
 function selectImageFromList() {
   if (!selectedIdea) return;
 
-  const val1 = document.getElementById('imageSelector').value;
-  const val2 = document.getElementById('imageSelect').value;
-  const value = val2 || val1 || null;
+  const value = document.getElementById('imageSelector').value || null;
 
   selectedIdea.image = value;
 
@@ -2378,6 +2735,7 @@ function selectImageFromList() {
     const img = new Image();
     img.onload = () => {
       loadedImages[value] = img;
+      console.log("🖼️ Selected image loaded:", value);
     };
     img.src = value;
   }
@@ -2385,24 +2743,94 @@ function selectImageFromList() {
 
 document.getElementById('uploadImage').addEventListener('change', function (e) {
   const file = e.target.files[0];
-  if (!file || !file.type.startsWith('image/')) return;
+  if (!file || !file.type.startsWith('image/')) {
+    alert("Please select a valid image file.");
+    return;
+  }
+
+  if (!selectedIdea) {
+    alert("Please click on a bubble first to upload an image to it.");
+    return;
+  }
+
+  console.log("📁 Starting upload for file:", file.name, "size:", file.size, "type:", file.type);
+
   const reader = new FileReader();
   reader.onload = function (event) {
-    selectedIdea.image = event.target.result;
+    const imageData = event.target.result;
+    console.log("📁 File read successfully, size:", imageData.length);
+    
+    // Create a unique identifier for this uploaded image
+    const imageId = `uploaded_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Preload the image first
     const img = new Image();
-    img.onload = () => loadedImages[event.target.result] = img;
-    img.src = event.target.result;
+    img.crossOrigin = "anonymous"; // Handle CORS issues
+    
+    img.onload = () => {
+      console.log("🖼️ Image loaded successfully:", img.width, "x", img.height);
+      
+      // Only set the image after it's successfully loaded
+      selectedIdea.image = imageData;
+      loadedImages[imageData] = img;
+      
+      console.log("✅ Image uploaded and stored for this bubble.");
+      console.log("🎯 Bubble position:", selectedIdea.x, selectedIdea.y);
+      console.log("📊 Total loaded images:", Object.keys(loadedImages).length);
+      
+      // Show success feedback
+      const uploadInput = document.getElementById('uploadImage');
+      uploadInput.style.border = '2px solid green';
+      uploadInput.title = "Image uploaded successfully!";
+      
+      setTimeout(() => {
+        uploadInput.style.border = '';
+        uploadInput.title = "Upload custom image";
+      }, 2000);
+      
+      // Force immediate redraw
+      requestAnimationFrame(() => {
+        console.log("🔄 Forcing redraw after upload");
+      });
+    };
+    
+    img.onerror = (error) => {
+      console.error("❌ Failed to load uploaded image:", error);
+      alert("Failed to load the uploaded image. Please try again.");
+    };
+    
+    // Set the source after setting up event handlers
+    img.src = imageData;
   };
+
+  reader.onerror = function(error) {
+    console.error("❌ FileReader error:", error);
+    alert("Error reading the file. Please try again.");
+  };
+
   reader.readAsDataURL(file);
 });
 </script>
 </label></div>
-<div id="playbackToolbar" style="position: fixed; bottom: 0; width: 100%; background: #111; color: white;display: flex; justify-content: center; align-items: center; gap: 10px; padding: 10px; z-index: 1000; display: none;"><button onclick="recordState('start')">🎬Mark-Start</button><button onclick="recordState('end')">Mark-Fin🏁</button><button onclick="startPlayback()">▶️Play</button><input id="playbackSlider" max="1" min="0" step="0.01" style="margin-left: 10px; width: 200px;" type="range" value="0"/><select id="playbackDuration" style="margin-left: 10px;">
-<option value="5000">5s</option>
-<option selected="" value="10000">10s</option>
-<option value="15000">15s</option>
-<option value="20000">20s</option>
-<option value="30000">30s</option>
-</select><button onclick="captureCanvas()">📷 Snapshot</button></div>
+<div id="playbackToolbar" style="position: fixed; bottom: 0; width: 100%; background: linear-gradient(135deg, #1a1a1a, #2a2a2a); color: white; display: flex; justify-content: center; align-items: center; gap: 15px; padding: 15px; z-index: 1000; display: none; border-top: 2px solid #333; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
+  <button onclick="recordState('start')" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">🎬 Start</button>
+  <button onclick="recordState('end')" style="background: linear-gradient(45deg, #f44336, #da190b); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">🏁 End</button>
+  <button onclick="startPlayback()" style="background: linear-gradient(45deg, #2196F3, #1976D2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">▶️ Play</button>
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <span style="color: #ccc; font-size: 12px;">Timeline:</span>
+    <input id="playbackSlider" max="1" min="0" step="0.01" style="width: 250px; height: 6px; border-radius: 3px; background: #333; outline: none;" type="range" value="0"/>
+  </div>
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <span style="color: #ccc; font-size: 12px;">Duration:</span>
+    <select id="playbackDuration" style="background: #333; color: white; border: 1px solid #555; padding: 6px; border-radius: 4px; outline: none;">
+      <option value="5000">5s</option>
+      <option selected="" value="10000">10s</option>
+      <option value="15000">15s</option>
+      <option value="20000">20s</option>
+      <option value="30000">30s</option>
+    </select>
+  </div>
+  <button onclick="captureCanvas()" style="background: linear-gradient(45deg, #FF9800, #F57C00); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">📷 Snapshot</button>
+</div>
 </body>
 </html>
