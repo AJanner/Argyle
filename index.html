@@ -398,15 +398,15 @@ input[type="text"] {
 <option value="season">🏟️S25⚽️</option>
 <option value="sleep">🥱 😴</option>
 <option value="credits"> 💚</option>
-</select></div>
+</select><label style="margin-left: 1px;">🚦:⚡️
+        <input max="3" min="0.0" onchange="speedMultiplier = parseFloat(this.value)" step="0.1" type="range" value="1"/>
+</label></div>
 <button onclick="saveIdeas()">💾Save.json</button>
 <input accept=".json" id="fileLoader" style="display:none" type="file"/>
 <button onclick="document.getElementById('fileLoader').click()">🆙 Load.json</button>
 <button onclick="deleteAllIdeas()" style="margin-left:10px;">🚮Clear💭Ideas🗑️</button>
 <div>
-<label style="margin-left: 10px;">🚦:⚡️
-        <input max="3" min="0.0" onchange="speedMultiplier = parseFloat(this.value)" step="0.1" type="range" value="1"/>
-</label>
+
 <label style="margin-left: 10px;">🖼️:
         <input accept="image/*" id="bgLoader" style="width:60px;" type="file"/>
 </label>
