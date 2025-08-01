@@ -714,13 +714,13 @@ function togglePlaybackToolbar() {
 
 <!-- S25 Controls -->
 <div id="s25Controls">
-  <button onclick="s25Play()" title="Play">▶️ Play</button>
+  <button onclick="s25Play()" title="Play">🟢 Play</button>
   <button onclick="s25Pause()" title="Pause">⏸️ Pause</button>
   <button onclick="s25Next()" title="Next">⏭️ Next</button>
   <button onclick="s25Prev()" title="Previous">⏮️ Prev</button>
-  <button onclick="s25TogglePlaylist()" title="Toggle Playlist">YouTube📋</button>
-  <button onclick="s25ToggleFullscreen()" title="Toggle Fullscreen">🖥️Fullscreen</button>
-  <button onclick="s25Close()" title="Close">❌ Close</button>
+  <button onclick="s25TogglePlaylist()" title="Playlist">YouTube📋</button>
+  <button onclick="s25ToggleFullscreen()" title="Fullscreen">🖥️Fullscreen</button>
+  <button onclick="s25Close()" title="Close">🟩 Close</button>
 </div>
 
 <!-- S25 Playlist Panel -->
@@ -3362,9 +3362,9 @@ async function loadS25Playlist() {
     console.error('❌ Error loading S25 playlist:', error);
     // Fallback to default playlist
     s25Playlist = [
-      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      'https://www.youtube.com/watch?v=9bZkp7q19f0',
-      'https://www.youtube.com/watch?v=kJQP7kiw5Fk'
+      'https://www.youtube.com/watch?v=36YnV9STBqc',
+      'https://www.youtube.com/watch?v=Ihm9OQWmibA',
+      'https://www.youtube.com/watch?v=WsDyRAPFBC8'
     ];
     console.log('📋 S25 Using fallback playlist:', s25Playlist);
     updateS25PlaylistDisplay();
