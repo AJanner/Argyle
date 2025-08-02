@@ -1,5 +1,9 @@
 // ===== MINDS EYE - MEDIA HANDLING =====
 
+// ===== VIDEO PLAYLIST VARIABLES =====
+let uploadedPlaylists = [];
+let currentPlaylistIndex = -1;
+
 // ===== UTILITY FUNCTIONS =====
 function formatTime(seconds) {
   if (isNaN(seconds)) return '00:00';
@@ -443,17 +447,44 @@ function hideDiceSlider() {
 
 // ===== PLAYLIST FUNCTIONS =====
 
-// Global playlist management
-let uploadedPlaylists = [];
-let currentPlaylistIndex = 0;
-
 // Initialize video player
 function initVideoPlayer() {
+  console.log('🎥 Initializing video player...');
+  
+  // Ensure video elements are properly hidden initially
+  const player = document.getElementById('videoPlayer');
+  const controls = document.getElementById('videoControls');
+  const playlist = document.getElementById('videoPlaylist');
+  
+  if (player) {
+    player.style.display = 'none';
+    player.style.pointerEvents = 'none';
+    player.style.zIndex = '-1';
+    player.style.visibility = 'hidden';
+    console.log('🎥 Video player element properly initialized');
+  }
+  
+  if (controls) {
+    controls.style.display = 'none';
+    controls.style.pointerEvents = 'none';
+    controls.style.zIndex = '-1';
+    controls.style.visibility = 'hidden';
+  }
+  
+  if (playlist) {
+    playlist.style.display = 'none';
+    playlist.style.pointerEvents = 'none';
+    playlist.style.zIndex = '-1';
+    playlist.style.visibility = 'hidden';
+  }
+  
   // Load default playlist if not already loaded
   if (videoPlaylist.length === 0) {
     loadVideoPlaylist().then(() => {
       console.log('🎥 Video player initialized with default playlist');
     });
+  } else {
+    console.log('🎥 Video player initialized with existing playlist');
   }
 }
 
@@ -511,21 +542,25 @@ async function uploadPlaylist() {
       return;
     }
     
-    // Add to uploaded playlists
+    // Replace current playlist with uploaded one
+    videoPlaylist = youtubeUrls;
+    videoCurrentIndex = 0;
+    videoTitles = []; // Clear cached titles
+    
+    // Add to uploaded playlists for cycling
     const playlistName = file.name.replace('.txt', '');
     uploadedPlaylists.push({
       name: playlistName,
       urls: youtubeUrls
     });
     
-    // Switch to the uploaded playlist
-    currentPlaylistIndex = uploadedPlaylists.length - 1;
-    loadUploadedPlaylist(currentPlaylistIndex);
-    
     // Update display to show the new playlist
     if (typeof updateVideoPlaylistDisplay === 'function') {
       updateVideoPlaylistDisplay();
     }
+    
+    // Clear the file input
+    fileInput.value = '';
     
     console.log(`📋 Uploaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
     alert(`✅ Uploaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
@@ -560,6 +595,7 @@ function loadUploadedPlaylist(index) {
   // Update global playlist variables
   videoPlaylist = playlist.urls;
   videoCurrentIndex = 0;
+  videoTitles = []; // Clear cached titles for new playlist
   
   // Update display
   if (typeof updateVideoPlaylistDisplay === 'function') {
@@ -785,7 +821,19 @@ async function toggleVideoPlayer() {
   
   if (!player) return;
   
-  const isVisible = player.style.display !== 'none';
+  // Check if video player is currently visible by checking both inline style and computed style
+  const isVisible = player.style.display !== 'none' && 
+                   getComputedStyle(player).display !== 'none' &&
+                   player.style.visibility !== 'hidden' &&
+                   getComputedStyle(player).visibility !== 'hidden';
+  
+  console.log('🎥 Toggle video player - Current state:', {
+    display: player.style.display,
+    computedDisplay: getComputedStyle(player).display,
+    visibility: player.style.visibility,
+    computedVisibility: getComputedStyle(player).visibility,
+    isVisible: isVisible
+  });
   
   if (isVisible) {
     // Stop video playback and hide video elements

@@ -268,7 +268,8 @@ html, body {
 #videoControls {
   position: fixed;
   bottom: 50px;
-  right: 50%;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: -1;
   display: none;
   background: rgba(0, 0, 0, 0.8);
@@ -325,13 +326,15 @@ html, body {
 
 .playlist-item {
   background: rgba(255, 255, 255, 0.1);
-  color: white;
+  color: #4CAF50;
   border: 1px solid #4CAF50;
-  padding: 8px 12px;
-  margin: 5px 0;
+  padding: 6px 10px;
+  margin: 3px 0;
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  font-size: 12px;
+  line-height: 1.2;
 }
 
 .playlist-item:hover {
