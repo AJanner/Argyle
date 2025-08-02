@@ -683,16 +683,47 @@ function videoPrev() {
 
 function videoTogglePlaylist() {
   const playlist = document.getElementById('videoPlaylist');
+  const playlistButton = document.querySelector('#videoControls button[onclick="videoTogglePlaylist()"]');
+  
   videoPlaylistVisible = !videoPlaylistVisible;
   
   if (videoPlaylistVisible) {
+    // Show playlist
     playlist.style.display = 'block';
     playlist.style.pointerEvents = 'auto';
+    playlist.style.zIndex = '9999';
+    playlist.style.visibility = 'visible';
+    playlist.style.opacity = '1';
+    
+    // Update button text to show it's ON
+    if (playlistButton) {
+      playlistButton.textContent = 'Hide📋List';
+      playlistButton.title = 'Hide Playlist';
+    }
+    
     startVideoPlaylistFadeOut();
   } else {
+    // Hide playlist
     playlist.style.display = 'none';
     playlist.style.pointerEvents = 'none';
+    playlist.style.zIndex = '-1';
+    playlist.style.visibility = 'hidden';
+    playlist.style.opacity = '0';
+    
+    // Update button text to show it's OFF
+    if (playlistButton) {
+      playlistButton.textContent = 'Show📋List';
+      playlistButton.title = 'Show Playlist';
+    }
+    
+    // Clear any existing timeout
+    if (videoPlaylistTimeout) {
+      clearTimeout(videoPlaylistTimeout);
+      videoPlaylistTimeout = null;
+    }
   }
+  
+  console.log('📋 Playlist toggled:', videoPlaylistVisible ? 'ON' : 'OFF');
 }
 
 function videoToggleFullscreen() {
@@ -728,7 +759,7 @@ function showVideoControls() {
     setTimeout(() => {
       controls.style.display = 'none';
       controls.style.pointerEvents = 'none';
-    }, 3000);
+    }, 10000); // Changed from 3000 to 10000 (10 seconds)
   }
 }
 
@@ -736,11 +767,13 @@ function showVideoPlaylist() {
   const player = document.getElementById('videoPlayer');
   const playlist = document.getElementById('videoPlaylist');
   
-  // Only show playlist if video player is visible
-  if (playlist && player && player.style.display !== 'none') {
+  // Only show playlist if video player is visible AND playlist toggle is ON
+  if (playlist && player && player.style.display !== 'none' && videoPlaylistVisible) {
     playlist.style.opacity = '1';
     playlist.style.display = 'block';
     playlist.style.pointerEvents = 'auto';
+    playlist.style.zIndex = '9999';
+    playlist.style.visibility = 'visible';
     startVideoPlaylistFadeOut();
   }
 }
@@ -900,14 +933,24 @@ async function toggleVideoPlayer() {
       }
     }
     
-    // Show playlist panel
+    // Start with playlist hidden and update button text
     if (playlist) {
-      playlist.style.display = 'block';
-      playlist.style.opacity = '1';
-      playlist.style.pointerEvents = 'auto';
-      playlist.style.zIndex = '9999';
-      playlist.style.visibility = 'visible';
+      playlist.style.display = 'none';
+      playlist.style.opacity = '0';
+      playlist.style.pointerEvents = 'none';
+      playlist.style.zIndex = '-1';
+      playlist.style.visibility = 'hidden';
     }
+    
+    // Update playlist button text to show it's OFF initially
+    const playlistButton = document.querySelector('#videoControls button[onclick="videoTogglePlaylist()"]');
+    if (playlistButton) {
+      playlistButton.textContent = 'Show📋List';
+      playlistButton.title = 'Show Playlist';
+    }
+    
+    // Reset playlist visibility state
+    videoPlaylistVisible = false;
   }
   
   console.log('🎥 Video player toggled:', isVisible ? 'hidden' : 'shown');

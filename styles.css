@@ -279,11 +279,12 @@ html, body {
   transition: opacity 0.5s ease;
   opacity: 1;
   pointer-events: none;
+  text-align: center;
 }
 
 #videoControls button {
-  background: linear-gradient(45deg, #4CAF50, #45a049);
-  border: none;
+  background: black;
+  border: 2px solid #4CAF50;
   color: white;
   padding: 8px 16px;
   margin: 5px;
