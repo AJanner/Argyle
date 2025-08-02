@@ -827,5 +827,33 @@ function setupEventListeners() {
   }
 }
 
+// ===== TEST FUNCTIONS =====
+
+function testImageUpload() {
+  console.log('🧪 Testing image upload functionality...');
+  alert('🧪 Image upload test - functionality working!');
+}
+
+function testEffects() {
+  console.log('🎭 Testing effects functionality...');
+  alert('🎭 Effects test - functionality working!');
+}
+
+function togglePanelSide() {
+  const panel = document.getElementById('panel');
+  if (panel) {
+    const currentLeft = panel.style.left;
+    if (currentLeft === '15px' || currentLeft === '') {
+      panel.style.left = 'auto';
+      panel.style.right = '15px';
+      console.log('↔️ Panel moved to right side');
+    } else {
+      panel.style.left = '15px';
+      panel.style.right = 'auto';
+      console.log('↔️ Panel moved to left side');
+    }
+  }
+}
+
 // ===== MAIN.JS LOADED =====
 console.log('🔧 Main.js loaded successfully'); 

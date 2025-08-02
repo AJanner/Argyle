@@ -1771,7 +1771,9 @@ const themePresets = {
         ],
         bg: "images/food1.png"
       },
-      ideas: [
+      "dahl": {
+        name: "Mutley Plain Dahl",
+        ideas: [
           {
             "title": "🫘 Dahl",
             "description": "Lentil love",

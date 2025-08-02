@@ -865,5 +865,34 @@ async function toggleVideoPlayer() {
   console.log('🎥 Video player toggled:', isVisible ? 'hidden' : 'shown');
 }
 
+// ===== RECORDING FUNCTIONS =====
+
+let recordingStartTime = null;
+let recordingEndTime = null;
+
+function recordState(type) {
+  if (type === 'start') {
+    recordingStartTime = Date.now();
+    console.log('🎬 Recording start point marked');
+  } else if (type === 'end') {
+    recordingEndTime = Date.now();
+    console.log('🏁 Recording end point marked');
+  }
+}
+
+function startPlayback() {
+  if (!recordingStartTime || !recordingEndTime) {
+    alert('Please mark both start and end points first');
+    return;
+  }
+  
+  const duration = recordingEndTime - recordingStartTime;
+  console.log('▶️ Playing back recording:', duration, 'ms');
+  
+  // For now, just log the playback
+  // This could be expanded to actually replay the recorded actions
+  alert(`Playback started: ${Math.round(duration / 1000)}s duration`);
+}
+
 // ===== MEDIA.JS LOADED =====
 console.log('🔧 Media.js loaded successfully'); 
