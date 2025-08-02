@@ -1961,7 +1961,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 60,
             "font": "Arial",
-            "image": "images/s10.png",
+            "image": "images/s8.png",
             "glow": true,
             "fontSize": 15,
             "rotation": 0
@@ -1977,7 +1977,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 50,
             "font": "Arial",
-            "image": "images/s11.png",
+            "image": "images/s10.png",
             "glow": true,
             "fontSize": 13,
             "rotation": 0

@@ -18,7 +18,7 @@ const ctx = canvas.getContext("2d");
 
 // Font array
 const fonts = [
-  "Arial", "Monaco", "Verdana", "Tahoma", "Trebuchet MS", "Comic Sans MS",
+  "Monaco", "Arial", "Verdana", "Tahoma", "Trebuchet MS", "Comic Sans MS",
   "Impact", "Franklin Gothic Medium", "Century Gothic", "Calibri", "Cambria",
   "Constantia", "Corbel", "Arial Black", "System-ui", "Sans-serif",
   "Times New Roman", "Georgia", "Garamond", "Courier New", "Lucida Sans Unicode",
@@ -132,7 +132,7 @@ function updatePresetSelector(themeName) {
   const presetSelector = document.getElementById('presetSelector');
   if (!presetSelector) return;
   
-  presetSelector.innerHTML = '<option value="">Select Preset</option>';
+  presetSelector.innerHTML = '<option value="">😇 Preset</option>';
   
   const theme = themePresets[themeName];
   if (theme && theme.presets) {

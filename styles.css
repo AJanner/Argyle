@@ -299,10 +299,10 @@ html, body {
 
 #videoPlaylist {
   position: fixed;
-  top: 80px;
+  top: 100px;
   left: 20px;
   width: 300px;
-  max-height: 400px;
+  max-height: 500px;
   background: rgba(0, 0, 0, 0.9);
   color: white;
   padding: 15px;

@@ -31,15 +31,15 @@
         <option value="blank">Blank 😶</option>
         <option value="meme">Memes 🙄</option>
         <option value="foods">Food 😋</option>
-        <option value="sleep">🥱🌗😴</option>
+        <option value="sleep">🥱 😴</option>
         <option value="credits"> 💚</option>
       </select>
       
       <select id="presetSelector" onchange="switchPreset(this.value)" title="Select Preset" style="margin-left: 1px;">
-        <option value="">😇Preset</option>
+        <option value="">😇 Preset</option>
       </select>
       <label style="margin-left: 1px;" title="Motion"> 
-        ⬅️🚦:⚡️
+        ⬅️
         <input max="3" min="0.0" onchange="speedMultiplier = parseFloat(this.value)" step="0.1" type="range" value="1"/>
       </label>
     </div>
@@ -48,7 +48,7 @@
     <input accept=".json" id="fileLoader" style="display:none" type="file"/>
     <button onclick="document.getElementById('fileLoader').click()" title="Load .json File">🆙 Load.json</button>
     <button onclick="deleteAllIdeas()" style="margin-left:0px;" title="Blank Canvas">🚮Clear💭Ideas🗑️</button>
-    <button onclick="toggleVideoPlayer()" style="margin-left:10px;" title="Toggle Video Player">📺</button>
+    <button onclick="toggleVideoPlayer()" style="margin-left:10px;" title="Toggle Video Player">📹</button>
   </div>
 
   <!-- Media Toolbar -->
@@ -110,8 +110,8 @@
     <div style="margin-bottom: 10px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 5px;">
       <label style="display: block; margin-bottom: 5px; color: gold;">📋 Upload Playlist (.txt):</label>
       <input type="file" id="playlistUpload" accept=".txt" style="width: 100%; margin-bottom: 5px;"/>
-      <button onclick="uploadPlaylist()" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: none; color: white; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px;">📤 Upload</button>
-      <button onclick="cyclePlaylists()" style="background: linear-gradient(45deg, #2196F3, #1976D2); border: none; color: white; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px;">🔄 Cycle</button>
+      <button onclick="uploadPlaylist()" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: none; color: black; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px;">📤 Upload</button>
+      <button onclick="cyclePlaylists()" style="background: linear-gradient(45deg, #2196F3, #1976D2); border: none; color: black; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px;">🔄 Cycle</button>
     </div>
     <div id="videoPlaylistItems">
       <!-- Playlist items will be loaded here -->
@@ -130,7 +130,7 @@
     <div id="musicList">
       <!-- Music items will be loaded here -->
     </div>
-    <button onclick="stopMusic()" style="background: linear-gradient(45deg, #f44336, #da190b); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 100%;">⏯️ Play/Pause</button>
+    <button onclick="stopMusic()" style="background: linear-gradient(45deg, #f44336, #da190b); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 100%;">⏯️Play🎚️</button>
   </div>
 
   <!-- Main Panel -->
@@ -154,7 +154,7 @@
     <input id="rotationSlider" title="Rotate Bubble" max="360" min="0" oninput="selectedIdea.rotation = parseInt(this.value)" type="range" value="0"/>
     
     <div style="margin-bottom: 10px;">
-      <label style="margin-left: 10px;">⬆️ Rotation | ⬇️ Select Image ♻️
+      <label style="margin-left: 10px;">⬆️ Rotation | ⬇️ Select Image 👾
         <select id="imageSelector" style="background-color: rgba(0, 0, 0, 0.6); color: gold; border: 2px solid darkgreen; font-family: 'Monaco', serif; padding: 6px; border-radius: 6px; width: 100%; margin-top: 5px;">
           <option value="">None</option>
           <option value="images/a1.png">a1.png</option>
@@ -232,9 +232,9 @@
     </div>
     
     <div style="margin-bottom: 10px;">
-      <button onclick="toggleGlow()" title="Toggle Glow">Glow</button>
-      <button onclick="changeGlowColor()" title="Change Glow Color">Colour</button>
-      <button onclick="toggleFlash()" title="Toggle Flash">Flash</button>
+      <button onclick="toggleGlow()" title="Toggle Glow">Glow🔆</button>
+      <button onclick="changeGlowColor()" title="Change Glow Color">Colour🔅</button>
+      <button onclick="toggleFlash()" title="Toggle Flash">Flash🎇</button>
       <button onclick="toggleAnimateColors()" title="Toggle Animate Colors">All🎨</button>
       <button onclick="toggleTransparent()" title="Toggle Transparent">Opaque</button>
       <button onclick="toggleFixed()" title="Toggle Fixed Mode">Solid🗿</button>
