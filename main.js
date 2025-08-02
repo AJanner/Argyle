@@ -827,15 +827,5 @@ function setupEventListeners() {
   }
 }
 
-// ===== EXPORTS =====
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    init,
-    setupEventListeners,
-    switchTheme,
-    addIdea,
-    saveIdeas,
-    deleteAllIdeas
-  };
-} 
+// ===== MAIN.JS LOADED =====
+console.log('🔧 Main.js loaded successfully'); 

@@ -37,10 +37,10 @@ function toggleMusicPanel() {
     musicPanel.style.display = 'block';
     loadMusicList();
     
-    // Auto-hide after 10 seconds
+    // Auto-hide after 20 seconds
     setTimeout(() => {
       musicPanel.style.display = 'none';
-    }, 10000);
+    }, 20000);
   } else {
     musicPanel.style.display = 'none';
   }
@@ -193,17 +193,18 @@ function playMusic(filename, event) {
 }
 
 function stopMusic() {
-  // Stop any currently playing audio
+  // Toggle play/pause for currently playing audio
   if (window.currentAudio) {
-    window.currentAudio.pause();
-    window.currentAudio = null;
-    console.log("🔇 Music stopped");
+    if (window.currentAudio.paused) {
+      window.currentAudio.play();
+      console.log("▶️ Music resumed");
+    } else {
+      window.currentAudio.pause();
+      console.log("⏸️ Music paused");
+    }
+  } else {
+    console.log("🔇 No music currently loaded");
   }
-  
-  // Remove playing class from all items
-  document.querySelectorAll('.music-item').forEach(item => {
-    item.classList.remove('playing');
-  });
 }
 
 // ===== MEDIA TOOLBAR FUNCTIONS =====
@@ -471,7 +472,7 @@ async function loadVideoPlaylist() {
     console.log(`📋 Video Loaded ${videoPlaylist.length} videos from playlist`);
     
     // Update display after loading
-    updateVideoPlaylistDisplay();
+    await updateVideoPlaylistDisplay();
     
     return videoPlaylist;
   } catch (error) {
@@ -481,7 +482,7 @@ async function loadVideoPlaylist() {
   }
 }
 
-function uploadPlaylist() {
+async function uploadPlaylist() {
   const fileInput = document.getElementById('playlistUpload');
   const file = fileInput.files[0];
   
@@ -522,7 +523,9 @@ function uploadPlaylist() {
     loadUploadedPlaylist(currentPlaylistIndex);
     
     // Update display to show the new playlist
-    updateVideoPlaylistDisplay();
+    if (typeof updateVideoPlaylistDisplay === 'function') {
+      updateVideoPlaylistDisplay();
+    }
     
     console.log(`📋 Uploaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
     alert(`✅ Uploaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
@@ -531,7 +534,7 @@ function uploadPlaylist() {
   reader.readAsText(file);
 }
 
-function cyclePlaylists() {
+async function cyclePlaylists() {
   if (uploadedPlaylists.length === 0) {
     alert('No uploaded playlists available. Please upload a .txt file first.');
     return;
@@ -541,7 +544,9 @@ function cyclePlaylists() {
   loadUploadedPlaylist(currentPlaylistIndex);
   
   // Update display to show the switched playlist
-  updateVideoPlaylistDisplay();
+  if (typeof updateVideoPlaylistDisplay === 'function') {
+    updateVideoPlaylistDisplay();
+  }
   
   const playlist = uploadedPlaylists[currentPlaylistIndex];
   console.log(`🔄 Switched to playlist: ${playlist.name} (${playlist.urls.length} videos)`);
@@ -576,6 +581,20 @@ function extractYouTubeId(url) {
   return match ? match[1] : null;
 }
 
+async function fetchVideoTitle(videoId) {
+  try {
+    // Use YouTube oEmbed API to get video title
+    const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+    if (response.ok) {
+      const data = await response.json();
+      return data.title;
+    }
+  } catch (error) {
+    console.error('❌ Error fetching video title for', videoId, ':', error);
+  }
+  return null;
+}
+
 function videoPlayVideo(index) {
   if (index < 0 || index >= videoPlaylist.length) return;
   
@@ -590,7 +609,7 @@ function videoPlayVideo(index) {
   
   const iframe = document.getElementById('videoIframe');
   if (iframe) {
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=1&loop=1&playlist=${videoId}`;
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=1&playlist=${videoId}`;
     iframe.src = embedUrl;
     console.log('🎵 Video Playing video:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
   }
@@ -663,20 +682,29 @@ function videoClose() {
 }
 
 function showVideoControls() {
+  const player = document.getElementById('videoPlayer');
   const controls = document.getElementById('videoControls');
-  if (controls) {
+  
+  // Only show controls if video player is visible
+  if (controls && player && player.style.display !== 'none') {
     controls.style.display = 'block';
+    controls.style.pointerEvents = 'auto';
     setTimeout(() => {
       controls.style.display = 'none';
+      controls.style.pointerEvents = 'none';
     }, 3000);
   }
 }
 
 function showVideoPlaylist() {
+  const player = document.getElementById('videoPlayer');
   const playlist = document.getElementById('videoPlaylist');
-  if (playlist) {
+  
+  // Only show playlist if video player is visible
+  if (playlist && player && player.style.display !== 'none') {
     playlist.style.opacity = '1';
     playlist.style.display = 'block';
+    playlist.style.pointerEvents = 'auto';
     startVideoPlaylistFadeOut();
   }
 }
@@ -700,7 +728,7 @@ function startVideoPlaylistFadeOut() {
   }, 5000);
 }
 
-function updateVideoPlaylistDisplay() {
+async function updateVideoPlaylistDisplay() {
   const playlistContainer = document.getElementById('videoPlaylistItems');
   if (!playlistContainer) {
     console.error('❌ Video Playlist container not found');
@@ -710,18 +738,33 @@ function updateVideoPlaylistDisplay() {
   console.log('📋 Video Updating playlist display with', videoPlaylist.length, 'videos');
   playlistContainer.innerHTML = '';
   
-  videoPlaylist.forEach((url, index) => {
+  for (let index = 0; index < videoPlaylist.length; index++) {
+    const url = videoPlaylist[index];
     const item = document.createElement('div');
     item.className = 'playlist-item';
     
-    // Use video title if available, otherwise fall back to ID
+    // Get video ID and title
     const videoId = extractYouTubeId(url);
-    const title = videoTitles[index] || `Video ${index + 1}`;
-    const displayText = videoId ? `${title} (${videoId})` : `${title} (Invalid URL)`;
+    let title = videoTitles[index];
+    
+    // If title not cached, fetch it
+    if (!title && videoId) {
+      try {
+        title = await fetchVideoTitle(videoId);
+        if (title) {
+          videoTitles[index] = title;
+        }
+      } catch (error) {
+        console.error('❌ Error fetching video title:', error);
+      }
+    }
+    
+    // Use title if available, otherwise fall back to ID
+    const displayText = title ? title : (videoId ? `Video ${index + 1} (${videoId})` : `Video ${index + 1} (Invalid URL)`);
     item.textContent = displayText;
     
     item.onclick = () => {
-      console.log('📋 Video Clicked playlist item:', index, 'Title:', title, 'URL:', url);
+      console.log('📋 Video Clicked playlist item:', index, 'Title:', title || 'Unknown', 'URL:', url);
       videoPlayVideo(index);
       showVideoPlaylist(); // Show playlist when clicking
     };
@@ -730,7 +773,7 @@ function updateVideoPlaylistDisplay() {
       item.classList.add('playing');
     }
     playlistContainer.appendChild(item);
-  });
+  }
   
   console.log('📋 Video Playlist display updated');
 }
@@ -745,72 +788,82 @@ async function toggleVideoPlayer() {
   const isVisible = player.style.display !== 'none';
   
   if (isVisible) {
-    // Hide video player
-    player.style.display = 'none';
-    player.style.pointerEvents = 'none';
-    if (controls) controls.style.display = 'none';
-    if (playlist) playlist.style.display = 'none';
+    // Stop video playback and hide video elements
+    const videoIframe = document.getElementById('videoIframe');
+    if (videoIframe) {
+      videoIframe.src = ''; // Stop video by clearing src
+      console.log('⏹️ Video stopped and cleared');
+    }
+    
+    // Completely remove video elements from DOM when hiding
+    if (player) {
+      player.style.display = 'none';
+      player.style.pointerEvents = 'none';
+      player.style.zIndex = '-1';
+      player.style.visibility = 'hidden';
+    }
+    if (controls) {
+      controls.style.display = 'none';
+      controls.style.pointerEvents = 'none';
+      controls.style.zIndex = '-1';
+      controls.style.visibility = 'hidden';
+    }
+    if (playlist) {
+      playlist.style.display = 'none';
+      playlist.style.pointerEvents = 'none';
+      playlist.style.zIndex = '-1';
+      playlist.style.visibility = 'hidden';
+    }
     videoPlaylistVisible = false;
   } else {
-    // Show video player
-    player.style.display = 'block';
-    player.style.pointerEvents = 'auto';
+    // Show video player with proper z-index
+    if (player) {
+      player.style.display = 'block';
+      player.style.pointerEvents = 'auto';
+      player.style.zIndex = '9998';
+      player.style.visibility = 'visible';
+    }
+    
+    // Show controls initially
+    if (controls) {
+      controls.style.display = 'block';
+      controls.style.pointerEvents = 'auto';
+      controls.style.zIndex = '9997';
+      controls.style.visibility = 'visible';
+    }
     
     // Initialize video player and load playlist if empty
     if (videoPlaylist.length === 0) {
-      await loadVideoPlaylist();
-      updateVideoPlaylistDisplay();
-    }
-    
-    // Play first video if available
-    if (videoPlaylist.length > 0) {
-      videoPlayVideo(0);
+      if (typeof loadVideoPlaylist === 'function') {
+        loadVideoPlaylist().then(() => {
+          // Play first video after playlist is loaded
+          if (videoPlaylist.length > 0) {
+            videoPlayVideo(0);
+          }
+        });
+      }
+      if (typeof updateVideoPlaylistDisplay === 'function') {
+        updateVideoPlaylistDisplay();
+      }
+    } else {
+      // Play first video if playlist is already loaded
+      if (videoPlaylist.length > 0) {
+        videoPlayVideo(0);
+      }
     }
     
     // Show playlist panel
     if (playlist) {
       playlist.style.display = 'block';
       playlist.style.opacity = '1';
+      playlist.style.pointerEvents = 'auto';
+      playlist.style.zIndex = '9999';
+      playlist.style.visibility = 'visible';
     }
   }
   
   console.log('🎥 Video player toggled:', isVisible ? 'hidden' : 'shown');
 }
 
-// ===== EXPORTS =====
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    loadYouTubeVideo,
-    toggleMusicPanel,
-    loadMusicList,
-    playMusic,
-    stopMusic,
-    toggleMediaToolbar,
-    handleBackgroundUpload,
-    handleVideoUpload,
-    captureCanvas,
-    captureCanvasOnly,
-    rollDice,
-    showDiceSlider,
-    hideDiceSlider,
-    uploadPlaylist,
-    cyclePlaylists,
-    loadUploadedPlaylist,
-    loadVideoPlaylist,
-    videoPlayVideo,
-    videoPlay,
-    videoPause,
-    videoNext,
-    videoPrev,
-    videoTogglePlaylist,
-    videoToggleFullscreen,
-    videoClose,
-    showVideoControls,
-    showVideoPlaylist,
-    startVideoPlaylistFadeOut,
-    updateVideoPlaylistDisplay,
-    toggleVideoPlayer,
-    initVideoPlayer
-  };
-} 
+// ===== MEDIA.JS LOADED =====
+console.log('🔧 Media.js loaded successfully'); 
