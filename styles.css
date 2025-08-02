@@ -221,7 +221,7 @@ html, body {
   left: 50%;
   transform: translate(-50%, -50%);
   width: 60%;
-  height: 60%;
+  height: 42%;
   z-index: -1;
   display: none;
   background: rgba(0, 0, 0, 0.9);
@@ -299,7 +299,7 @@ html, body {
 
 #videoPlaylist {
   position: fixed;
-  top: 100px;
+  top: 130px;
   left: 20px;
   width: 300px;
   max-height: 500px;
