@@ -13,15 +13,15 @@
     <button onclick="toggleMediaToolbar()" title="Media Toolbar">🎛️</button>
     <button onclick="captureCanvasOnly()" title="Snapshot">📷</button>
     <button onclick="rollDice()" oncontextmenu="showDiceSlider(); return false;" title="Random (Right-click for slider)">🎲</button>
-    <span id="diceResult" style="color: gold; margin: 0 10px; font-weight: bold;"></span>
+    <span id="diceResult" style="color: gold; margin: 0 15px; font-weight: bold;"></span>
     <button onclick="toggleMusicPanel()" title="Music Panel">🎶</button>
     <button onclick="location.reload()" title="Reset">Ⓡ</button>
-    <button onclick="rotateBackground()" style="margin-left:10px;" title="Rotate Background">🔄</button>
-    <button onclick="cycleBackground()" style="margin-left:10px;" title="Change Background">⏯️</button>
-    <button onclick="speedMultiplier = 0;" style="margin-left:10px;" title="Pause">⏸️</button>
+    <button onclick="rotateBackground()" style="margin-left:10px;" title="Rotate Background">🔃</button>
+    <button onclick="cycleBackground()" style="margin-left:10px;" title="Change Background">🔄</button>
+    <button onclick="speedMultiplier = 0;" style="margin-left:10px;" title="Pause">⏯️</button>
     
     <div>
-      <strong>🤔💭MindsEye💬~Events-Ideas-Incidents-Logger😎JSON-Exporter-V3-LegallyGrounded☕️</strong>
+      <strong>🤔💭ME💬v4😎</strong>
       <br>
       ➡️ 
       <select id="themeSelector" onchange="switchTheme(this.value)" title="Select Use">
@@ -31,12 +31,12 @@
         <option value="blank">Blank 😶</option>
         <option value="meme">Memes 🙄</option>
         <option value="foods">Food 😋</option>
-        <option value="sleep">🥱 😴</option>
+        <option value="sleep">🥱🌗😴</option>
         <option value="credits"> 💚</option>
       </select>
       
-      <select id="presetSelector" onchange="switchPreset(this.value)" title="Select Preset" style="margin-left: 10px;">
-        <option value="">Select Preset</option>
+      <select id="presetSelector" onchange="switchPreset(this.value)" title="Select Preset" style="margin-left: 1px;">
+        <option value="">😇Preset</option>
       </select>
       <label style="margin-left: 1px;" title="Motion"> 
         ⬅️🚦:⚡️
@@ -48,12 +48,12 @@
     <input accept=".json" id="fileLoader" style="display:none" type="file"/>
     <button onclick="document.getElementById('fileLoader').click()" title="Load .json File">🆙 Load.json</button>
     <button onclick="deleteAllIdeas()" style="margin-left:0px;" title="Blank Canvas">🚮Clear💭Ideas🗑️</button>
-    <button onclick="toggleVideoPlayer()" style="margin-left:10px;" title="Toggle Video Player">🎥 Video</button>
+    <button onclick="toggleVideoPlayer()" style="margin-left:10px;" title="Toggle Video Player">📺</button>
   </div>
 
   <!-- Media Toolbar -->
   <div id="mediaToolbar">
-    <label>🖼️ Background:
+    <label>🫟 Background:
       <input accept="image/*" id="bgLoader" type="file"/>
     </label>
     <label>📀 Video:
@@ -95,12 +95,12 @@
 
   <!-- Video Controls -->
   <div id="videoControls">
+    <button onclick="videoPrev()" title="Previous">⏮️ Prev</button>
     <button onclick="videoPlay()" title="Play">🟢 Play</button>
     <button onclick="videoPause()" title="Pause">⏸️ Pause</button>
     <button onclick="videoNext()" title="Next">⏭️ Next</button>
-    <button onclick="videoPrev()" title="Previous">⏮️ Prev</button>
-    <button onclick="videoTogglePlaylist()" title="Playlist">YouTube📋</button>
-    <button onclick="videoToggleFullscreen()" title="Fullscreen">🖥️Fullscreen</button>
+    <button onclick="videoTogglePlaylist()" title="Playlist">Play📋List</button>
+    <button onclick="videoToggleFullscreen()" title="Fullscreen">Full🖥️screen</button>
     <button onclick="videoClose()" title="Close">🟩 Close</button>
   </div>
 
