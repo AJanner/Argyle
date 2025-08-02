@@ -696,7 +696,7 @@ const themePresets = {
             "rotation": 0
           }
         ],
-        bg: "images/cqc3.png"
+        bg: "images/games1.png"
       },
       "hockey": {
         name: "Hockey",
@@ -1510,7 +1510,7 @@ const themePresets = {
         name: "Team",
         ideas: [
           {
-            "title": "👥 Squad",
+            "title": "",
             "description": "Together we win",
             "x": 400,
             "y": 300,
@@ -1525,7 +1525,7 @@ const themePresets = {
             "rotation": 0
           },
           {
-            "title": "🤝 Unity",
+            "title": "",
             "description": "One team",
             "x": 600,
             "y": 400,
@@ -1540,7 +1540,7 @@ const themePresets = {
             "rotation": 0
           },
           {
-            "title": "🏆 Champions",
+            "title": "",
             "description": "Victory",
             "x": 800,
             "y": 200,
@@ -1663,7 +1663,7 @@ const themePresets = {
         name: "Random",
         ideas: [
           {
-            title: "🎲 Random",
+            title: "",
             description: "Chaos mode",
             x: 400,
             y: 300,
@@ -1678,7 +1678,7 @@ const themePresets = {
             "rotation": 0
           },
           {
-            title: "🎪 Circus",
+            title: "",
             description: "Wild ride",
             x: 600,
             y: 400,
@@ -1693,7 +1693,7 @@ const themePresets = {
             "rotation": 0
           },
           {
-            title: "🎭 Drama",
+            title: "🎭",
             description: "The show",
             x: 800,
             y: 200,
@@ -1833,7 +1833,7 @@ const themePresets = {
         name: "Rest",
         ideas: [
           {
-            "title": "😴 Sleep",
+            "title": "",
             "description": "Rest time",
             "x": 400,
             "y": 300,
@@ -1849,7 +1849,7 @@ const themePresets = {
             "rotation": 0
           },
           {
-            "title": "💤 Zzz",
+            "title": "",
             "description": "Dreaming",
             "x": 600,
             "y": 400,
@@ -1865,7 +1865,7 @@ const themePresets = {
             "rotation": 0
           },
           {
-            "title": "🌙 Night",
+            "title": "",
             "description": "Peaceful",
             "x": 800,
             "y": 200,
@@ -1887,7 +1887,7 @@ const themePresets = {
         name: "Dream",
         ideas: [
           {
-            "title": "💭 Dream",
+            "title": "",
             "description": "Imagination",
             "x": 400,
             "y": 300,
@@ -1903,7 +1903,7 @@ const themePresets = {
             "rotation": 0
           },
           {
-            "title": "✨ Magic",
+            "title": "",
             "description": "Wonder",
             "x": 600,
             "y": 400,
@@ -1919,7 +1919,7 @@ const themePresets = {
             "rotation": 0
           },
           {
-            "title": "🌟 Wish",
+            "title": "",
             "description": "Hope",
             "x": 800,
             "y": 200,
@@ -1935,7 +1935,7 @@ const themePresets = {
             "rotation": 0
           },
           {
-            "title": "🦋 Butterfly",
+            "title": "",
             "description": "Freedom",
             "x": 500,
             "y": 500,
@@ -1967,7 +1967,7 @@ const themePresets = {
             "rotation": 0
           },
           {
-            "title": "🌙 Moon",
+            "title": "",
             "description": "Night",
             "x": 300,
             "y": 600,
