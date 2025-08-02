@@ -594,7 +594,7 @@ const themePresets = {
             "glow": true
           }
         ],
-        bg: "images/cqc1.png"
+        bg: "images/games1.png"
       },
       "plymouth": {
         name: "Plymouth",
@@ -645,7 +645,7 @@ const themePresets = {
             "rotation": 0
           }
         ],
-        bg: "images/cqc2.png"
+        bg: "images/games1.png"
       },
       "pinball": {
         name: "Pinball",
@@ -696,7 +696,7 @@ const themePresets = {
             "rotation": 0
           }
         ],
-        bg: "images/games1.png"
+        bg: "images/games17.png"
       },
       "hockey": {
         name: "Hockey",
@@ -747,7 +747,7 @@ const themePresets = {
             "rotation": 0
           }
         ],
-        bg: "images/cqc4.png"
+        bg: "images/games6.png"
       },
       "board": {
         name: "Board",
@@ -798,7 +798,7 @@ const themePresets = {
             "rotation": 0
           }
         ],
-        bg: "images/cqc5.png"
+        bg: "images/games5.png"
       }
     }
   },
@@ -1771,9 +1771,7 @@ const themePresets = {
         ],
         bg: "images/food1.png"
       },
-      "dahl": {
-        name: "Mutley Plain Dahl",
-        ideas: [
+      ideas: [
           {
             "title": "🫘 Dahl",
             "description": "Lentil love",
