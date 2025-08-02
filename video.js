@@ -2,7 +2,6 @@
 
 // Video Player Variables
 // Note: These variables are defined in main.js to avoid conflicts
-let videoTitles = [];
 let videoIsPlaying = false;
 let videoControlsTimeout = null;
 let videoPlayerMode = 'centered';
@@ -72,45 +71,9 @@ async function fetchVideoTitle(videoId) {
 // ===== VIDEO CONTROL FUNCTIONS =====
 // Note: Video control functions are defined in media.js
 
-function videoTogglePlaylist() {
-  const playlist = document.getElementById('videoPlaylist');
-  videoPlaylistVisible = !videoPlaylistVisible;
-  
-  if (videoPlaylistVisible) {
-    playlist.style.display = 'block';
-    playlist.style.opacity = '1';
-    startVideoPlaylistFadeOut();
-    console.log('📋 Video playlist shown');
-  } else {
-    playlist.style.display = 'none';
-    playlist.style.opacity = '1'; // Reset opacity
-    if (videoPlaylistTimeout) {
-      clearTimeout(videoPlaylistTimeout);
-      videoPlaylistTimeout = null;
-    }
-    console.log('📋 Video playlist hidden');
-  }
-}
+// Note: videoTogglePlaylist is defined in media.js
 
-function videoToggleFullscreen() {
-  const videoPlayer = document.getElementById('videoPlayer');
-  if (!videoPlayer) return;
-  
-  if (videoPlayerMode === 'fullscreen') {
-    // Switch to centered mode
-    videoPlayer.className = 'centered';
-    videoPlayerMode = 'centered';
-    console.log('📺 Video player switched to centered mode');
-  } else {
-    // Switch to fullscreen mode
-    videoPlayer.className = 'fullscreen';
-    videoPlayerMode = 'fullscreen';
-    console.log('🖥️ Video player switched to fullscreen mode');
-  }
-  
-  // Show controls when toggling
-  showVideoControls();
-}
+// Note: videoToggleFullscreen is defined in media.js
 
 // ===== VIDEO DISPLAY FUNCTIONS =====
 
@@ -130,39 +93,11 @@ function startVideoControlsFadeOut() {
   }, 10000);
 }
 
-function startVideoPlaylistFadeOut() {
-  // Clear existing timeout
-  if (videoPlaylistTimeout) {
-    clearTimeout(videoPlaylistTimeout);
-  }
-  
-  // Set new timeout for 10 seconds
-  videoPlaylistTimeout = setTimeout(() => {
-    const videoPlaylist = document.getElementById('videoPlaylist');
-    if (videoPlaylist && videoPlaylist.style.display !== 'none') {
-      videoPlaylist.style.opacity = '0';
-      console.log('⏰ Video playlist faded out');
-    }
-  }, 10000);
-}
+// Note: startVideoPlaylistFadeOut is defined in media.js
 
-function showVideoControls() {
-  const videoControls = document.getElementById('videoControls');
-  if (videoControls) {
-    videoControls.style.opacity = '1';
-    // Restart fade-out timer
-    startVideoControlsFadeOut();
-  }
-}
+// Note: showVideoControls is defined in media.js
 
-function showVideoPlaylist() {
-  const videoPlaylist = document.getElementById('videoPlaylist');
-  if (videoPlaylist) {
-    videoPlaylist.style.opacity = '1';
-    // Restart fade-out timer
-    startVideoPlaylistFadeOut();
-  }
-}
+// Note: showVideoPlaylist is defined in media.js
 
 // ===== VIDEO LIFECYCLE FUNCTIONS =====
 
