@@ -4,6 +4,7 @@
 let movementDelayActive = true;
 let backgroundRotation = 0;
 let speedMultiplier = 1;
+let previousSpeed = 1; // Store the previous speed for toggling
 let ideas = [];
 let selectedIdea = null;
 let backgroundImage = null;
@@ -11,6 +12,12 @@ let currentTheme = "default";
 let backgroundIndex = 1;
 let width, height;
 let border = 10;
+
+// Drag and drop variables
+let isDragging = false;
+let draggedIdea = null;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
 
 // Canvas setup
 const canvas = document.getElementById("canvas");
@@ -707,6 +714,41 @@ function draw() {
       ctx.fillText(word, 0, idx * lineHeight - (words.length - 1) * (lineHeight / 2));
     });
     ctx.restore();
+    
+    // Visual feedback for dragging and manual control
+    if (speedMultiplier === 0) {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      ctx.beginPath();
+      ctx.arc(0, 0, a.radius + 3, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255, 255, 0, 0.5)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.stroke();
+      ctx.restore();
+    }
+    
+    // Visual feedback for manual control (always available)
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    ctx.beginPath();
+    ctx.arc(0, 0, a.radius + 1, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+    
+    // Visual feedback for dragging
+    if (isDragging && draggedIdea === a) {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      ctx.beginPath();
+      ctx.arc(0, 0, a.radius + 8, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   requestAnimationFrame(draw);
@@ -744,8 +786,10 @@ function init() {
 // ===== EVENT LISTENERS =====
 
 function setupEventListeners() {
-  // Canvas click
+  // Canvas click (left click for adding bubbles)
   canvas.addEventListener("click", (e) => {
+    if (isDragging) return; // Don't add bubbles while dragging
+    
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -764,6 +808,123 @@ function setupEventListeners() {
     }
     
     if (!clicked) addIdea(x, y);
+  });
+
+  // Right-click for panel
+  canvas.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    for (let idea of ideas) {
+      const dx = x - idea.x;
+      const dy = y - idea.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < idea.radius) {
+        selectedIdea = idea;
+        showPanel();
+        return;
+      }
+    }
+  });
+
+  // Drag and drop functionality
+  canvas.addEventListener("mousedown", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    for (let idea of ideas) {
+      const dx = x - idea.x;
+      const dy = y - idea.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < idea.radius) {
+        isDragging = true;
+        draggedIdea = idea;
+        dragOffsetX = dx;
+        dragOffsetY = dy;
+        selectedIdea = idea;
+        showPanel();
+        break;
+      }
+    }
+  });
+
+  canvas.addEventListener("mousemove", (e) => {
+    if (!isDragging || !draggedIdea) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    draggedIdea.x = x - dragOffsetX;
+    draggedIdea.y = y - dragOffsetY;
+    
+    // Keep bubble within bounds
+    if (draggedIdea.x - draggedIdea.radius < border) {
+      draggedIdea.x = border + draggedIdea.radius;
+    }
+    if (draggedIdea.x + draggedIdea.radius > width - border) {
+      draggedIdea.x = width - border - draggedIdea.radius;
+    }
+    if (draggedIdea.y - draggedIdea.radius < border + 50) {
+      draggedIdea.y = border + 50 + draggedIdea.radius;
+    }
+    if (draggedIdea.y + draggedIdea.radius > height - border) {
+      draggedIdea.y = height - border - draggedIdea.radius;
+    }
+  });
+
+  canvas.addEventListener("mouseup", () => {
+    isDragging = false;
+    draggedIdea = null;
+  });
+
+  // Keyboard controls
+  document.addEventListener("keydown", (e) => {
+    if (!selectedIdea) return;
+    
+    const moveAmount = 5;
+    let moved = false;
+    
+    switch(e.key) {
+      case "ArrowUp":
+        selectedIdea.y -= moveAmount;
+        moved = true;
+        break;
+      case "ArrowDown":
+        selectedIdea.y += moveAmount;
+        moved = true;
+        break;
+      case "ArrowLeft":
+        selectedIdea.x -= moveAmount;
+        moved = true;
+        break;
+      case "ArrowRight":
+        selectedIdea.x += moveAmount;
+        moved = true;
+        break;
+    }
+    
+    if (moved) {
+      e.preventDefault();
+      
+      // Keep bubble within bounds
+      if (selectedIdea.x - selectedIdea.radius < border) {
+        selectedIdea.x = border + selectedIdea.radius;
+      }
+      if (selectedIdea.x + selectedIdea.radius > width - border) {
+        selectedIdea.x = width - border - selectedIdea.radius;
+      }
+      if (selectedIdea.y - selectedIdea.radius < border + 50) {
+        selectedIdea.y = border + 50 + selectedIdea.radius;
+      }
+      if (selectedIdea.y + selectedIdea.radius > height - border) {
+        selectedIdea.y = height - border - selectedIdea.radius;
+      }
+    }
   });
 
   // File loader
@@ -824,6 +985,20 @@ function setupEventListeners() {
   const videoLoader = document.getElementById('videoLoader');
   if (videoLoader) {
     videoLoader.addEventListener('change', handleVideoUpload);
+  }
+}
+
+function toggleSpeed() {
+  const speedSlider = document.querySelector('input[type="range"]');
+  if (speedMultiplier === 0) {
+    // If currently paused, restore to previous speed
+    speedMultiplier = previousSpeed;
+    speedSlider.value = previousSpeed;
+  } else {
+    // If currently running, pause and remember current speed
+    previousSpeed = speedMultiplier;
+    speedMultiplier = 0;
+    speedSlider.value = 0;
   }
 }
 

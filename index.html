@@ -21,7 +21,7 @@
     <button onclick="speedMultiplier = 0;" style="margin-left:10px;" title="Pause">⏯️</button>
     
     <div>
-      <strong>🤔💭ME💬v4😎</strong>
+      <strong style="font-size: 0.5em;">🤔💭ME💬v4😎</strong>
       <br>
       ➡️ 
       <select id="themeSelector" onchange="switchTheme(this.value)" title="Select Use">
@@ -38,9 +38,9 @@
       <select id="presetSelector" onchange="switchPreset(this.value)" title="Select Preset" style="margin-left: 1px;">
         <option value="">😇 Preset</option>
       </select>
-      <label style="margin-left: 1px;" title="Motion"> 
+      <label style="margin-left: 1px;" title="Motion (Right-click to pause/unpause)"> 
         ⬅️
-        <input max="3" min="0.0" onchange="speedMultiplier = parseFloat(this.value)" step="0.1" type="range" value="1"/>
+        <input max="3" min="0.0" onchange="if(parseFloat(this.value) !== 0) { previousSpeed = parseFloat(this.value); } speedMultiplier = parseFloat(this.value)" oncontextmenu="toggleSpeed(); return false;" step="0.1" type="range" value="1"/>
       </label>
     </div>
     
@@ -135,6 +135,7 @@
 
   <!-- Main Panel -->
   <div class="panel" id="panel">
+    <div class="panel-close-btn" onclick="closePanel()" title="Close Panel">✕</div>
     <input id="title" placeholder="Title"/>
     <textarea id="description" placeholder="Description" rows="5"></textarea>
     <div class="resize-handle">⤡</div>
@@ -334,6 +335,7 @@
       window.testImageUpload = testImageUpload;
       window.testEffects = testEffects;
       window.togglePanelSide = togglePanelSide;
+      window.toggleSpeed = toggleSpeed;
       
       // Video.js functions
       window.videoPlayVideo = videoPlayVideo;
