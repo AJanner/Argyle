@@ -1783,7 +1783,7 @@ const themePresets = {
             "vy": 0,
             "color": "hsl(30, 100%, 70%)",
             "textColor": "black",
-            "radius": 80,
+            "radius": 70,
             "font": "Arial",
             "image": "images/t1.png",
             "glow": true,
@@ -1799,9 +1799,9 @@ const themePresets = {
             "vy": -2.7259476366710977,
             "color": "hsl(127.23694310531901, 100%, 70%)",
             "textColor": "white",
-            "radius": 63,
+            "radius": 70,
             "font": "Arial",
-            "image": "images/t8.png",
+            "image": "images/t3.png",
             "glow": true
           },
           {
@@ -1857,7 +1857,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 80,
             "font": "Arial",
-            "image": "images/t3.png",
+            "image": "images/t8.png",
             "glow": true
           },
           {
