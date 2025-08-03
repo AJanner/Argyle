@@ -5,6 +5,7 @@ let movementDelayActive = true;
 let backgroundRotation = 0;
 let speedMultiplier = 1;
 let previousSpeed = 1; // Store the previous speed for toggling
+let showPauseBorder = false; // Track pause border state (renamed from showCheckeredBorder)
 let ideas = [];
 let selectedIdea = null;
 let backgroundImage = null;
@@ -421,6 +422,20 @@ function toggleStatic() {
   }
 }
 
+function toggleCheckeredBorder() {
+  showPauseBorder = !showPauseBorder;
+  console.log("🏁 Checkered border:", showPauseBorder ? "ON" : "OFF");
+  
+  const button = event.target;
+  if (showPauseBorder) {
+    button.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
+    button.style.color = "black";
+  } else {
+    button.style.background = "";
+    button.style.color = "";
+  }
+}
+
 // ===== BUBBLE PROPERTIES =====
 
 function changeColor() { 
@@ -716,7 +731,7 @@ function draw() {
     ctx.restore();
     
     // Visual feedback for dragging and manual control
-    if (speedMultiplier === 0) {
+    if (speedMultiplier === 0 && showPauseBorder) {
       ctx.save();
       ctx.translate(a.x, a.y);
       ctx.beginPath();
