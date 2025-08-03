@@ -1109,9 +1109,9 @@ const themePresets = {
             "vy": 0,
             "color": "hsl(0, 100%, 70%)",
             "textColor": "white",
-            "radius": 50,
+            "radius": 30,
             "font": "Arial",
-            "image": "images/a22.png",
+            "image": "images/a21.png",
             "glow": true,
             "fontSize": 16,
             "rotation": 0
@@ -1125,8 +1125,9 @@ const themePresets = {
             "vy": -2.1,
             "color": "hsl(60, 100%, 70%)",
             "textColor": "black",
-            "radius": 60,
+            "radius": 40,
             "font": "Arial",
+            "image": "images/a20.png",
             "glow": true,
             "fontSize": 14,
             "rotation": 0
