@@ -1801,7 +1801,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 63,
             "font": "Arial",
-            "image": "images/t8.png"
+            "image": "images/t8.png",
             "glow": true
           },
           {
@@ -1857,7 +1857,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 80,
             "font": "Arial",
-            "image": "images/t3.png"
+            "image": "images/t3.png",
             "glow": true
           },
           {
@@ -1871,7 +1871,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 59,
             "font": "Arial",
-            "image": "images/t2.png"
+            "image": "images/t2.png",
             "glow": true
           },
           {
