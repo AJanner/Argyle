@@ -2345,7 +2345,8 @@ const themePresets = {
             "radius": 61,
             "font": "Arial",
             "image": "images/t6.png",
-            "glow": true
+            "glow": true,
+            "glowColor": "hsl(338.61598053072913, 100%, 70%)"
           },
           {
             "title": "",
