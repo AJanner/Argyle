@@ -1730,8 +1730,8 @@ const themePresets = {
 ],
         bg: "images/argyle1.png"
       },
-      "central": {
-        name: "Centrél",
+      "analysis": {
+        name: "Analysis🧐",
         ideas: [
           {
     "title": "",
@@ -2431,8 +2431,8 @@ const themePresets = {
         ],
         bg: "images/argyle1.png"
       },
-      "news": {
-        name: "News",
+      "training": {
+        name: "Training",
         ideas: [
           {
     "title": "",
