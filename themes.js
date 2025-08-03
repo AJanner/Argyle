@@ -1802,6 +1802,7 @@ const themePresets = {
             "radius": 63,
             "font": "Arial",
             "image": "images/t8.png"
+            "glow": true
           },
           {
             "title": "",
@@ -1822,8 +1823,8 @@ const themePresets = {
             "description": "",
             "x": 129,
             "y": 527,
-            "vx": -0.6861455142184185,
-            "vy": -2.6954829203378177,
+            "vx": 0,
+            "vy": 0,
             "color": "hsl(217.30224307389682, 100%, 70%)",
             "textColor": "white",
             "radius": 69,
@@ -1857,6 +1858,7 @@ const themePresets = {
             "radius": 80,
             "font": "Arial",
             "image": "images/t3.png"
+            "glow": true
           },
           {
             "title": "",
@@ -1870,6 +1872,7 @@ const themePresets = {
             "radius": 59,
             "font": "Arial",
             "image": "images/t2.png"
+            "glow": true
           },
           {
             "title": "",
