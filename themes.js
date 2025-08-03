@@ -465,7 +465,7 @@ const themePresets = {
             "vy": 2.435546891874921,
             "color": "hsl(67.26192022230275, 100%, 70%)",
             "textColor": "white",
-            "radius": 62,
+            "radius": 42,
             "font": "Arial",
             "image": "images/l3.png",
             "glow": true
@@ -479,7 +479,7 @@ const themePresets = {
             "vy": 2.492252820118642,
             "color": "hsl(139.91524203693803, 100%, 70%)",
             "textColor": "white",
-            "radius": 68,
+            "radius": 48,
             "font": "Arial",
             "image": "images/l4.png",
             "glow": true
@@ -493,7 +493,7 @@ const themePresets = {
             "vy": -2.2367504485206355,
             "color": "hsl(191.89806599193358, 100%, 70%)",
             "textColor": "white",
-            "radius": 60,
+            "radius": 50,
             "font": "Arial",
             "image": "images/l2.png",
             "glow": true
@@ -507,7 +507,7 @@ const themePresets = {
             "vy": -2.7259476366710977,
             "color": "hsl(127.23694310531901, 100%, 70%)",
             "textColor": "white",
-            "radius": 63,
+            "radius": 43,
             "font": "Arial",
             "image": "images/l5.png"
           },
@@ -520,7 +520,7 @@ const themePresets = {
             "vy": 2.510897540099248,
             "color": "hsl(334.34575693904037, 100%, 70%)",
             "textColor": "white",
-            "radius": 63,
+            "radius": 43,
             "font": "Arial",
             "image": "images/l8.png",
             "glow": true
@@ -534,7 +534,7 @@ const themePresets = {
             "vy": -2.6954829203378177,
             "color": "hsl(217.30224307389682, 100%, 70%)",
             "textColor": "white",
-            "radius": 69,
+            "radius": 49,
             "font": "Arial",
             "image": "images/l7.png",
             "glow": true
@@ -548,7 +548,7 @@ const themePresets = {
             "vy": 1.9117263286194006,
             "color": "hsl(254.0872352592045, 100%, 70%)",
             "textColor": "white",
-            "radius": 59,
+            "radius": 49,
             "font": "Arial",
             "image": "images/l1.png",
             "glow": true
@@ -562,7 +562,7 @@ const themePresets = {
             "vy": -0.13113271942065707,
             "color": "hsl(319.5115481470086, 100%, 70%)",
             "textColor": "white",
-            "radius": 80,
+            "radius": 50,
             "font": "Arial",
             "image": "images/l26.png"
           },
@@ -575,7 +575,7 @@ const themePresets = {
             "vy": 1.9520595917203052,
             "color": "hsl(321.6047791937284, 100%, 70%)",
             "textColor": "white",
-            "radius": 59,
+            "radius": 49,
             "font": "Arial",
             "image": "images/l26.png"
           },
@@ -588,7 +588,7 @@ const themePresets = {
             "vy": 2.5971470318095813,
             "color": "hsl(2.18992732131281, 100%, 70%)",
             "textColor": "white",
-            "radius": 55,
+            "radius": 45,
             "font": "Arial",
             "image": "images/l12.png",
             "glow": true
@@ -608,7 +608,7 @@ const themePresets = {
     "vy": 1,
     "color": "hsl(266.80831007995465, 100%, 70%)",
     "textColor": "white",
-    "radius": 60,
+    "radius": 70,
     "font": "Arial",
     "image": "images/c1.png",
     "glow": true
@@ -622,7 +622,7 @@ const themePresets = {
     "vy": -1.814208650607946,
     "color": "hsl(123.97262968121507, 100%, 70%)",
     "textColor": "white",
-    "radius": 53,
+    "radius": 63,
     "font": "Arial",
     "image": "images/c2.png"
   },
@@ -821,8 +821,8 @@ const themePresets = {
     "description": "",
     "x": 1653,
     "y": 821,
-    "vx": -2.3769488955395275,
-    "vy": -0.331982879982647,
+    "vx": 0,
+    "vy": 0,
     "color": "hsl(43.294021276490106, 100%, 70%)",
     "textColor": "white",
     "radius": 28,
@@ -847,8 +847,8 @@ const themePresets = {
     "description": "",
     "x": 812.0844431309924,
     "y": 879,
-    "vx": 2.9427255133597914,
-    "vy": 2.3744452497319144,
+    "vx": 0,
+    "vy": 0,
     "color": "hsl(245.47608978475924, 100%, 70%)",
     "textColor": "white",
     "radius": 26,
