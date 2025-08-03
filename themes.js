@@ -1148,7 +1148,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 62,
             "font": "Arial",
-            "image": "images/l3.png",
+            "image": "images/w3.png",
             "glow": true
           },
           {
@@ -1162,7 +1162,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 68,
             "font": "Arial",
-            "image": "images/l4.png",
+            "image": "images/w4.png",
             "glow": true
           },
           {
@@ -1176,7 +1176,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 60,
             "font": "Arial",
-            "image": "images/l2.png",
+            "image": "images/w2.png",
             "glow": true
           },
           {
@@ -1190,7 +1190,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 63,
             "font": "Arial",
-            "image": "images/l5.png"
+            "image": "images/w5.png"
           },
           {
             "title": "",
@@ -1203,7 +1203,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 63,
             "font": "Arial",
-            "image": "images/l8.png",
+            "image": "images/w1.png",
             "glow": true
           },
           {
@@ -1217,7 +1217,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 69,
             "font": "Arial",
-            "image": "images/l7.png",
+            "image": "images/w6.png",
             "glow": true
           },
           {
@@ -1245,34 +1245,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 80,
             "font": "Arial",
-            "image": "images/l26.png"
-          },
-          {
-            "title": "",
-            "description": "",
-            "x": 223.12944639313582,
-            "y": 613.7389608060978,
-            "vx": -1.0343116528841743,
-            "vy": 1.9520595917203052,
-            "color": "hsl(321.6047791937284, 100%, 70%)",
-            "textColor": "white",
-            "radius": 59,
-            "font": "Arial",
-            "image": "images/l26.png"
-          },
-          {
-            "title": "",
-            "description": "",
-            "x": 831,
-            "y": 465,
-            "vx": -2.7164527841027692,
-            "vy": 2.5971470318095813,
-            "color": "hsl(2.18992732131281, 100%, 70%)",
-            "textColor": "white",
-            "radius": 55,
-            "font": "Arial",
-            "image": "images/l12.png",
-            "glow": true
+            "image": "images/l12.png"
           }
         ],
         bg: "images/games19.png"
