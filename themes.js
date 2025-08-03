@@ -1225,7 +1225,7 @@ const themePresets = {
             "vy": 2.492252820118642,
             "color": "hsl(139.91524203693803, 100%, 70%)",
             "textColor": "white",
-            "radius": 68,
+            "radius": 58,
             "font": "Arial",
             "image": "images/w4.png",
             "glow": true
@@ -1239,7 +1239,7 @@ const themePresets = {
             "vy": -2.2367504485206355,
             "color": "hsl(191.89806599193358, 100%, 70%)",
             "textColor": "white",
-            "radius": 60,
+            "radius": 50,
             "font": "Arial",
             "image": "images/w2.png",
             "glow": true
@@ -1253,7 +1253,7 @@ const themePresets = {
             "vy": -2.7259476366710977,
             "color": "hsl(127.23694310531901, 100%, 70%)",
             "textColor": "white",
-            "radius": 63,
+            "radius": 55,
             "font": "Arial",
             "image": "images/w5.png"
           },
@@ -1266,7 +1266,7 @@ const themePresets = {
             "vy": 2.510897540099248,
             "color": "hsl(334.34575693904037, 100%, 70%)",
             "textColor": "white",
-            "radius": 63,
+            "radius": 55,
             "font": "Arial",
             "image": "images/w1.png",
             "glow": true
@@ -1280,7 +1280,7 @@ const themePresets = {
             "vy": -2.6954829203378177,
             "color": "hsl(217.30224307389682, 100%, 70%)",
             "textColor": "white",
-            "radius": 69,
+            "radius": 59,
             "font": "Arial",
             "image": "images/w6.png",
             "glow": true
@@ -1294,9 +1294,23 @@ const themePresets = {
             "vy": 1.9117263286194006,
             "color": "hsl(254.0872352592045, 100%, 70%)",
             "textColor": "white",
-            "radius": 59,
+            "radius": 69,
             "font": "Arial",
             "image": "images/w7.png",
+            "glow": true
+          },
+          {
+            "title": "",
+            "description": "",
+            "x": 960,
+            "y": 851,
+            "vx": -1.0933425054687722,
+            "vy": 1.9117263286194006,
+            "color": "hsl(254.0872352592045, 100%, 70%)",
+            "textColor": "white",
+            "radius": 75,
+            "font": "Arial",
+            "image": "images/w8.png",
             "glow": true
           },
           {
