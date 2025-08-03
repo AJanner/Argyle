@@ -616,6 +616,7 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
   border: 2px solid darkgreen;
   box-shadow: 0 0 4px gold;
+  transition: background-color 0.3s ease;
 }
 
 input[type="range"]::-moz-range-thumb {
@@ -626,6 +627,18 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
   border: 2px solid darkgreen;
   box-shadow: 0 0 4px gold;
+  transition: background-color 0.3s ease;
+}
+
+/* Red thumb when paused */
+input[type="range"].paused::-webkit-slider-thumb {
+  background: red;
+  box-shadow: 0 0 4px red;
+}
+
+input[type="range"].paused::-moz-range-thumb {
+  background: red;
+  box-shadow: 0 0 4px red;
 }
 
 input[type="file"] {

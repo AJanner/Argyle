@@ -18,7 +18,6 @@
     <button onclick="location.reload()" title="Reset">Ⓡ</button>
     <button onclick="rotateBackground()" style="margin-left:10px;" title="Rotate Background">🔃</button>
     <button onclick="cycleBackground()" style="margin-left:10px;" title="Change Background">🔄</button>
-    <button onclick="speedMultiplier = 0;" style="margin-left:10px;" title="Pause">⏯️</button>
     
     <div>
       <strong style="font-size: 0.5em;">🤔💭ME💬v4😎</strong>
@@ -40,7 +39,8 @@
       </select>
       <label style="margin-left: 1px;" title="Motion (Right-click to pause/unpause)"> 
         ⬅️
-        <input max="3" min="0.0" onchange="if(parseFloat(this.value) !== 0) { previousSpeed = parseFloat(this.value); } speedMultiplier = parseFloat(this.value)" oncontextmenu="toggleSpeed(); return false;" step="0.1" type="range" value="1"/>
+        <button onclick="togglePauseButton()" style="margin: 0 5px; padding: 2px 6px; font-size: 12px;" title="Pause/Unpause">⏯️</button>
+        <input max="3" min="0.0" onchange="const slider = this; if(parseFloat(slider.value) !== 0) { previousSpeed = parseFloat(slider.value); slider.classList.remove('paused'); } else { slider.classList.add('paused'); } speedMultiplier = parseFloat(slider.value)" oncontextmenu="toggleSpeed(); return false;" step="0.1" type="range" value="1"/>
       </label>
     </div>
     
@@ -336,6 +336,7 @@
       window.testEffects = testEffects;
       window.togglePanelSide = togglePanelSide;
       window.toggleSpeed = toggleSpeed;
+      window.togglePauseButton = togglePauseButton;
       
       // Video.js functions
       window.videoPlayVideo = videoPlayVideo;

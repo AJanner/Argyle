@@ -994,11 +994,29 @@ function toggleSpeed() {
     // If currently paused, restore to previous speed
     speedMultiplier = previousSpeed;
     speedSlider.value = previousSpeed;
+    speedSlider.classList.remove('paused');
   } else {
     // If currently running, pause and remember current speed
     previousSpeed = speedMultiplier;
     speedMultiplier = 0;
     speedSlider.value = 0;
+    speedSlider.classList.add('paused');
+  }
+}
+
+function togglePauseButton() {
+  const speedSlider = document.querySelector('input[type="range"]');
+  if (speedMultiplier === 0) {
+    // If currently paused, restore to previous speed
+    speedMultiplier = previousSpeed;
+    speedSlider.value = previousSpeed;
+    speedSlider.classList.remove('paused');
+  } else {
+    // If currently running, pause and remember current speed
+    previousSpeed = speedMultiplier;
+    speedMultiplier = 0;
+    speedSlider.value = 0;
+    speedSlider.classList.add('paused');
   }
 }
 
