@@ -1109,8 +1109,9 @@ const themePresets = {
             "vy": 0,
             "color": "hsl(0, 100%, 70%)",
             "textColor": "white",
-            "radius": 80,
+            "radius": 50,
             "font": "Arial",
+            "image": "images/a22.png",
             "glow": true,
             "fontSize": 16,
             "rotation": 0
@@ -1124,14 +1125,14 @@ const themePresets = {
             "vy": -2.1,
             "color": "hsl(60, 100%, 70%)",
             "textColor": "black",
-            "radius": 70,
+            "radius": 60,
             "font": "Arial",
             "glow": true,
             "fontSize": 14,
             "rotation": 0
           },
           {
-            "title": "🎰 Jackpot",
+            "title": "",
             "description": "High score",
             "x": 800,
             "y": 200,
@@ -1139,9 +1140,10 @@ const themePresets = {
             "vy": 1.9,
             "color": "hsl(120, 100%, 70%)",
             "textColor": "white",
-            "radius": 65,
+            "radius": 30,
             "font": "Arial",
             "glow": true,
+            "image": "images/a22.png",
             "fontSize": 18,
             "rotation": 0
           }
