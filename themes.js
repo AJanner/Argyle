@@ -1296,7 +1296,7 @@ const themePresets = {
             "textColor": "white",
             "radius": 59,
             "font": "Arial",
-            "image": "images/l1.png",
+            "image": "images/w7.png",
             "glow": true
           },
           {
@@ -1304,13 +1304,13 @@ const themePresets = {
             "description": "",
             "x": 946,
             "y": 292,
-            "vx": 1.078293018313335,
-            "vy": -0.13113271942065707,
+            "vx": 0,
+            "vy": 0,
             "color": "hsl(319.5115481470086, 100%, 70%)",
             "textColor": "white",
-            "radius": 80,
+            "radius": 40,
             "font": "Arial",
-            "image": "images/l12.png"
+            "image": "images/l41.png"
           }
         ],
         bg: "images/games19.png"
