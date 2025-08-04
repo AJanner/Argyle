@@ -268,6 +268,47 @@ function closePanel() {
   }
 }
 
+function minimizePanel() {
+  const panel = document.getElementById('panel');
+  const minimizeBtn = panel.querySelector('button[onclick="minimizePanel()"]');
+  if (panel) {
+    if (panel.classList.contains('minimized')) {
+      // Restore panel
+      panel.classList.remove('minimized');
+      panel.style.width = '300px';
+      panel.style.height = 'auto';
+      panel.style.overflow = 'visible';
+      if (minimizeBtn) {
+        minimizeBtn.textContent = '📋';
+        minimizeBtn.title = 'Minimize';
+      }
+      console.log('💭 Panel restored');
+    } else {
+      // Minimize panel
+      panel.classList.add('minimized');
+      panel.style.width = '15px';
+      panel.style.height = '200px';
+      panel.style.overflow = 'hidden';
+      if (minimizeBtn) {
+        minimizeBtn.textContent = '⬜';
+        minimizeBtn.title = 'Restore';
+      }
+      console.log('💭 Panel minimized');
+    }
+  }
+}
+
+function restorePanel() {
+  const panel = document.getElementById('panel');
+  if (panel && panel.classList.contains('minimized')) {
+    panel.classList.remove('minimized');
+    panel.style.width = '300px';
+    panel.style.height = 'auto';
+    panel.style.overflow = 'visible';
+    console.log('💭 Panel restored');
+  }
+}
+
 function resetPanelFade() {
   const panel = document.getElementById('panel');
   if (panel && panel.style.display === 'block') {
@@ -995,6 +1036,17 @@ function setupEventListeners() {
   const videoLoader = document.getElementById('videoLoader');
   if (videoLoader && typeof handleVideoUpload === 'function') {
     videoLoader.addEventListener('change', handleVideoUpload);
+  }
+  
+  // Add click handler for minimized panel
+  const panelElement = document.getElementById('panel');
+  if (panelElement) {
+    panelElement.addEventListener('click', function(e) {
+      // Only restore if minimized and click is not on a button
+      if (this.classList.contains('minimized') && !e.target.matches('button')) {
+        restorePanel();
+      }
+    });
   }
 }
 

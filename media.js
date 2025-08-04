@@ -502,11 +502,29 @@ function initVideoPlayer() {
     console.log('🎥 Initial video opacity set to:', opacitySlider.value);
   }
   
+  // Set initial size
+  const sizeSlider = document.getElementById('videoSizeSlider');
+  if (sizeSlider && player) {
+    player.style.transform = `translate(-50%, -50%) scale(${sizeSlider.value})`;
+    console.log('🎥 Initial video size set to:', sizeSlider.value);
+  }
+  
   // Debug video controls after a short delay
   setTimeout(() => {
     debugVideoControls();
     testPngAccess();
   }, 1000);
+  
+  // Add click handler for minimized playlist
+  const playlistElement = document.getElementById('videoPlaylist');
+  if (playlistElement) {
+    playlistElement.addEventListener('click', function(e) {
+      // Only restore if minimized and click is not on a button
+      if (this.classList.contains('minimized') && !e.target.matches('button')) {
+        restorePlaylist();
+      }
+    });
+  }
 }
 
 // Video Playlist loading function
@@ -848,6 +866,15 @@ function updateVideoOpacity(value) {
   }
 }
 
+function updateVideoSize(value) {
+  const player = document.getElementById('videoPlayer');
+  if (player) {
+    const scale = parseFloat(value);
+    player.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    console.log('🎥 Video size updated to:', scale);
+  }
+}
+
 function videoClose() {
   const elements = ['videoPlayer', 'videoControls', 'videoPlaylist'];
   elements.forEach(id => {
@@ -1150,6 +1177,52 @@ function setupMediaEventListeners() {
   if (videoLoader && typeof handleVideoUpload === 'function') {
     videoLoader.addEventListener('change', handleVideoUpload);
     console.log('✅ Video upload listener set up');
+  }
+}
+
+// ===== PLAYLIST PANEL FUNCTIONS =====
+
+function closePlaylist() {
+  const playlist = document.getElementById('videoPlaylist');
+  if (playlist) {
+    playlist.style.display = 'none';
+    playlist.style.pointerEvents = 'none';
+    playlist.style.zIndex = '-1';
+    playlist.style.visibility = 'hidden';
+    videoPlaylistVisible = false;
+    console.log('📋 Playlist panel closed');
+  }
+}
+
+function minimizePlaylist() {
+  const playlist = document.getElementById('videoPlaylist');
+  if (playlist) {
+    if (playlist.classList.contains('minimized')) {
+      // Restore playlist
+      playlist.classList.remove('minimized');
+      playlist.style.width = '300px';
+      playlist.style.height = 'auto';
+      playlist.style.overflow = 'visible';
+      console.log('📋 Playlist panel restored');
+    } else {
+      // Minimize playlist
+      playlist.classList.add('minimized');
+      playlist.style.width = '30px';
+      playlist.style.height = '200px';
+      playlist.style.overflow = 'hidden';
+      console.log('📋 Playlist panel minimized');
+    }
+  }
+}
+
+function restorePlaylist() {
+  const playlist = document.getElementById('videoPlaylist');
+  if (playlist && playlist.classList.contains('minimized')) {
+    playlist.classList.remove('minimized');
+    playlist.style.width = '300px';
+    playlist.style.height = 'auto';
+    playlist.style.overflow = 'visible';
+    console.log('📋 Playlist panel restored');
   }
 }
 
