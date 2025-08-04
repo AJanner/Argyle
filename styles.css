@@ -27,29 +27,34 @@ html, body {
 #toolbar button {
   background-color: rgba(0, 0, 0, 0.7);
   color: gold;
-  border: 2px solid darkgreen;
+  border: 1px solid transparent;
   font-family: 'Monaco', serif;
   border-radius: 6px;
-  padding: 6px 10px;
-  margin-right: 6px;
+  padding: 0;
+  margin: 0;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: all 0.3s ease;
+  width: 80px;
+  height: 80px;
 }
 
 #toolbar button:hover {
   background-color: rgba(0, 0, 0, 0.9);
   transform: scale(1.05);
+  border: 1px solid darkgreen;
 }
 
 .toolbar-btn {
   background-image: none;
-  background-size: 24px 24px;
+  background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
   color: transparent;
   font-size: 0;
-  min-width: 40px;
-  min-height: 40px;
+  width: 80px;
+  height: 80px;
+  margin: 0;
+  padding: 0;
 }
 
 .toolbar-btn.has-png {
@@ -636,6 +641,7 @@ html, body {
   cursor: pointer;
   font-weight: bold;
   transition: all 0.3s ease;
+  margin: 0;
 }
 
 #mediaToolbar button:hover {

@@ -1080,6 +1080,11 @@ function togglePauseButton() {
     speedSlider.value = 0;
     speedSlider.classList.add('paused');
   }
+  
+  // Update the pause button icon
+  if (typeof updatePauseButtonIcon === 'function') {
+    updatePauseButtonIcon();
+  }
 }
 
 // ===== TEST FUNCTIONS =====

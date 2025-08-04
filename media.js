@@ -877,14 +877,43 @@ function updateVideoSize(value) {
 }
 
 function videoClose() {
-  const elements = ['videoPlayer', 'videoControls', 'videoPlaylist'];
-  elements.forEach(id => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.style.display = 'none';
-    }
-  });
+  const player = document.getElementById('videoPlayer');
+  const controls = document.getElementById('videoControls');
+  const playlist = document.getElementById('videoPlaylist');
+  const iframe = document.getElementById('videoIframe');
+  
+  // Stop the video by clearing the iframe src
+  if (iframe) {
+    iframe.src = '';
+    videoIsPlaying = false;
+    console.log('🎥 Video stopped');
+  }
+  
+  // Hide all video elements
+  if (player) {
+    player.style.display = 'none';
+    player.style.pointerEvents = 'none';
+    player.style.zIndex = '-1';
+    player.style.visibility = 'hidden';
+  }
+  
+  if (controls) {
+    controls.style.display = 'none';
+    controls.style.pointerEvents = 'none';
+    controls.style.zIndex = '-1';
+    controls.style.visibility = 'hidden';
+  }
+  
+  if (playlist) {
+    playlist.style.display = 'none';
+    playlist.style.pointerEvents = 'none';
+    playlist.style.zIndex = '-1';
+    playlist.style.visibility = 'hidden';
+    videoPlaylistVisible = false;
+  }
+  
   videoPlaylistVisible = false;
+  console.log('🎥 Video player closed and video stopped');
 }
 
 function showVideoControls() {
@@ -1283,6 +1312,9 @@ function loadToolbarButtonImages() {
     'snapshot-media': 'snapshot.png'
   };
   
+  // Store the image file map globally for dynamic updates
+  window.toolbarImageFileMap = imageFileMap;
+  
   const buttons = document.querySelectorAll('.toolbar-btn');
   let loadedCount = 0;
   let totalButtons = buttons.length;
@@ -1316,6 +1348,15 @@ function loadToolbarButtonImages() {
       console.log(`⚠️ No PNG mapping found for ${iconName} button`);
     }
   });
+}
+
+function updatePauseButtonIcon() {
+  const pauseButton = document.querySelector('.toolbar-btn[data-icon="pause"]');
+  if (pauseButton && window.toolbarImageFileMap) {
+    const filename = speedMultiplier === 0 ? 'play.png' : 'pause.png';
+    pauseButton.style.backgroundImage = `url(images/${filename})`;
+    console.log(`🎛️ Updated pause button to ${filename} (speed: ${speedMultiplier})`);
+  }
 }
 
 // ===== MEDIA.JS LOADED =====
