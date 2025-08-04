@@ -993,12 +993,12 @@ function setupEventListeners() {
   
   // Media toolbar functionality
   const bgLoader = document.getElementById('bgLoader');
-  if (bgLoader) {
+  if (bgLoader && typeof handleBackgroundUpload === 'function') {
     bgLoader.addEventListener('change', handleBackgroundUpload);
   }
   
   const videoLoader = document.getElementById('videoLoader');
-  if (videoLoader) {
+  if (videoLoader && typeof handleVideoUpload === 'function') {
     videoLoader.addEventListener('change', handleVideoUpload);
   }
 }

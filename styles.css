@@ -310,20 +310,115 @@ html, body {
 }
 
 #videoControls button {
+  display: inline-block;
+  margin: 0 2px;
+  white-space: nowrap;
+}
+
+#videoControls {
+  white-space: nowrap;
+}
+
+#videoControls button {
   background: black;
   border: 2px solid #4CAF50;
   color: white;
   padding: 8px 16px;
-  margin: 5px;
+  margin: 2px;
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
   transition: all 0.3s ease;
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-block;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
 }
 
 #videoControls button:hover {
   transform: scale(1.05);
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Video control button icons - fallback to emoji if PNG not available */
+.video-control-btn {
+  background-image: none;
+  background-size: 24px 24px;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: relative;
+}
+
+/* When PNG images are available, these classes will be used */
+.video-control-btn[data-icon="prev"] {
+  background-image: url('images/previous.png');
+}
+
+.video-control-btn[data-icon="play"] {
+  background-image: url('images/play.png');
+}
+
+.video-control-btn[data-icon="pause"] {
+  background-image: url('images/stop.png');
+}
+
+.video-control-btn[data-icon="next"] {
+  background-image: url('images/next.png');
+}
+
+.video-control-btn[data-icon="playlist"] {
+  background-image: url('images/playlist.png');
+}
+
+.video-control-btn[data-icon="fullscreen"] {
+  background-image: url('images/fullscreen.png');
+}
+
+.video-control-btn[data-icon="close"] {
+  background-image: url('images/stop.png');
+}
+
+/* Hide text when PNG is loaded */
+.video-control-btn.has-png {
+  color: transparent !important;
+  font-size: 0 !important;
+}
+
+/* Ensure buttons are clickable even with PNG */
+.video-control-btn {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Force PNG images to be visible when loaded */
+.video-control-btn.has-png[data-icon="prev"] {
+  background-image: url('images/previous.png') !important;
+}
+
+.video-control-btn.has-png[data-icon="play"] {
+  background-image: url('images/play.png') !important;
+}
+
+.video-control-btn.has-png[data-icon="pause"] {
+  background-image: url('images/stop.png') !important;
+}
+
+.video-control-btn.has-png[data-icon="next"] {
+  background-image: url('images/next.png') !important;
+}
+
+.video-control-btn.has-png[data-icon="playlist"] {
+  background-image: url('images/playlist.png') !important;
+}
+
+.video-control-btn.has-png[data-icon="fullscreen"] {
+  background-image: url('images/fullscreen.png') !important;
+}
+
+.video-control-btn.has-png[data-icon="close"] {
+  background-image: url('images/stop.png') !important;
 }
 
 #videoPlaylist {

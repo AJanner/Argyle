@@ -480,18 +480,64 @@ function initVideoPlayer() {
   
   // Load default playlist if not already loaded
   if (videoPlaylist.length === 0) {
-    loadVideoPlaylist().then(() => {
-      console.log('🎥 Video player initialized with default playlist');
-    });
+    // Try to load playlist, but don't fail if it doesn't work
+    setTimeout(() => {
+      loadVideoPlaylist().then(() => {
+        console.log('🎥 Video player initialized with playlist');
+      }).catch(error => {
+        console.log('🎥 Video player initialized with empty playlist (file not accessible)');
+      });
+    }, 100);
   } else {
     console.log('🎥 Video player initialized with existing playlist');
   }
+  
+  // Load video control images
+  loadVideoControlImages();
+  
+  // Set initial opacity
+  const opacitySlider = document.getElementById('videoOpacitySlider');
+  if (opacitySlider && player) {
+    player.style.opacity = opacitySlider.value;
+  }
+  
+  // Debug video controls after a short delay
+  setTimeout(() => {
+    debugVideoControls();
+  }, 1000);
 }
 
 // Video Playlist loading function
 async function loadVideoPlaylist() {
   try {
-    const response = await fetch('s25_playlist.txt');
+    // Check if we're running from file:// protocol (local file)
+    const isLocalFile = window.location.protocol === 'file:';
+    
+    if (isLocalFile) {
+      console.log('📋 Running from local file - playlist loading may be restricted by CORS');
+      console.log('📋 You can upload your own playlist file using the upload button');
+      videoPlaylist = [];
+      
+      // Update display with empty playlist
+      if (typeof updateVideoPlaylistDisplay === 'function') {
+        await updateVideoPlaylistDisplay();
+      }
+      
+      return videoPlaylist;
+    }
+    
+    // Try to load the playlist file
+    const response = await fetch('s25_playlist.txt', {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/plain',
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
     const content = await response.text();
     const lines = content.split('\n').filter(line => line.trim() !== '');
     
@@ -503,13 +549,24 @@ async function loadVideoPlaylist() {
     console.log(`📋 Video Loaded ${videoPlaylist.length} videos from playlist`);
     
     // Update display after loading
-    await updateVideoPlaylistDisplay();
+    if (typeof updateVideoPlaylistDisplay === 'function') {
+      await updateVideoPlaylistDisplay();
+    }
     
     return videoPlaylist;
   } catch (error) {
     console.error('❌ Error loading video playlist:', error);
+    console.log('📋 Creating empty playlist - you can upload your own playlist file');
+    
+    // Create a default empty playlist
     videoPlaylist = [];
-    return [];
+    
+    // Update display with empty playlist
+    if (typeof updateVideoPlaylistDisplay === 'function') {
+      await updateVideoPlaylistDisplay();
+    }
+    
+    return videoPlaylist;
   }
 }
 
@@ -697,11 +754,11 @@ function videoTogglePlaylist() {
     
     // Update button text to show it's ON
     if (playlistButton) {
-      playlistButton.textContent = 'Hide📋List';
+      playlistButton.textContent = '📋';
       playlistButton.title = 'Hide Playlist';
     }
     
-    startVideoPlaylistFadeOut();
+    // Removed auto-hide functionality
   } else {
     // Hide playlist
     playlist.style.display = 'none';
@@ -712,7 +769,7 @@ function videoTogglePlaylist() {
     
     // Update button text to show it's OFF
     if (playlistButton) {
-      playlistButton.textContent = 'Show📋List';
+      playlistButton.textContent = '📋';
       playlistButton.title = 'Show Playlist';
     }
     
@@ -730,10 +787,38 @@ function videoToggleFullscreen() {
   const player = document.getElementById('videoPlayer');
   if (player) {
     if (document.fullscreenElement) {
-      document.exitFullscreen();
+      // Exit fullscreen
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+      console.log('🖥️ Exiting fullscreen');
     } else {
-      player.requestFullscreen();
+      // Enter fullscreen
+      if (player.requestFullscreen) {
+        player.requestFullscreen();
+      } else if (player.webkitRequestFullscreen) {
+        player.webkitRequestFullscreen();
+      } else if (player.mozRequestFullScreen) {
+        player.mozRequestFullScreen();
+      } else if (player.msRequestFullscreen) {
+        player.msRequestFullscreen();
+      }
+      console.log('🖥️ Entering fullscreen');
     }
+  }
+}
+
+function updateVideoOpacity(value) {
+  const player = document.getElementById('videoPlayer');
+  if (player) {
+    player.style.opacity = value;
+    console.log('🎥 Video opacity updated to:', value);
   }
 }
 
@@ -756,10 +841,7 @@ function showVideoControls() {
   if (controls && player && player.style.display !== 'none') {
     controls.style.display = 'block';
     controls.style.pointerEvents = 'auto';
-    setTimeout(() => {
-      controls.style.display = 'none';
-      controls.style.pointerEvents = 'none';
-    }, 10000); // Changed from 3000 to 10000 (10 seconds)
+    // Removed auto-hide functionality - controls stay visible
   }
 }
 
@@ -774,28 +856,10 @@ function showVideoPlaylist() {
     playlist.style.pointerEvents = 'auto';
     playlist.style.zIndex = '9999';
     playlist.style.visibility = 'visible';
-    startVideoPlaylistFadeOut();
   }
 }
 
-function startVideoPlaylistFadeOut() {
-  if (videoPlaylistTimeout) {
-    clearTimeout(videoPlaylistTimeout);
-  }
-  
-  videoPlaylistTimeout = setTimeout(() => {
-    const playlist = document.getElementById('videoPlaylist');
-    if (playlist && playlist.style.display !== 'none') {
-      playlist.style.opacity = '0';
-      setTimeout(() => {
-        playlist.style.display = 'none';
-        playlist.style.pointerEvents = 'none';
-        playlist.style.opacity = '1'; // Reset opacity
-      }, 500);
-    }
-    videoPlaylistVisible = false;
-  }, 5000);
-}
+// Auto-hide functionality removed - playlist now only toggles via button
 
 async function updateVideoPlaylistDisplay() {
   const playlistContainer = document.getElementById('videoPlaylistItems');
@@ -869,14 +933,7 @@ async function toggleVideoPlayer() {
   });
   
   if (isVisible) {
-    // Stop video playback and hide video elements
-    const videoIframe = document.getElementById('videoIframe');
-    if (videoIframe) {
-      videoIframe.src = ''; // Stop video by clearing src
-      console.log('⏹️ Video stopped and cleared');
-    }
-    
-    // Completely remove video elements from DOM when hiding
+    // Just hide video elements without stopping playback
     if (player) {
       player.style.display = 'none';
       player.style.pointerEvents = 'none';
@@ -896,13 +953,20 @@ async function toggleVideoPlayer() {
       playlist.style.visibility = 'hidden';
     }
     videoPlaylistVisible = false;
+    console.log('🎥 Video player hidden (playback continues)');
   } else {
-    // Show video player with proper z-index
+    // Show video player with proper z-index and current opacity
     if (player) {
       player.style.display = 'block';
       player.style.pointerEvents = 'auto';
       player.style.zIndex = '9998';
       player.style.visibility = 'visible';
+      
+      // Apply current opacity setting
+      const opacitySlider = document.getElementById('videoOpacitySlider');
+      if (opacitySlider) {
+        player.style.opacity = opacitySlider.value;
+      }
     }
     
     // Show controls initially
@@ -916,19 +980,28 @@ async function toggleVideoPlayer() {
     // Initialize video player and load playlist if empty
     if (videoPlaylist.length === 0) {
       if (typeof loadVideoPlaylist === 'function') {
-        loadVideoPlaylist().then(() => {
-          // Play first video after playlist is loaded
-          if (videoPlaylist.length > 0) {
-            videoPlayVideo(0);
-          }
-        });
+        // Try to load playlist, but don't block the UI
+        setTimeout(() => {
+          loadVideoPlaylist().then(() => {
+            // Play first video after playlist is loaded
+            if (videoPlaylist.length > 0) {
+              videoPlayVideo(0);
+            }
+          }).catch(error => {
+            console.log('🎥 Playlist loading failed, but video player is ready');
+          });
+        }, 100);
       }
       if (typeof updateVideoPlaylistDisplay === 'function') {
         updateVideoPlaylistDisplay();
       }
     } else {
-      // Play first video if playlist is already loaded
-      if (videoPlaylist.length > 0) {
+      // Don't restart video if it's already playing, just show the player
+      const videoIframe = document.getElementById('videoIframe');
+      if (videoIframe && videoIframe.src) {
+        console.log('🎥 Video player shown (playback continues)');
+      } else if (videoPlaylist.length > 0) {
+        // Only start playing if no video is currently loaded
         videoPlayVideo(0);
       }
     }
@@ -945,7 +1018,7 @@ async function toggleVideoPlayer() {
     // Update playlist button text to show it's OFF initially
     const playlistButton = document.querySelector('#videoControls button[onclick="videoTogglePlaylist()"]');
     if (playlistButton) {
-      playlistButton.textContent = 'Show📋List';
+      playlistButton.textContent = '📋';
       playlistButton.title = 'Show Playlist';
     }
     
@@ -983,6 +1056,77 @@ function startPlayback() {
   // For now, just log the playback
   // This could be expanded to actually replay the recorded actions
   alert(`Playback started: ${Math.round(duration / 1000)}s duration`);
+}
+
+// ===== VIDEO CONTROL IMAGE HANDLING =====
+
+function loadVideoControlImages() {
+  const imageNames = ['prev', 'play', 'pause', 'next', 'playlist', 'fullscreen', 'close'];
+  const imageFileMap = {
+    'prev': 'previous.png',
+    'play': 'play.png',
+    'pause': 'stop.png',
+    'next': 'next.png',
+    'playlist': 'playlist.png',
+    'fullscreen': 'fullscreen.png',
+    'close': 'stop.png'
+  };
+  
+  console.log('🎨 Loading video control PNG images...');
+  
+  imageNames.forEach(iconName => {
+    const fileName = imageFileMap[iconName];
+    const img = new Image();
+    
+    img.onload = function() {
+      // Image loaded successfully, update button style
+      const buttons = document.querySelectorAll(`[data-icon="${iconName}"]`);
+      buttons.forEach(button => {
+        button.classList.add('has-png');
+        console.log(`✅ Loaded video control image: ${fileName} for ${iconName} button`);
+      });
+    };
+    
+    img.onerror = function() {
+      // Image failed to load, keep emoji fallback
+      console.log(`⚠️ Video control image not found: ${fileName} for ${iconName} button (using emoji fallback)`);
+    };
+    
+    img.src = `images/${fileName}`;
+    console.log(`🔄 Attempting to load: images/${fileName}`);
+  });
+}
+
+// ===== MEDIA EVENT LISTENER SETUP =====
+
+function setupMediaEventListeners() {
+  // Media toolbar functionality
+  const bgLoader = document.getElementById('bgLoader');
+  if (bgLoader && typeof handleBackgroundUpload === 'function') {
+    bgLoader.addEventListener('change', handleBackgroundUpload);
+    console.log('✅ Background upload listener set up');
+  }
+  
+  const videoLoader = document.getElementById('videoLoader');
+  if (videoLoader && typeof handleVideoUpload === 'function') {
+    videoLoader.addEventListener('change', handleVideoUpload);
+    console.log('✅ Video upload listener set up');
+  }
+}
+
+// ===== DEBUG FUNCTIONS =====
+
+function debugVideoControls() {
+  console.log('🔍 Debugging video controls...');
+  const buttons = document.querySelectorAll('.video-control-btn');
+  console.log(`Found ${buttons.length} video control buttons`);
+  
+  buttons.forEach((button, index) => {
+    const icon = button.getAttribute('data-icon');
+    const hasPng = button.classList.contains('has-png');
+    const backgroundImage = getComputedStyle(button).backgroundImage;
+    console.log(`Button ${index + 1}: icon="${icon}", has-png=${hasPng}, background="${backgroundImage}"`);
+  });
 }
 
 // ===== MEDIA.JS LOADED =====

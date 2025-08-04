@@ -77,21 +77,7 @@ async function fetchVideoTitle(videoId) {
 
 // ===== VIDEO DISPLAY FUNCTIONS =====
 
-function startVideoControlsFadeOut() {
-  // Clear existing timeout
-  if (videoControlsTimeout) {
-    clearTimeout(videoControlsTimeout);
-  }
-  
-  // Set new timeout for 10 seconds
-  videoControlsTimeout = setTimeout(() => {
-    const videoControls = document.getElementById('videoControls');
-    if (videoControls && videoControls.style.display !== 'none') {
-      videoControls.style.opacity = '0';
-      console.log('⏰ Video controls faded out');
-    }
-  }, 10000);
-}
+// Auto-hide functionality removed - video controls now stay visible
 
 // Note: startVideoPlaylistFadeOut is defined in media.js
 

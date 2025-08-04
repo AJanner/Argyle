@@ -89,19 +89,24 @@
   <iframe allow="autoplay" allowfullscreen="" frameborder="0" id="ytFrame" style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:-3; display:none;"></iframe>
 
   <!-- Video Player -->
-  <div id="videoPlayer" onmouseenter="showVideoControls(); showVideoPlaylist()">
+  <div id="videoPlayer" onmouseenter="showVideoControls()">
     <iframe id="videoIframe" allow="autoplay" allowfullscreen="" frameborder="0"></iframe>
   </div>
 
   <!-- Video Controls -->
   <div id="videoControls">
-    <button onclick="videoPrev()" title="Previous">⏮️ Prev</button>
-    <button onclick="videoPlay()" title="Play">🟢 Play</button>
-    <button onclick="videoPause()" title="Pause">⏸️ Pause</button>
-    <button onclick="videoNext()" title="Next">⏭️ Next</button>
-    <button onclick="videoTogglePlaylist()" title="Show Playlist">Show📋List</button>
-    <button onclick="videoToggleFullscreen()" title="Fullscreen">Full🖥️screen</button>
-    <button onclick="videoClose()" title="Close">🟩 Close</button>
+    <div style="margin-bottom: 10px;">
+      <label style="color: white; font-size: 12px;">Opacity: 
+        <input type="range" id="videoOpacitySlider" min="0.1" max="1.0" step="0.1" value="0.5" style="width: 100px; margin-left: 5px;" oninput="updateVideoOpacity(this.value)"/>
+      </label>
+    </div>
+    <button onclick="videoPrev()" title="Previous" class="video-control-btn" data-icon="prev">⏮️</button>
+    <button onclick="videoPlay()" title="Play" class="video-control-btn" data-icon="play">🟢</button>
+    <button onclick="videoPause()" title="Pause" class="video-control-btn" data-icon="pause">⏸️</button>
+    <button onclick="videoNext()" title="Next" class="video-control-btn" data-icon="next">⏭️</button>
+    <button onclick="videoTogglePlaylist()" title="Show Playlist" class="video-control-btn" data-icon="playlist">📋</button>
+    <button onclick="videoToggleFullscreen()" title="Fullscreen" class="video-control-btn" data-icon="fullscreen">🖥️</button>
+    <button onclick="videoClose()" title="Close" class="video-control-btn" data-icon="close">��</button>
   </div>
 
   <!-- Video Playlist Panel -->
@@ -263,116 +268,120 @@
   <script src="media.js"></script>
   <script src="video.js"></script>
   <script>
-    // Global scope exports - ensure all functions are available
-    console.log("🔧 Setting up global function exports...");
-    
-    try {
-      // Export all functions to global scope
-      window.loadYouTubeVideo = loadYouTubeVideo;
-      window.toggleMusicPanel = toggleMusicPanel;
-      window.loadMusicList = loadMusicList;
-      window.playMusic = playMusic;
-      window.stopMusic = stopMusic;
-      window.toggleMediaToolbar = toggleMediaToolbar;
-      window.handleBackgroundUpload = handleBackgroundUpload;
-      window.handleVideoUpload = handleVideoUpload;
-      window.captureCanvas = captureCanvas;
-      window.captureCanvasOnly = captureCanvasOnly;
-      window.rollDice = rollDice;
-      window.showDiceSlider = showDiceSlider;
-      window.hideDiceSlider = hideDiceSlider;
-      window.uploadPlaylist = uploadPlaylist;
-      window.cyclePlaylists = cyclePlaylists;
-      window.loadUploadedPlaylist = loadUploadedPlaylist;
-      window.loadVideoPlaylist = loadVideoPlaylist;
-      window.videoPlayVideo = videoPlayVideo;
-      window.videoPlay = videoPlay;
-      window.videoPause = videoPause;
-      window.videoNext = videoNext;
-      window.videoPrev = videoPrev;
-      window.videoTogglePlaylist = videoTogglePlaylist;
-      window.videoToggleFullscreen = videoToggleFullscreen;
-      window.videoClose = videoClose;
-      window.showVideoControls = showVideoControls;
-      window.showVideoPlaylist = showVideoPlaylist;
-      window.startVideoPlaylistFadeOut = startVideoPlaylistFadeOut;
-      window.updateVideoPlaylistDisplay = updateVideoPlaylistDisplay;
-      window.toggleVideoPlayer = toggleVideoPlayer;
-      window.initVideoPlayer = initVideoPlayer;
-      
-      // Recording functions
-      window.recordState = recordState;
-      window.startPlayback = startPlayback;
-      
-      // Main.js functions
-      window.init = init;
-      window.setupEventListeners = setupEventListeners;
-      window.switchTheme = switchTheme;
-      window.addIdea = addIdea;
-      window.saveIdeas = saveIdeas;
-      window.deleteAllIdeas = deleteAllIdeas;
-      window.cycleBackground = cycleBackground;
-      window.rotateBackground = rotateBackground;
-      window.showPanel = showPanel;
-      window.savePanel = savePanel;
-      window.deleteIdea = deleteIdea;
-      window.closePanel = closePanel;
-      window.toggleGlow = toggleGlow;
-      window.toggleFlash = toggleFlash;
-      window.toggleAnimateColors = toggleAnimateColors;
-      window.toggleTransparent = toggleTransparent;
-      window.changeGlowColor = changeGlowColor;
-      window.toggleFixed = toggleFixed;
-      window.toggleStatic = toggleStatic;
-      window.changeColor = changeColor;
-      window.changeTextColor = changeTextColor;
-      window.cycleFont = cycleFont;
-      window.handleImageUpload = handleImageUpload;
-      window.handleImageSelect = handleImageSelect;
-      window.clearUploadedImage = clearUploadedImage;
-      window.loadBackgroundImage = loadBackgroundImage;
-      window.updatePresetSelector = updatePresetSelector;
-      window.switchPreset = switchPreset;
-      window.testImageUpload = testImageUpload;
-      window.testEffects = testEffects;
-      window.togglePanelSide = togglePanelSide;
-      window.toggleSpeed = toggleSpeed;
-      window.togglePauseButton = togglePauseButton;
-      window.toggleCheckeredBorder = toggleCheckeredBorder;
-      
-      // Video.js functions
-      window.videoPlayVideo = videoPlayVideo;
-      window.extractYouTubeId = extractYouTubeId;
-      window.fetchVideoTitle = fetchVideoTitle;
-      window.videoTogglePlaylist = videoTogglePlaylist;
-      window.videoToggleFullscreen = videoToggleFullscreen;
-      window.startVideoControlsFadeOut = startVideoControlsFadeOut;
-      window.startVideoPlaylistFadeOut = startVideoPlaylistFadeOut;
-      window.showVideoControls = showVideoControls;
-      window.showVideoPlaylist = showVideoPlaylist;
-      window.forceCloseVideo = forceCloseVideo;
-      
-      // Test function
-      window.testFunction = function() {
-        console.log('✅ Test function is working!');
-        return 'test';
-      };
-      
-      // Test if functions are available
-      console.log("🔧 Testing function availability:");
-      console.log("  rollDice:", typeof window.rollDice);
-      console.log("  toggleMusicPanel:", typeof window.toggleMusicPanel);
-      console.log("  captureCanvasOnly:", typeof window.captureCanvasOnly);
-      console.log("  toggleMediaToolbar:", typeof window.toggleMediaToolbar);
-      console.log("  testFunction:", typeof window.testFunction);
-      
-    } catch (error) {
-      console.error("❌ Error setting up global functions:", error);
-    }
-    
     // Initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
       console.log("🚀 Starting MindsEye initialization...");
+      
+      // Global scope exports - ensure all functions are available
+      console.log("🔧 Setting up global function exports...");
+      
+      try {
+        // Export all functions to global scope
+        window.loadYouTubeVideo = loadYouTubeVideo;
+        window.toggleMusicPanel = toggleMusicPanel;
+        window.loadMusicList = loadMusicList;
+        window.playMusic = playMusic;
+        window.stopMusic = stopMusic;
+        window.toggleMediaToolbar = toggleMediaToolbar;
+        window.handleBackgroundUpload = handleBackgroundUpload;
+        window.handleVideoUpload = handleVideoUpload;
+        window.captureCanvas = captureCanvas;
+        window.captureCanvasOnly = captureCanvasOnly;
+        window.rollDice = rollDice;
+        window.showDiceSlider = showDiceSlider;
+        window.hideDiceSlider = hideDiceSlider;
+        window.uploadPlaylist = uploadPlaylist;
+        window.cyclePlaylists = cyclePlaylists;
+        window.loadUploadedPlaylist = loadUploadedPlaylist;
+        window.loadVideoPlaylist = loadVideoPlaylist;
+        window.videoPlayVideo = videoPlayVideo;
+        window.videoPlay = videoPlay;
+        window.videoPause = videoPause;
+        window.videoNext = videoNext;
+        window.videoPrev = videoPrev;
+        window.videoTogglePlaylist = videoTogglePlaylist;
+        window.videoToggleFullscreen = videoToggleFullscreen;
+        window.videoClose = videoClose;
+        window.showVideoControls = showVideoControls;
+        window.showVideoPlaylist = showVideoPlaylist;
+        window.startVideoPlaylistFadeOut = startVideoPlaylistFadeOut;
+        window.updateVideoPlaylistDisplay = updateVideoPlaylistDisplay;
+        window.toggleVideoPlayer = toggleVideoPlayer;
+        window.initVideoPlayer = initVideoPlayer;
+        
+        // Recording functions
+        window.recordState = recordState;
+        window.startPlayback = startPlayback;
+        
+        // Main.js functions
+        window.init = init;
+        window.setupEventListeners = setupEventListeners;
+        window.switchTheme = switchTheme;
+        window.addIdea = addIdea;
+        window.saveIdeas = saveIdeas;
+        window.deleteAllIdeas = deleteAllIdeas;
+        window.cycleBackground = cycleBackground;
+        window.rotateBackground = rotateBackground;
+        window.showPanel = showPanel;
+        window.savePanel = savePanel;
+        window.deleteIdea = deleteIdea;
+        window.closePanel = closePanel;
+        window.toggleGlow = toggleGlow;
+        window.toggleFlash = toggleFlash;
+        window.toggleAnimateColors = toggleAnimateColors;
+        window.toggleTransparent = toggleTransparent;
+        window.changeGlowColor = changeGlowColor;
+        window.toggleFixed = toggleFixed;
+        window.toggleStatic = toggleStatic;
+        window.changeColor = changeColor;
+        window.changeTextColor = changeTextColor;
+        window.cycleFont = cycleFont;
+        window.handleImageUpload = handleImageUpload;
+        window.handleImageSelect = handleImageSelect;
+        window.clearUploadedImage = clearUploadedImage;
+        window.loadBackgroundImage = loadBackgroundImage;
+        window.updatePresetSelector = updatePresetSelector;
+        window.switchPreset = switchPreset;
+        window.testImageUpload = testImageUpload;
+        window.testEffects = testEffects;
+        window.togglePanelSide = togglePanelSide;
+        window.toggleSpeed = toggleSpeed;
+        window.togglePauseButton = togglePauseButton;
+        window.toggleCheckeredBorder = toggleCheckeredBorder;
+        
+        // Video.js functions
+        window.videoPlayVideo = videoPlayVideo;
+        window.extractYouTubeId = extractYouTubeId;
+        window.fetchVideoTitle = fetchVideoTitle;
+        window.videoTogglePlaylist = videoTogglePlaylist;
+        window.videoToggleFullscreen = videoToggleFullscreen;
+        window.startVideoControlsFadeOut = startVideoControlsFadeOut;
+        window.startVideoPlaylistFadeOut = startVideoPlaylistFadeOut;
+        window.showVideoControls = showVideoControls;
+        window.showVideoPlaylist = showVideoPlaylist;
+        window.forceCloseVideo = forceCloseVideo;
+        window.updateVideoOpacity = updateVideoOpacity;
+        window.loadVideoControlImages = loadVideoControlImages;
+        window.setupMediaEventListeners = setupMediaEventListeners;
+        window.debugVideoControls = debugVideoControls;
+        
+        // Test function
+        window.testFunction = function() {
+          console.log('✅ Test function is working!');
+          return 'test';
+        };
+        
+        // Test if functions are available
+        console.log("🔧 Testing function availability:");
+        console.log("  rollDice:", typeof window.rollDice);
+        console.log("  toggleMusicPanel:", typeof window.toggleMusicPanel);
+        console.log("  captureCanvasOnly:", typeof window.captureCanvasOnly);
+        console.log("  toggleMediaToolbar:", typeof window.toggleMediaToolbar);
+        console.log("  testFunction:", typeof window.testFunction);
+        
+      } catch (error) {
+        console.error("❌ Error setting up global functions:", error);
+      }
       
       // Initialize core functionality
       if (typeof init === 'function') {
@@ -387,6 +396,11 @@
       // Initialize video player
       if (typeof initVideoPlayer === 'function') {
         initVideoPlayer();
+      }
+      
+      // Set up media event listeners
+      if (typeof setupMediaEventListeners === 'function') {
+        setupMediaEventListeners();
       }
       
       // Set up toolbar auto-hide
