@@ -1383,11 +1383,6 @@ function recordState(type) {
     console.log('✅ Animation complete: Out point updated with current positions');
     
   } else if (type === 'keyframe') {
-    if (!AnimationState.data.isRecording) {
-      alert('Please start recording first (mark in point)');
-      return;
-    }
-    
     // Pause any current playback
     if (AnimationState.data.isPlaying) {
       stopPlayback();
@@ -1412,6 +1407,15 @@ function recordState(type) {
       time: keyframeTime,
       positions: keyframePositions
     };
+    
+    // If no animation is active, start one
+    if (!AnimationState.data.isRecording) {
+      AnimationState.data.isRecording = true;
+      AnimationState.data.inPoint = 0;
+      AnimationState.data.outPoint = maxTime;
+      AnimationState.data.keyframes = [];
+      console.log('🎬 Started new animation recording');
+    }
     
     AnimationState.data.keyframes.push(keyframe);
     addTimelineMarker('keyframe', keyframeTime);
@@ -2422,7 +2426,7 @@ function updateKeyframesForCurrentPositions() {
 
 // Function to automatically update keyframes when bubbles are moved during recording
 function autoUpdateKeyframes() {
-  if (AnimationState.data.isRecording && AnimationState.data.keyframes.length > 0) {
+  if (AnimationState.data.keyframes.length > 0) {
     // Get current timeline position
     const timelineSlider = document.getElementById('mediaPlaybackSlider');
     if (timelineSlider) {
