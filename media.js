@@ -663,20 +663,17 @@ async function nextPlaylist() {
     return;
   }
   
-  if (currentPlaylistIndex < uploadedPlaylists.length - 1) {
-    currentPlaylistIndex++;
-    loadUploadedPlaylist(currentPlaylistIndex);
-    
-    // Update display to show the switched playlist
-    if (typeof updateVideoPlaylistDisplay === 'function') {
-      updateVideoPlaylistDisplay();
-    }
-    
-    const playlist = uploadedPlaylists[currentPlaylistIndex];
-    console.log(`📋 Switched to next playlist: ${playlist.name} (${playlist.urls.length} videos)`);
-  } else {
-    console.log('📋 Already at the last playlist');
+  // Loop to first playlist if at the end
+  currentPlaylistIndex = (currentPlaylistIndex + 1) % uploadedPlaylists.length;
+  loadUploadedPlaylist(currentPlaylistIndex);
+  
+  // Update display to show the switched playlist
+  if (typeof updateVideoPlaylistDisplay === 'function') {
+    updateVideoPlaylistDisplay();
   }
+  
+  const playlist = uploadedPlaylists[currentPlaylistIndex];
+  console.log(`📋 Switched to next playlist: ${playlist.name} (${playlist.urls.length} videos)`);
 }
 
 async function previousPlaylist() {
@@ -685,20 +682,17 @@ async function previousPlaylist() {
     return;
   }
   
-  if (currentPlaylistIndex > 0) {
-    currentPlaylistIndex--;
-    loadUploadedPlaylist(currentPlaylistIndex);
-    
-    // Update display to show the switched playlist
-    if (typeof updateVideoPlaylistDisplay === 'function') {
-      updateVideoPlaylistDisplay();
-    }
-    
-    const playlist = uploadedPlaylists[currentPlaylistIndex];
-    console.log(`📋 Switched to previous playlist: ${playlist.name} (${playlist.urls.length} videos)`);
-  } else {
-    console.log('📋 Already at the first playlist');
+  // Loop to last playlist if at the beginning
+  currentPlaylistIndex = currentPlaylistIndex === 0 ? uploadedPlaylists.length - 1 : currentPlaylistIndex - 1;
+  loadUploadedPlaylist(currentPlaylistIndex);
+  
+  // Update display to show the switched playlist
+  if (typeof updateVideoPlaylistDisplay === 'function') {
+    updateVideoPlaylistDisplay();
   }
+  
+  const playlist = uploadedPlaylists[currentPlaylistIndex];
+  console.log(`📋 Switched to previous playlist: ${playlist.name} (${playlist.urls.length} videos)`);
 }
 
 async function playRandomVideo() {
@@ -722,15 +716,22 @@ function loadUploadedPlaylist(index) {
   videoCurrentIndex = 0;
   videoTitles = []; // Clear cached titles for new playlist
   
-  // Update display (only once)
+  // Update display immediately
   if (typeof updateVideoPlaylistDisplay === 'function') {
     updateVideoPlaylistDisplay();
   }
   
-  // Play first video
+  // Play first video (this will also update the display)
   if (typeof videoPlayVideo === 'function') {
     videoPlayVideo(0);
   }
+  
+  // Force another display update to ensure it's correct
+  setTimeout(() => {
+    if (typeof updateVideoPlaylistDisplay === 'function') {
+      updateVideoPlaylistDisplay();
+    }
+  }, 100);
   
   console.log(`🔄 Loaded uploaded playlist: ${playlist.name} with ${playlist.urls.length} videos`);
 }
@@ -1227,11 +1228,9 @@ async function toggleVideoPlayer() {
       if (videoIframe && videoIframe.src && videoIframe.src !== '') {
         console.log('🎥 Video player shown (playback continues)');
       } else {
-        // Start playing the first video
-        setTimeout(() => {
-          videoPlayVideo(0);
-          console.log('🎥 Video player opened and started playing first video');
-        }, 500); // Small delay to ensure iframe is ready
+        // Start playing the first video immediately
+        videoPlayVideo(0);
+        console.log('🎥 Video player opened and started playing first video');
       }
     }
     
@@ -1518,7 +1517,14 @@ function updateVideoPlayButtonIcon() {
 }
 
 // ===== PRE-LOAD PLAYLISTS FROM ROOT FOLDER =====
+let playlistsPreloaded = false; // Flag to prevent double loading
+
 async function preloadPlaylists() {
+  if (playlistsPreloaded) {
+    console.log('📋 Playlists already pre-loaded, skipping');
+    return;
+  }
+  
   const playlistFiles = ['s25_playlist.txt', 'Argyle🎧Podcasts.txt'];
   
   console.log('📋 Pre-loading playlists from root folder...');
@@ -1568,6 +1574,8 @@ async function preloadPlaylists() {
   } else {
     console.log('📋 No playlists found in root folder');
   }
+  
+  playlistsPreloaded = true;
 }
 
 // ===== MEDIA.JS LOADED =====
