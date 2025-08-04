@@ -403,11 +403,13 @@ html, body {
 .timeline-marker {
   position: absolute;
   top: -5px;
-  width: 10px;
-  height: 20px;
-  border-radius: 2px;
+  width: 12px;
+  height: 24px;
+  border-radius: 3px;
   cursor: pointer;
   z-index: 10;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .timeline-control {
@@ -418,6 +420,37 @@ html, body {
 .timeline-control input[type="range"] {
   width: 100%;
   position: relative;
+}
+
+/* Animation recording buttons */
+.record-btn {
+  background: linear-gradient(45deg, #ff6b6b, #ee5a52) !important;
+  color: white !important;
+  font-weight: bold !important;
+}
+
+.record-btn:hover {
+  background: linear-gradient(45deg, #ff5252, #d32f2f) !important;
+}
+
+.play-btn {
+  background: linear-gradient(45deg, #4CAF50, #45a049) !important;
+  color: white !important;
+  font-weight: bold !important;
+}
+
+.play-btn:hover {
+  background: linear-gradient(45deg, #388E3C, #2E7D32) !important;
+}
+
+/* PNG button overrides */
+.has-png {
+  background-image: var(--png-url) !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  color: transparent !important;
+  font-size: 0 !important;
 }
 
 #videoControls button:hover {
@@ -687,6 +720,28 @@ html, body {
   font-weight: bold;
   transition: all 0.3s ease;
   margin: 0;
+}
+
+/* Override for PNG buttons */
+#mediaToolbar button.has-png,
+#toolbar button.has-png,
+.video-control-btn.has-png {
+  background: none !important;
+  background-image: var(--png-url, none) !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  color: transparent !important;
+  font-size: 0 !important;
+}
+
+/* Special override for dice button when showing number */
+#toolbar button.has-png[data-icon="dice"].showing-number {
+  color: gold !important;
+  font-size: 24px !important;
+  font-weight: bold !important;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8) !important;
+  z-index: 10 !important;
 }
 
 #mediaToolbar button:hover {

@@ -70,6 +70,7 @@
     <div class="timeline-control">
       <span>Timeline:</span>
       <input id="mediaPlaybackSlider" max="1" min="0" step="0.01" type="range" value="0"/>
+      <span id="playbackTimeDisplay" style="color: white; font-size: 12px; margin-left: 10px;">00:00 / 00:00</span>
     </div>
     <div class="duration-control">
       <span>Duration:</span>
@@ -79,8 +80,12 @@
         <option value="15000">15s</option>
         <option value="20000">20s</option>
         <option value="30000">30s</option>
+        <option value="40000">40s</option>
+        <option value="50000">50s</option>
       </select>
     </div>
+    <button onclick="saveAnimation()" class="save-btn toolbar-btn" data-icon="save" title="Save Animation">💾 Save</button>
+    <button onclick="loadAnimation()" class="load-btn toolbar-btn" data-icon="load" title="Load Animation">📂 Load</button>
     <button onclick="captureCanvas()" class="snapshot-btn toolbar-btn" data-icon="snapshot-media" title="Snapshot">📷 Snapshot</button>
   </div>
 
@@ -334,11 +339,16 @@
         window.initVideoPlayer = initVideoPlayer;
         
         // Recording functions
-        window.recordState = recordState;
-        window.startPlayback = startPlayback;
-        window.stopPlayback = stopPlayback;
-        window.animateBubbles = animateBubbles;
-        window.interpolateBubblePositions = interpolateBubblePositions;
+                       window.recordState = recordState;
+               window.startPlayback = startPlayback;
+               window.stopPlayback = stopPlayback;
+               window.animateBubbles = animateBubbles;
+               window.interpolateBubblePositions = interpolateBubblePositions;
+               window.saveAnimation = saveAnimation;
+               window.loadAnimation = loadAnimation;
+               window.updatePlaybackTimeDisplay = updatePlaybackTimeDisplay;
+               window.updateTimelineMarkers = updateTimelineMarkers;
+               window.toggleVideoPlayer = toggleVideoPlayer;
         
         // Main.js functions
         window.init = init;
@@ -426,6 +436,7 @@
         console.log("  toggleMusicPanel:", typeof window.toggleMusicPanel);
         console.log("  captureCanvasOnly:", typeof window.captureCanvasOnly);
         console.log("  toggleMediaToolbar:", typeof window.toggleMediaToolbar);
+        console.log("  toggleVideoPlayer:", typeof window.toggleVideoPlayer);
         console.log("  testFunction:", typeof window.testFunction);
       }, 300);
       

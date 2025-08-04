@@ -373,13 +373,11 @@ function rollDice() {
   diceOverlay.textContent = result;
   diceOverlay.style.display = 'block';
   
-  // Show the dice result on top of the button
+  // Show the dice result on top of the button (even with PNG)
   if (diceButton) {
     diceButton.textContent = result;
-    diceButton.style.color = 'gold';
-    diceButton.style.fontSize = '24px';
-    diceButton.style.fontWeight = 'bold';
-    diceButton.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
+    // Add CSS class to override PNG styles
+    diceButton.classList.add('showing-number');
   }
   
   console.log("🎲 Dice roll result:", result, "(max:", diceMaxValue, ")");
@@ -1246,80 +1244,199 @@ async function toggleVideoPlayer() {
   console.log('🎥 Video player toggled:', isVisible ? 'hidden' : 'shown');
 }
 
-// ===== ANIMATION RECORDING SYSTEM =====
+// ===== MODULAR ANIMATION SYSTEM =====
 
-// Animation state
-let animationData = {
-  inPoint: null,
-  outPoint: null,
-  keyframes: [],
-  duration: 10000, // Default 10 seconds
-  isRecording: false,
-  isPlaying: false
+// Animation Configuration
+const ANIMATION_CONFIG = {
+  defaultDuration: 10000, // 10 seconds
+  minKeyframes: 2,
+  timelineStep: 0.01
 };
 
-// Timeline markers
-let timelineMarkers = [];
+// Animation State Manager
+const AnimationState = {
+  data: {
+    inPoint: null,
+    outPoint: null,
+    keyframes: [],
+    duration: ANIMATION_CONFIG.defaultDuration,
+    isRecording: false,
+    isPlaying: false,
+    currentTime: 0,
+    startTime: 0
+  },
+  
+  timelineMarkers: [],
+  playbackStartTime: 0,
+  playbackDuration: 0,
+  currentPlaybackTime: 0,
+  
+  // Reset animation state
+  reset() {
+    this.data.keyframes = [];
+    this.timelineMarkers = [];
+    this.data.isRecording = false;
+    this.data.isPlaying = false;
+    console.log('🔄 Animation state reset');
+  },
+  
+  // Get current state
+  getState() {
+    return { ...this.data };
+  },
+  
+  // Update duration
+  updateDuration(duration) {
+    this.data.duration = duration;
+    console.log(`⏱️ Animation duration updated: ${duration}ms`);
+  }
+};
 
 function recordState(type) {
-  const currentTime = Date.now();
+  // Get duration from dropdown
+  const durationSelect = document.getElementById('mediaPlaybackDuration');
+  const duration = parseInt(durationSelect.value);
+  AnimationState.updateDuration(duration);
   
   if (type === 'start') {
-    animationData.inPoint = currentTime;
-    animationData.isRecording = true;
-    console.log('🎬 In point marked at:', new Date(currentTime).toLocaleTimeString());
+    // Auto-pause if speed is not 0
+    if (typeof speedMultiplier !== 'undefined' && speedMultiplier !== 0) {
+      if (typeof togglePauseButton === 'function') {
+        togglePauseButton();
+      }
+    }
     
-    // Add marker to timeline
-    addTimelineMarker('in', currentTime);
+    // Reset animation state
+    AnimationState.reset();
+    updateTimelineDisplay();
+    
+    // Set in point at 0 seconds and out point at full duration
+    AnimationState.data.inPoint = 0;
+    AnimationState.data.outPoint = duration / 1000;
+    AnimationState.data.isRecording = true;
+    
+    console.log('🎬 In point set at 0s, Out point set at', (duration / 1000).toFixed(1), 's');
     
     // Capture current bubble positions
-    captureBubblePositions();
+    const currentPositions = captureBubblePositions();
+    
+    // Create keyframes: in point (0s) and out point (full duration) with same positions
+    AnimationState.data.keyframes = [
+      {
+        time: 0,
+        positions: currentPositions
+      },
+      {
+        time: duration / 1000,
+        positions: currentPositions
+      }
+    ];
+    
+    // Add timeline markers
+    addTimelineMarker('in', 0);
+    addTimelineMarker('out', duration / 1000);
+    
+    // Update time display
+    updatePlaybackTimeDisplay(0, duration / 1000);
+    
+    console.log('✅ Animation ready: In and Out points created with current positions');
+    console.log('📊 Keyframes created:', AnimationState.data.keyframes.length);
+    AnimationState.data.keyframes.forEach((kf, index) => {
+      console.log(`  Keyframe ${index}: time=${kf.time}s, positions=${kf.positions.length}`);
+    });
     
   } else if (type === 'end') {
-    animationData.outPoint = currentTime;
-    animationData.isRecording = false;
-    console.log('🏁 Out point marked at:', new Date(currentTime).toLocaleTimeString());
-    
-    // Add marker to timeline
-    addTimelineMarker('out', currentTime);
-    
-    // Capture final bubble positions
-    captureBubblePositions();
-    
-  } else if (type === 'keyframe') {
-    if (!animationData.isRecording) {
+    if (!AnimationState.data.isRecording) {
       alert('Please start recording first (mark in point)');
       return;
     }
     
-    // Add keyframe
+    // Get current time from timeline slider
+    const timelineSlider = document.getElementById('mediaPlaybackSlider');
+    const progress = parseFloat(timelineSlider.value);
+    const endTime = progress * (duration / 1000);
+    
+    AnimationState.data.outPoint = endTime;
+    AnimationState.data.isRecording = false;
+    console.log('🏁 Out point adjusted to', endTime.toFixed(1), 's');
+    
+    // Update out marker position
+    updateTimelineMarkers();
+    
+    // Capture current bubble positions for out point
+    const endPositions = captureBubblePositions();
+    
+    // Update the out keyframe with current positions
+    const outKeyframeIndex = AnimationState.data.keyframes.findIndex(kf => kf.time === AnimationState.data.outPoint);
+    if (outKeyframeIndex !== -1) {
+      AnimationState.data.keyframes[outKeyframeIndex].positions = endPositions;
+    } else {
+      AnimationState.data.keyframes.push({
+        time: endTime,
+        positions: endPositions
+      });
+    }
+    
+    // Update time display
+    updatePlaybackTimeDisplay(endTime, duration / 1000);
+    
+    console.log('✅ Animation complete: Out point updated with current positions');
+    
+  } else if (type === 'keyframe') {
+    if (!AnimationState.data.isRecording) {
+      alert('Please start recording first (mark in point)');
+      return;
+    }
+    
+    // Pause any current playback
+    if (AnimationState.data.isPlaying) {
+      stopPlayback();
+      console.log('⏸️ Paused playback to add keyframe');
+    }
+    
+    // Get current time from timeline slider
+    const timelineSlider = document.getElementById('mediaPlaybackSlider');
+    const progress = parseFloat(timelineSlider.value);
+    const keyframeTime = progress * (duration / 1000);
+    
+    const maxTime = duration / 1000;
+    
+    if (keyframeTime <= 0 || keyframeTime >= maxTime) {
+      alert('Keyframe must be between start and end of animation');
+      return;
+    }
+    
+    // Capture current bubble positions for keyframe
+    const keyframePositions = captureBubblePositions();
     const keyframe = {
-      time: currentTime,
-      positions: captureBubblePositions()
+      time: keyframeTime,
+      positions: keyframePositions
     };
     
-    animationData.keyframes.push(keyframe);
-    addTimelineMarker('keyframe', currentTime);
+    AnimationState.data.keyframes.push(keyframe);
+    addTimelineMarker('keyframe', keyframeTime);
     
-    console.log('📍 Keyframe added at:', new Date(currentTime).toLocaleTimeString());
+    console.log('📍 Keyframe added at:', keyframeTime.toFixed(1), 's with current positions');
   }
 }
 
+function deepCopyIdeas() {
+  // Deep copy the ideas array (equivalent to the previous system)
+  return ideas.map(idea => ({ ...idea }));
+}
+
 function captureBubblePositions() {
-  const bubbles = document.querySelectorAll('.bubble');
-  const positions = [];
+  // Use the ideas array instead of DOM elements
+  console.log('🎬 Capturing bubble positions from ideas array...');
+  console.log('🔍 Found ideas:', ideas.length);
   
-  bubbles.forEach((bubble, index) => {
-    const rect = bubble.getBoundingClientRect();
-    positions.push({
-      id: index,
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2,
-      scale: bubble.style.transform.match(/scale\(([^)]+)\)/) ? parseFloat(bubble.style.transform.match(/scale\(([^)]+)\)/)[1]) : 1,
-      rotation: bubble.style.transform.match(/rotate\(([^)]+)deg\)/) ? parseFloat(bubble.style.transform.match(/rotate\(([^)]+)deg\)/)[1]) : 0
-    });
+  const positions = deepCopyIdeas();
+  
+  positions.forEach((idea, index) => {
+    console.log(`  Idea ${index}: x=${idea.x.toFixed(1)}, y=${idea.y.toFixed(1)}, title="${idea.title}"`);
   });
   
+  console.log('✅ Captured positions for', positions.length, 'ideas');
   return positions;
 }
 
@@ -1327,10 +1444,14 @@ function addTimelineMarker(type, time) {
   const marker = {
     type: type,
     time: time,
-    position: ((time - (animationData.inPoint || time)) / animationData.duration) * 100
+    position: (time / (AnimationState.data.duration / 1000)) * 100 // Convert to percentage
   };
   
-  timelineMarkers.push(marker);
+  // Remove existing marker of same type
+  AnimationState.timelineMarkers = AnimationState.timelineMarkers.filter(m => m.type !== type);
+  
+  // Add new marker
+  AnimationState.timelineMarkers.push(marker);
   updateTimelineDisplay();
 }
 
@@ -1343,60 +1464,105 @@ function updateTimelineDisplay() {
   existingMarkers.forEach(marker => marker.remove());
   
   // Add new markers
-  timelineMarkers.forEach(marker => {
+  AnimationState.timelineMarkers.forEach(marker => {
     const markerElement = document.createElement('div');
     markerElement.className = 'timeline-marker';
     markerElement.style.left = `${marker.position}%`;
     markerElement.style.backgroundColor = marker.type === 'in' ? '#4CAF50' : 
                                        marker.type === 'out' ? '#f44336' : '#FF9800';
-    markerElement.title = `${marker.type} point`;
+    markerElement.title = `${marker.type} point at ${marker.time.toFixed(1)}s`;
     
     timeline.parentNode.appendChild(markerElement);
   });
 }
 
+function updateTimelineMarkers() {
+  // Clear and rebuild all markers
+  AnimationState.timelineMarkers = [];
+  
+  // Add in marker
+  addTimelineMarker('in', 0);
+  
+  // Add out marker
+  addTimelineMarker('out', AnimationState.data.outPoint);
+  
+  // Add keyframe markers
+  AnimationState.data.keyframes.forEach(keyframe => {
+    if (keyframe.time > 0 && keyframe.time < AnimationState.data.outPoint) {
+      addTimelineMarker('keyframe', keyframe.time);
+    }
+  });
+}
+
+function updatePlaybackTimeDisplay(currentTime, totalTime) {
+  const timeDisplay = document.getElementById('playbackTimeDisplay');
+  if (timeDisplay) {
+    const currentFormatted = formatTime(currentTime);
+    const totalFormatted = formatTime(totalTime);
+    timeDisplay.textContent = `${currentFormatted} / ${totalFormatted}`;
+  }
+}
+
 function startPlayback() {
-  if (!animationData.inPoint || !animationData.outPoint) {
-    alert('Please mark both in and out points first');
+  console.log('🎬 Playback check:', {
+    inPoint: AnimationState.data.inPoint,
+    outPoint: AnimationState.data.outPoint,
+    keyframes: AnimationState.data.keyframes.length,
+    isRecording: AnimationState.data.isRecording
+  });
+  
+  // Check if we have at least 2 keyframes (in and out points)
+  if (AnimationState.data.keyframes.length < 2) {
+    console.log('❌ Not enough keyframes for playback:', AnimationState.data.keyframes.length);
+    alert('Please set in point first to create animation (need at least 2 keyframes)');
     return;
   }
   
-  if (animationData.isPlaying) {
+  console.log('✅ Sufficient keyframes for playback:', AnimationState.data.keyframes.length);
+  
+  if (AnimationState.data.isPlaying) {
     stopPlayback();
     return;
   }
   
-  animationData.isPlaying = true;
-  const duration = animationData.outPoint - animationData.inPoint;
+  AnimationState.data.isPlaying = true;
+  AnimationState.playbackStartTime = Date.now();
   
-  console.log('▶️ Starting animation playback:', duration, 'ms');
+  // Calculate duration from in and out points
+  AnimationState.playbackDuration = (AnimationState.data.outPoint - AnimationState.data.inPoint) * 1000; // Convert to milliseconds
+  
+  console.log('▶️ Starting animation playback:', AnimationState.playbackDuration, 'ms');
   
   // Start the animation
-  animateBubbles(duration);
+  animateBubbles(AnimationState.playbackDuration);
 }
 
 function stopPlayback() {
-  animationData.isPlaying = false;
+  AnimationState.data.isPlaying = false;
   console.log('⏹️ Animation playback stopped');
 }
 
 function animateBubbles(duration) {
-  if (!animationData.isPlaying) return;
-  
-  const startTime = Date.now();
-  const endTime = startTime + duration;
+  if (!AnimationState.data.isPlaying) return;
   
   function animate() {
-    if (!animationData.isPlaying) return;
+    if (!AnimationState.data.isPlaying) return;
     
     const currentTime = Date.now();
-    const progress = Math.min((currentTime - startTime) / duration, 1);
+    const elapsed = currentTime - AnimationState.playbackStartTime;
+    const progress = Math.min(elapsed / duration, 1);
+    
+    // Calculate current playback time in seconds
+    AnimationState.currentPlaybackTime = AnimationState.data.inPoint + (progress * (AnimationState.data.outPoint - AnimationState.data.inPoint));
     
     // Update timeline slider
     const timelineSlider = document.getElementById('mediaPlaybackSlider');
     if (timelineSlider) {
       timelineSlider.value = progress;
     }
+    
+    // Update time display
+    updatePlaybackTimeDisplay(AnimationState.currentPlaybackTime, AnimationState.data.duration / 1000);
     
     // Interpolate bubble positions
     interpolateBubblePositions(progress);
@@ -1405,7 +1571,7 @@ function animateBubbles(duration) {
       requestAnimationFrame(animate);
     } else {
       // Animation complete
-      animationData.isPlaying = false;
+      AnimationState.data.isPlaying = false;
       console.log('✅ Animation playback complete');
     }
   }
@@ -1414,25 +1580,24 @@ function animateBubbles(duration) {
 }
 
 function interpolateBubblePositions(progress) {
-  // Get all keyframes including in/out points
-  const allKeyframes = [
-    { time: animationData.inPoint, positions: animationData.keyframes[0]?.positions || [] },
-    ...animationData.keyframes,
-    { time: animationData.outPoint, positions: animationData.keyframes[animationData.keyframes.length - 1]?.positions || [] }
-  ].filter(kf => kf.positions.length > 0);
+  if (AnimationState.data.keyframes.length < 2) {
+    console.log('❌ Not enough keyframes for interpolation:', AnimationState.data.keyframes.length);
+    return;
+  }
   
-  if (allKeyframes.length < 2) return;
+  // Convert progress to time in seconds
+  const currentTime = progress * (AnimationState.data.duration / 1000);
+  
+  console.log('🎬 Interpolating at progress:', progress, 'time:', currentTime.toFixed(1), 's');
   
   // Find the two keyframes to interpolate between
-  const currentTime = animationData.inPoint + (progress * (animationData.outPoint - animationData.inPoint));
+  let startKeyframe = AnimationState.data.keyframes[0];
+  let endKeyframe = AnimationState.data.keyframes[AnimationState.data.keyframes.length - 1];
   
-  let startKeyframe = allKeyframes[0];
-  let endKeyframe = allKeyframes[allKeyframes.length - 1];
-  
-  for (let i = 0; i < allKeyframes.length - 1; i++) {
-    if (currentTime >= allKeyframes[i].time && currentTime <= allKeyframes[i + 1].time) {
-      startKeyframe = allKeyframes[i];
-      endKeyframe = allKeyframes[i + 1];
+  for (let i = 0; i < AnimationState.data.keyframes.length - 1; i++) {
+    if (currentTime >= AnimationState.data.keyframes[i].time && currentTime <= AnimationState.data.keyframes[i + 1].time) {
+      startKeyframe = AnimationState.data.keyframes[i];
+      endKeyframe = AnimationState.data.keyframes[i + 1];
       break;
     }
   }
@@ -1440,23 +1605,123 @@ function interpolateBubblePositions(progress) {
   // Calculate interpolation factor
   const segmentProgress = (currentTime - startKeyframe.time) / (endKeyframe.time - startKeyframe.time);
   
-  // Apply interpolated positions to bubbles
-  const bubbles = document.querySelectorAll('.bubble');
-  bubbles.forEach((bubble, index) => {
-    const startPos = startKeyframe.positions[index];
-    const endPos = endKeyframe.positions[index];
-    
-    if (startPos && endPos) {
-      const x = startPos.x + (endPos.x - startPos.x) * segmentProgress;
-      const y = startPos.y + (endPos.y - startPos.y) * segmentProgress;
-      const scale = startPos.scale + (endPos.scale - startPos.scale) * segmentProgress;
-      const rotation = startPos.rotation + (endPos.rotation - startPos.rotation) * segmentProgress;
+  console.log('🎬 Interpolating between keyframes:', startKeyframe.time.toFixed(1), 's and', endKeyframe.time.toFixed(1), 's, factor:', segmentProgress.toFixed(2));
+  
+  // Apply interpolated positions to ideas array (which drives the rendering)
+  const startPositions = startKeyframe.positions;
+  const endPositions = endKeyframe.positions;
+  
+  if (startPositions && endPositions) {
+    // Update the ideas array with interpolated positions
+    ideas.forEach((idea, index) => {
+      const startPos = startPositions[index];
+      const endPos = endPositions[index];
       
-      bubble.style.left = `${x}px`;
-      bubble.style.top = `${y}px`;
-      bubble.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
-    }
-  });
+      if (startPos && endPos) {
+        // Interpolate position
+        idea.x = startPos.x + (endPos.x - startPos.x) * segmentProgress;
+        idea.y = startPos.y + (endPos.y - startPos.y) * segmentProgress;
+        
+        // Interpolate velocity (optional)
+        if (startPos.vx !== undefined && endPos.vx !== undefined) {
+          idea.vx = startPos.vx + (endPos.vx - startPos.vx) * segmentProgress;
+          idea.vy = startPos.vy + (endPos.vy - startPos.vy) * segmentProgress;
+        }
+        
+        // Interpolate other properties if they exist
+        if (startPos.radius !== undefined && endPos.radius !== undefined) {
+          idea.radius = startPos.radius + (endPos.radius - startPos.radius) * segmentProgress;
+        }
+      }
+    });
+    
+    console.log('✅ Applied interpolated positions to ideas array');
+  }
+}
+
+// ===== SAVE/LOAD ANIMATION FUNCTIONS =====
+
+function saveAnimation() {
+  if (AnimationState.data.keyframes.length < 2) {
+    alert('Please record an animation first (mark in and out points)');
+    return;
+  }
+  
+  const animationToSave = {
+    ...AnimationState.data,
+    timestamp: Date.now(),
+    name: `Animation_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`
+  };
+  
+  const dataStr = JSON.stringify(animationToSave, null, 2);
+  const dataBlob = new Blob([dataStr], { type: 'application/json' });
+  
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(dataBlob);
+  link.download = `${animationToSave.name}.json`;
+  link.click();
+  
+  console.log('💾 Animation saved:', animationToSave.name);
+}
+
+function loadAnimation() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  
+  input.onchange = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const loadedAnimation = JSON.parse(e.target.result);
+        
+        // Validate the loaded animation
+        if (!loadedAnimation.keyframes || loadedAnimation.keyframes.length < 2) {
+          alert('Invalid animation file: missing keyframes');
+          return;
+        }
+        
+        // Load the animation data
+        animationData = {
+          inPoint: loadedAnimation.inPoint || 0,
+          outPoint: loadedAnimation.outPoint || 10,
+          keyframes: loadedAnimation.keyframes,
+          duration: loadedAnimation.duration || 10000,
+          isRecording: false,
+          isPlaying: false,
+          currentTime: 0,
+          startTime: 0
+        };
+        
+        // Update duration dropdown
+        const durationSelect = document.getElementById('mediaPlaybackDuration');
+        durationSelect.value = animationData.duration;
+        
+        // Clear and rebuild timeline markers
+        timelineMarkers = [];
+        animationData.keyframes.forEach(keyframe => {
+          addTimelineMarker('keyframe', keyframe.time);
+        });
+        
+        // Add in/out markers
+        addTimelineMarker('in', 0);
+        addTimelineMarker('out', animationData.outPoint);
+        
+        console.log('📂 Animation loaded:', loadedAnimation.name || 'Unnamed Animation');
+        
+      } catch (error) {
+        console.error('❌ Error loading animation:', error);
+        alert('Error loading animation file');
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+  
+  input.click();
 }
 
 // ===== VIDEO CONTROL IMAGE HANDLING =====
@@ -1526,6 +1791,85 @@ function setupMediaEventListeners() {
     videoLoader.addEventListener('change', handleVideoUpload);
     console.log('✅ Video upload listener set up');
   }
+  
+  // Set up timeline slider events
+  const timelineSlider = document.getElementById('mediaPlaybackSlider');
+  if (timelineSlider) {
+    timelineSlider.addEventListener('input', (e) => {
+      if (!AnimationState.data.isPlaying) {
+        const progress = parseFloat(e.target.value);
+        console.log('🎛️ Timeline slider moved to progress:', progress);
+        
+        if (AnimationState.data.keyframes.length >= 2) {
+          const currentTime = progress * (AnimationState.data.duration / 1000);
+          AnimationState.currentPlaybackTime = currentTime;
+          interpolateBubblePositions(progress);
+          updatePlaybackTimeDisplay(currentTime, AnimationState.data.duration / 1000);
+        } else {
+          console.log('❌ No keyframes available for timeline scrubbing');
+        }
+      }
+    });
+    
+    // Add change event to record positions when scrubbing to end
+    timelineSlider.addEventListener('change', (e) => {
+      if (!AnimationState.data.isPlaying && AnimationState.data.isRecording) {
+        const progress = parseFloat(e.target.value);
+        const currentTime = progress * (AnimationState.data.duration / 1000);
+        
+        // If scrubbed to the end (or very close), update the out point
+        if (progress >= 0.95) { // Within 5% of the end
+          console.log('🎬 Timeline scrubbed to end - updating out point');
+          
+          // Capture current positions
+          const endPositions = captureBubblePositions();
+          
+          // Update the out keyframe
+          const outKeyframeIndex = AnimationState.data.keyframes.findIndex(kf => kf.time === AnimationState.data.outPoint);
+          if (outKeyframeIndex !== -1) {
+            AnimationState.data.keyframes[outKeyframeIndex].positions = endPositions;
+            console.log('✅ Out point updated with current positions');
+          }
+          
+          // Update timeline markers
+          updateTimelineMarkers();
+        }
+      }
+    });
+  }
+  
+  // Set up duration change handler
+  const durationSelect = document.getElementById('mediaPlaybackDuration');
+  if (durationSelect) {
+    durationSelect.addEventListener('change', (e) => {
+      AnimationState.data.duration = parseInt(e.target.value);
+      console.log('⏱️ Animation duration changed to:', AnimationState.data.duration, 'ms');
+    });
+  }
+  
+  // Load toolbar button images immediately
+  loadToolbarButtonImages();
+  
+  // Test PNG loading
+  setTimeout(() => {
+    console.log('🧪 Testing PNG loading...');
+    const testButtons = document.querySelectorAll('[data-icon]');
+    testButtons.forEach((button, index) => {
+      const dataIcon = button.getAttribute('data-icon');
+      const bgImage = getComputedStyle(button).backgroundImage;
+      console.log(`Button ${index + 1}: data-icon="${dataIcon}", background="${bgImage}"`);
+    });
+    
+    // Test if PNG files exist
+    console.log('🧪 Testing PNG file existence...');
+    const testFiles = ['recordin.png', 'keyframe.png', 'recordout.png', 'play.png', 'save.png', 'load.png', 'snapshot.png'];
+    testFiles.forEach(file => {
+      const img = new Image();
+      img.onload = () => console.log(`✅ PNG file exists: ${file}`);
+      img.onerror = () => console.log(`❌ PNG file missing: ${file}`);
+      img.src = `images/${file}`;
+    });
+  }, 500);
 }
 
 // ===== PLAYLIST PANEL FUNCTIONS =====
@@ -1609,74 +1953,156 @@ function testPngAccess() {
   });
 }
 
-function loadToolbarButtonImages() {
-  console.log('🎛️ Loading toolbar button images...');
-  
-  const imageNames = ['media', 'snapshot', 'dice', 'music', 'reset', 'rotate', 'cycle', 'pause', 'save', 'load', 'clear', 'video', 'youtube', 'record-in', 'record-out', 'keyframe', 'play', 'snapshot-media'];
-  const imageFileMap = {
-    'media': 'media.png',
-    'snapshot': 'snapshot.png',
-    'dice': 'dice.png',
-    'music': 'music.png',
-    'reset': 'reset.png',
-    'rotate': 'rotate.png',
-    'cycle': 'cycle.png',
-    'pause': 'pause.png',
-    'save': 'save.png',
-    'load': 'load.png',
-    'clear': 'clear.png',
-    'video': 'video.png',
-    'youtube': 'youtube.png',
-    'record-in': 'recordin.png',
-    'record-out': 'recordout.png',
-    'keyframe': 'keyframe.png',
-    'play': 'play.png',
-    'snapshot-media': 'snapshot.png'
-  };
-  
-  // Store the image file map globally for dynamic updates
-  window.toolbarImageFileMap = imageFileMap;
-  
-  const buttons = document.querySelectorAll('.toolbar-btn');
-  let loadedCount = 0;
-  let totalButtons = buttons.length;
-  
-  buttons.forEach(button => {
-    const iconName = button.getAttribute('data-icon');
-    const filename = imageFileMap[iconName];
+// ===== MODULAR PNG LOADING SYSTEM =====
+
+// PNG Configuration
+const PNG_CONFIG = {
+  mediaToolbar: [
+    { dataIcon: 'record-in', file: 'recordin.png' },
+    { dataIcon: 'keyframe', file: 'keyframe.png' },
+    { dataIcon: 'record-out', file: 'recordout.png' },
+    { dataIcon: 'play', file: 'play.png' },
+    { dataIcon: 'save', file: 'saveanimation.png' },
+    { dataIcon: 'load', file: 'loadanimation.png' },
+    { dataIcon: 'snapshot-media', file: 'snapshot.png' },
+    { dataIcon: 'youtube', file: 'youtube.png' }
+  ],
+  // Main toolbar buttons (with specific selectors)
+  mainToolbar: [
+    { dataIcon: 'media', file: 'media.png' },
+    { dataIcon: 'youtube', file: 'youtube.png' },
+    { dataIcon: 'dice', file: 'dice.png' },
+    { dataIcon: 'rotate', file: 'rotate.png' },
+    { dataIcon: 'music', file: 'music.png' },
+    { dataIcon: 'clear', file: 'clear.png' },
+    { dataIcon: 'reset', file: 'reset.png' },
+    { dataIcon: 'cycle', file: 'cycle.png' },
+    { dataIcon: 'rand', file: 'rand.png' },
+    { dataIcon: 'pause', file: 'pause.png' },
+    { dataIcon: 'video', file: 'video.png' },
+    { dataIcon: 'snapshot', file: 'snapshot.png' },
+    { dataIcon: 'save', file: 'save.png' },
+    { dataIcon: 'load', file: 'load.png' }
+  ],
+  // Video control buttons
+  videoControls: [
+    { dataIcon: 'playlist', file: 'playlist.png' },
+    { dataIcon: 'prev', file: 'previous.png' },
+    { dataIcon: 'play', file: 'play.png' },
+    { dataIcon: 'next', file: 'next.png' },
+    { dataIcon: 'close', file: 'stop.png' }
+  ]
+};
+
+// PNG Loading Utilities
+const PNGLoader = {
+  // Apply PNG to a single button
+  applyPNG(button, pngFile) {
+    if (!button || !pngFile) return false;
     
-    if (filename) {
-      const img = new Image();
-      img.onload = () => {
-        button.style.backgroundImage = `url(images/${filename})`;
-        button.style.color = 'transparent';
-        button.style.fontSize = '0';
-        button.classList.add('has-png');
-        loadedCount++;
-        console.log(`✅ Loaded ${filename} for ${iconName} button`);
-        
-        if (loadedCount === totalButtons) {
-          console.log('🎛️ All toolbar button images loaded successfully');
+    try {
+      // Set CSS custom property for PNG URL
+      button.style.setProperty('--png-url', `url(images/${pngFile})`, 'important');
+      button.classList.add('has-png');
+      
+      console.log(`✅ PNG applied: ${pngFile} to ${button.getAttribute('data-icon')}`);
+      return true;
+    } catch (error) {
+      console.log(`❌ Failed to apply PNG: ${pngFile}`, error);
+      return false;
+    }
+  },
+  
+  // Find button by data-icon
+  findButton(dataIcon) {
+    return document.querySelector(`[data-icon="${dataIcon}"]`);
+  },
+  
+  // Find button by data-icon within specific container
+  findButtonInContainer(dataIcon, containerSelector) {
+    const container = document.querySelector(containerSelector);
+    if (container) {
+      return container.querySelector(`[data-icon="${dataIcon}"]`);
+    }
+    return null;
+  },
+  
+  // Load PNGs for a specific toolbar
+  loadToolbarPNGs(toolbarConfig) {
+    console.log(`🎛️ Loading PNGs for toolbar...`);
+    
+    let successCount = 0;
+    const totalButtons = toolbarConfig.length;
+    
+    toolbarConfig.forEach(({ dataIcon, file }) => {
+      const button = this.findButton(dataIcon);
+      if (button) {
+        if (this.applyPNG(button, file)) {
+          successCount++;
         }
-      };
-      img.onerror = () => {
-        console.log(`❌ Failed to load ${filename} for ${iconName} button`);
-        // Keep the emoji as fallback
-        button.style.color = 'gold';
-        button.style.fontSize = 'inherit';
-      };
-      img.src = `images/${filename}`;
-    } else {
-      console.log(`⚠️ No PNG mapping found for ${iconName} button`);
+      } else {
+        console.log(`⚠️ Button not found: ${dataIcon}`);
+      }
+    });
+    
+    console.log(`🎛️ PNG loading complete: ${successCount}/${totalButtons} successful`);
+    return successCount;
+  },
+  
+  // Debug: Show all buttons with data-icon
+  debugButtons() {
+    const buttons = document.querySelectorAll('[data-icon]');
+    console.log('🔍 Found buttons:');
+    buttons.forEach((button, index) => {
+      const dataIcon = button.getAttribute('data-icon');
+      const text = button.textContent.trim();
+      console.log(`  ${index + 1}: data-icon="${dataIcon}", text="${text}"`);
+    });
+  }
+};
+
+// Main PNG loading function
+function loadToolbarButtonImages() {
+  console.log('🎛️ Starting PNG loading system...');
+  
+  // Debug: Show all buttons
+  PNGLoader.debugButtons();
+  
+  // Load media toolbar PNGs (specific to #mediaToolbar)
+  let mediaCount = 0;
+  PNG_CONFIG.mediaToolbar.forEach(({ dataIcon, file }) => {
+    const button = PNGLoader.findButtonInContainer(dataIcon, '#mediaToolbar');
+    if (button) {
+      if (PNGLoader.applyPNG(button, file)) {
+        mediaCount++;
+      }
     }
   });
+  
+  // Load main toolbar PNGs (specific to #toolbar)
+  let mainCount = 0;
+  PNG_CONFIG.mainToolbar.forEach(({ dataIcon, file }) => {
+    const button = PNGLoader.findButtonInContainer(dataIcon, '#toolbar');
+    if (button) {
+      if (PNGLoader.applyPNG(button, file)) {
+        mainCount++;
+      }
+    }
+  });
+  
+  // Load video control PNGs
+  const videoCount = PNGLoader.loadToolbarPNGs(PNG_CONFIG.videoControls);
+  
+  const totalCount = mediaCount + mainCount + videoCount;
+  console.log(`🎛️ PNG loading system complete: ${totalCount} PNGs loaded (Media: ${mediaCount}, Main: ${mainCount}, Video: ${videoCount})`);
 }
 
 function updatePauseButtonIcon() {
   const pauseButton = document.querySelector('.toolbar-btn[data-icon="pause"]');
-  if (pauseButton && window.toolbarImageFileMap) {
+  if (pauseButton) {
     const filename = speedMultiplier === 0 ? 'play.png' : 'pause.png';
-    pauseButton.style.backgroundImage = `url(images/${filename})`;
+    // Use our PNG system to update the button
+    PNGLoader.applyPNG(pauseButton, filename);
     console.log(`🎛️ Updated pause button to ${filename} (speed: ${speedMultiplier})`);
   }
 }
@@ -1753,4 +2179,280 @@ async function preloadPlaylists() {
 }
 
 // ===== MEDIA.JS LOADED =====
-console.log('🔧 Media.js loaded successfully'); 
+console.log('🔧 Media.js loaded successfully');
+
+// ===== INITIALIZATION SYSTEM =====
+function initializeMediaSystem() {
+  console.log('🎛️ Initializing media system...');
+  
+  // Wait for DOM to be fully ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        loadToolbarButtonImages();
+        console.log('🎛️ Media system initialized after DOM load');
+      }, 100);
+    });
+  } else {
+    // DOM is already loaded
+    setTimeout(() => {
+      loadToolbarButtonImages();
+      console.log('🎛️ Media system initialized immediately');
+    }, 100);
+  }
+}
+
+// Initialize when script loads
+initializeMediaSystem();
+
+// ===== MANUAL DEBUG FUNCTIONS =====
+// Call these from browser console to debug PNG loading
+
+function debugPNGLoading() {
+  console.log('🔍 === PNG LOADING DEBUG ===');
+  
+  // Check if PNG files exist
+  console.log('📁 Checking PNG file existence...');
+  const testFiles = [
+    // Media toolbar
+    'recordin.png', 'keyframe.png', 'recordout.png', 'play.png', 'saveanimation.png', 'loadanimation.png', 'snapshot.png', 'youtube.png',
+    // Main toolbar
+    'media.png', 'youtube.png', 'dice.png', 'rotate.png', 'music.png', 'clear.png', 'reset.png', 'cycle.png', 'rand.png', 'pause.png', 'video.png', 'snapshot.png', 'save.png', 'load.png',
+    // Video controls
+    'playlist.png', 'previous.png', 'next.png', 'stop.png'
+  ];
+  
+  testFiles.forEach(file => {
+    const img = new Image();
+    img.onload = () => console.log(`✅ PNG exists: ${file}`);
+    img.onerror = () => console.log(`❌ PNG missing: ${file}`);
+    img.src = `images/${file}`;
+  });
+  
+  // Check buttons
+  console.log('🔘 Checking buttons...');
+  const buttons = document.querySelectorAll('[data-icon]');
+  console.log(`Found ${buttons.length} buttons with data-icon`);
+  
+  buttons.forEach((button, index) => {
+    const dataIcon = button.getAttribute('data-icon');
+    const text = button.textContent.trim();
+    const bgImage = getComputedStyle(button).backgroundImage;
+    console.log(`Button ${index + 1}: data-icon="${dataIcon}", text="${text}", background="${bgImage}"`);
+  });
+  
+  // Test PNG loading
+  console.log('🎛️ Testing PNG loading...');
+  loadToolbarButtonImages();
+}
+
+// Make debug function globally available
+window.debugPNGLoading = debugPNGLoading;
+
+// Quick test function to check specific missing buttons
+function testMissingButtons() {
+  console.log('🔍 === TESTING MISSING BUTTONS ===');
+  
+  const missingButtons = [
+    { dataIcon: 'pause', file: 'pause.png' },
+    { dataIcon: 'video', file: 'video.png' },
+    { dataIcon: 'snapshot', file: 'snapshot.png' }
+  ];
+  
+  missingButtons.forEach(({ dataIcon, file }) => {
+    const button = document.querySelector(`[data-icon="${dataIcon}"]`);
+    if (button) {
+      console.log(`✅ Found button: data-icon="${dataIcon}"`);
+      
+      // Test PNG file
+      const img = new Image();
+      img.onload = () => {
+        console.log(`✅ PNG exists: ${file}`);
+        // Apply PNG
+        PNGLoader.applyPNG(button, file);
+      };
+      img.onerror = () => console.log(`❌ PNG missing: ${file}`);
+      img.src = `images/${file}`;
+    } else {
+      console.log(`❌ Button not found: data-icon="${dataIcon}"`);
+    }
+  });
+}
+
+window.testMissingButtons = testMissingButtons;
+
+// Test function for pause button
+function testPauseButton() {
+  console.log('⏯️ === TESTING PAUSE BUTTON ===');
+  
+  const pauseButton = document.querySelector('.toolbar-btn[data-icon="pause"]');
+  if (pauseButton) {
+    console.log('✅ Found pause button');
+    console.log('Current speedMultiplier:', speedMultiplier);
+    
+    // Test the toggle
+    console.log('🔄 Testing pause button toggle...');
+    togglePauseButton();
+    console.log('Speed after toggle:', speedMultiplier);
+    
+    // Check if PNG updated
+    const bgImage = getComputedStyle(pauseButton).backgroundImage;
+    console.log('Background image after toggle:', bgImage);
+  } else {
+    console.log('❌ Pause button not found');
+  }
+}
+
+window.testPauseButton = testPauseButton;
+
+// Test function for bubble capture
+function testBubbleCapture() {
+  console.log('🎬 === TESTING BUBBLE CAPTURE ===');
+  
+  // Check ideas array
+  console.log('🔍 Checking ideas array...');
+  console.log('  Ideas count:', ideas.length);
+  console.log('  Ideas structure:', ideas.length > 0 ? Object.keys(ideas[0]) : 'No ideas');
+  
+  if (ideas.length === 0) {
+    console.log('❌ No ideas found! Add some bubbles first.');
+    return;
+  }
+  
+  // Show some idea examples
+  ideas.slice(0, 3).forEach((idea, index) => {
+    console.log(`  Idea ${index}: x=${idea.x}, y=${idea.y}, title="${idea.title}"`);
+  });
+  
+  // Test capturing positions
+  console.log('🎬 Testing position capture...');
+  const positions = captureBubblePositions();
+  
+  console.log('✅ Capture test complete. Positions:', positions);
+  
+  // Test animation state
+  console.log('🎬 Animation state:', {
+    inPoint: AnimationState.data.inPoint,
+    outPoint: AnimationState.data.outPoint,
+    keyframes: AnimationState.data.keyframes.length,
+    isRecording: AnimationState.data.isRecording
+  });
+  
+  // Test if we can create a test animation
+  if (positions.length > 0) {
+    console.log('🎬 Testing animation creation...');
+    AnimationState.reset();
+    AnimationState.data.inPoint = 0;
+    AnimationState.data.outPoint = 10;
+    AnimationState.data.keyframes = [
+      { time: 0, positions: positions },
+      { time: 10, positions: positions }
+    ];
+    console.log('✅ Test animation created with', positions.length, 'ideas');
+  }
+}
+
+window.testBubbleCapture = testBubbleCapture;
+
+// Function to create test bubbles for animation testing
+function createTestBubbles() {
+  console.log('🎬 Creating test bubbles for animation...');
+  
+  // Remove existing test bubbles
+  const existingTestBubbles = document.querySelectorAll('.test-bubble');
+  existingTestBubbles.forEach(bubble => bubble.remove());
+  
+  // Create test bubbles
+  const testPositions = [
+    { x: 100, y: 100, text: 'Test 1' },
+    { x: 300, y: 150, text: 'Test 2' },
+    { x: 200, y: 300, text: 'Test 3' }
+  ];
+  
+  testPositions.forEach((pos, index) => {
+    const bubble = document.createElement('div');
+    bubble.className = 'test-bubble bubble';
+    bubble.style.cssText = `
+      position: absolute;
+      left: ${pos.x}px;
+      top: ${pos.y}px;
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      cursor: move;
+      z-index: 1000;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    `;
+    bubble.textContent = pos.text;
+    document.body.appendChild(bubble);
+  });
+  
+  console.log('✅ Created', testPositions.length, 'test bubbles');
+  return testPositions.length;
+}
+
+window.createTestBubbles = createTestBubbles;
+
+// Function to update keyframes when bubbles are moved
+function updateKeyframesForCurrentPositions() {
+  if (!AnimationState.data.isRecording && AnimationState.data.keyframes.length === 0) {
+    console.log('❌ No animation active to update');
+    return;
+  }
+  
+  console.log('🔄 Updating keyframes with current bubble positions...');
+  
+  // Capture current positions
+  const currentPositions = captureBubblePositions();
+  
+  // Update all keyframes with current positions
+  AnimationState.data.keyframes.forEach((keyframe, index) => {
+    keyframe.positions = currentPositions;
+    console.log(`  Updated keyframe ${index} at ${keyframe.time}s`);
+  });
+  
+  console.log('✅ All keyframes updated with current positions');
+}
+
+// Function to automatically update keyframes when bubbles are moved during recording
+function autoUpdateKeyframes() {
+  if (AnimationState.data.isRecording && AnimationState.data.keyframes.length > 0) {
+    // Get current timeline position
+    const timelineSlider = document.getElementById('mediaPlaybackSlider');
+    if (timelineSlider) {
+      const progress = parseFloat(timelineSlider.value);
+      const currentTime = progress * (AnimationState.data.duration / 1000);
+      
+      // Find the closest keyframe to update
+      let closestKeyframe = null;
+      let minDistance = Infinity;
+      
+      AnimationState.data.keyframes.forEach(keyframe => {
+        const distance = Math.abs(keyframe.time - currentTime);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestKeyframe = keyframe;
+        }
+      });
+      
+      // If we're close to a keyframe (within 0.5 seconds), update it
+      if (closestKeyframe && minDistance < 0.5) {
+        const currentPositions = captureBubblePositions();
+        closestKeyframe.positions = currentPositions;
+        console.log(`🔄 Auto-updated keyframe at ${closestKeyframe.time}s`);
+      }
+    }
+  }
+}
+
+// Make it globally available for manual updates
+window.autoUpdateKeyframes = autoUpdateKeyframes;
+
+// Make it globally available
+window.updateKeyframesForCurrentPositions = updateKeyframesForCurrentPositions; 
