@@ -72,6 +72,7 @@ const themePresets = {
     "image": "images/a18.png",
     "glow": true,
     "fontSize": 9,
+    "fixed": true,
     "static": true,
     "rotation": 0
   },
