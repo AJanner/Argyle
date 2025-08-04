@@ -102,11 +102,11 @@
         <input type="range" id="videoSizeSlider" min="0.3" max="1.5" step="0.1" value="1.0" style="width: 100px; margin-left: 5px;" oninput="updateVideoSize(this.value)"/>
       </label>
     </div>
+    <button onclick="videoTogglePlaylist()" title="Show Playlist" class="video-control-btn" data-icon="playlist">📋</button>
     <button onclick="videoPrev()" title="Previous" class="video-control-btn" data-icon="prev">⏮️</button>
     <button onclick="videoTogglePlay()" title="Play/Pause" class="video-control-btn" data-icon="play">🟢</button>
 
     <button onclick="videoNext()" title="Next" class="video-control-btn" data-icon="next">⏭️</button>
-    <button onclick="videoTogglePlaylist()" title="Show Playlist" class="video-control-btn" data-icon="playlist">📋</button>
     <button onclick="videoToggleFullscreen()" title="Fullscreen" class="video-control-btn" data-icon="fullscreen">🖥️</button>
     <button onclick="videoClose()" title="Close" class="video-control-btn" data-icon="close">��</button>
   </div>

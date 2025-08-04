@@ -1237,8 +1237,9 @@ function minimizePlaylist() {
       // Restore playlist
       playlist.classList.remove('minimized');
       playlist.style.width = '300px';
-      playlist.style.height = 'auto';
-      playlist.style.overflow = 'visible';
+      playlist.style.height = '400px';
+      playlist.style.overflow = 'auto';
+      playlist.style.maxHeight = '400px';
       console.log('📋 Playlist panel restored');
     } else {
       // Minimize playlist
@@ -1246,6 +1247,7 @@ function minimizePlaylist() {
       playlist.style.width = '30px';
       playlist.style.height = '200px';
       playlist.style.overflow = 'hidden';
+      playlist.style.maxHeight = '200px';
       console.log('📋 Playlist panel minimized');
     }
   }
@@ -1256,8 +1258,9 @@ function restorePlaylist() {
   if (playlist && playlist.classList.contains('minimized')) {
     playlist.classList.remove('minimized');
     playlist.style.width = '300px';
-    playlist.style.height = 'auto';
-    playlist.style.overflow = 'visible';
+    playlist.style.height = '400px';
+    playlist.style.overflow = 'auto';
+    playlist.style.maxHeight = '400px';
     console.log('📋 Playlist panel restored');
   }
 }

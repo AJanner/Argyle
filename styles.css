@@ -377,14 +377,14 @@ html, body {
   background: black;
   border: none;
   color: white;
-  padding: 12px 24px;
-  margin: 1px;
+  padding: 0;
+  margin: 0;
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
   transition: all 0.3s ease;
-  min-width: 60px;
-  min-height: 60px;
+  width: 60px;
+  height: 60px;
   display: inline-block;
   align-items: center;
   justify-content: center;
@@ -392,7 +392,7 @@ html, body {
   position: relative;
 }
 
-/* Line indents removed */
+/* Line indents removed - no borders between buttons */
 
 #videoControls button:hover {
   transform: scale(1.05);
@@ -402,7 +402,7 @@ html, body {
 /* Video control button icons - fallback to emoji if PNG not available */
 .video-control-btn {
   background-image: none;
-  background-size: 36px 36px;
+  background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
   position: relative;
@@ -456,7 +456,8 @@ html, body {
   top: 130px;
   left: 20px;
   width: 300px;
-  max-height: 500px;
+  height: 400px;
+  max-height: 400px;
   background: rgba(0, 0, 0, 0.9);
   color: white;
   padding: 15px;
@@ -485,7 +486,7 @@ html, body {
 }
 
 #videoPlaylist.minimized::before {
-  content: '📋';
+  content: '▶️';
   position: absolute;
   top: 50%;
   left: 50%;
