@@ -27,7 +27,7 @@ html, body {
 #toolbar button {
   background-color: rgba(0, 0, 0, 0.7);
   color: gold;
-  border: 1px solid transparent;
+  border: none;
   font-family: 'Monaco', serif;
   border-radius: 6px;
   padding: 0;
@@ -41,7 +41,6 @@ html, body {
 #toolbar button:hover {
   background-color: rgba(0, 0, 0, 0.9);
   transform: scale(1.05);
-  border: 1px solid darkgreen;
 }
 
 .toolbar-btn {
@@ -59,6 +58,18 @@ html, body {
 
 .toolbar-btn.has-png {
   background-image: var(--png-url);
+}
+
+.toolbar-btn[data-icon="dice"] {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  font-size: 0;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  transition: all 0.3s ease;
 }
 
 /* ===== CANVAS STYLES ===== */

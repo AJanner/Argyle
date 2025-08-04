@@ -367,14 +367,20 @@ let diceSliderTimeout = null;
 function rollDice() {
   const result = Math.floor(Math.random() * diceMaxValue) + 1;
   const diceOverlay = document.getElementById('diceOverlay');
-  const diceResult = document.getElementById('diceResult');
+  const diceButton = document.getElementById('diceButton');
   
   // Show the dice result in overlay
   diceOverlay.textContent = result;
   diceOverlay.style.display = 'block';
   
-  // Show the dice result in toolbar
-  diceResult.textContent = `🎲 ${result}`;
+  // Show the dice result on top of the button
+  if (diceButton) {
+    diceButton.textContent = result;
+    diceButton.style.color = 'gold';
+    diceButton.style.fontSize = '24px';
+    diceButton.style.fontWeight = 'bold';
+    diceButton.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
+  }
   
   console.log("🎲 Dice roll result:", result, "(max:", diceMaxValue, ")");
   

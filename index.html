@@ -12,13 +12,12 @@
   <div id="toolbar">
     <button onclick="toggleMediaToolbar()" title="Media Toolbar" class="toolbar-btn" data-icon="media">🎛️</button>
     <button onclick="captureCanvasOnly()" title="Snapshot" class="toolbar-btn" data-icon="snapshot">📷</button>
-    <button onclick="rollDice()" oncontextmenu="showDiceSlider(); return false;" title="Random (Right-click for slider)" class="toolbar-btn" data-icon="dice">🎲</button>
-    <span id="diceResult" style="color: gold; margin: 0 15px; font-weight: bold;"></span>
+    <button onclick="rollDice()" oncontextmenu="showDiceSlider(); return false;" title="Random (Right-click for slider)" class="toolbar-btn" data-icon="dice" id="diceButton"></button>
     <button onclick="toggleMusicPanel()" title="Music Panel" class="toolbar-btn" data-icon="music">🎶</button>
     <button onclick="location.reload()" title="Reset" class="toolbar-btn" data-icon="reset">Ⓡ</button>
-    <button onclick="rotateBackground()" style="margin-left:10px;" title="Rotate Background" class="toolbar-btn" data-icon="rotate">🔃</button>
-    <button onclick="cycleBackground()" style="margin-left:10px;" title="Change Background" class="toolbar-btn" data-icon="cycle">🔄</button>
-    <button onclick="togglePauseButton()" style="margin-left:10px;" title="Pause/Unpause" class="toolbar-btn" data-icon="pause">⏯️</button>
+    <button onclick="rotateBackground()" title="Rotate Background" class="toolbar-btn" data-icon="rotate">🔃</button>
+    <button onclick="cycleBackground()" title="Change Background" class="toolbar-btn" data-icon="cycle">🔄</button>
+    <button onclick="togglePauseButton()" title="Pause/Unpause" class="toolbar-btn" data-icon="pause">⏯️</button>
     
     <div>
       <strong style="font-size: 0.5em;">🤔💭ME💬v4😎</strong>
@@ -47,8 +46,8 @@
     <button onclick="saveIdeas()" title="Save .json File" class="toolbar-btn" data-icon="save">💾Save.json</button>
     <input accept=".json" id="fileLoader" style="display:none" type="file"/>
     <button onclick="document.getElementById('fileLoader').click()" title="Load .json File" class="toolbar-btn" data-icon="load">🆙 Load.json</button>
-    <button onclick="deleteAllIdeas()" style="margin-left:0px;" title="Blank Canvas" class="toolbar-btn" data-icon="clear">🚮Clear💭Ideas🗑️</button>
-    <button onclick="toggleVideoPlayer()" style="margin-left:10px;" title="Toggle Video Player" class="toolbar-btn" data-icon="video">📹</button>
+    <button onclick="deleteAllIdeas()" title="Blank Canvas" class="toolbar-btn" data-icon="clear">🚮Clear💭Ideas🗑️</button>
+    <button onclick="toggleVideoPlayer()" title="Toggle Video Player" class="toolbar-btn" data-icon="video">📹</button>
   </div>
 
   <!-- Media Toolbar -->
