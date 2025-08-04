@@ -1356,7 +1356,7 @@ const themePresets = {
     "vy": 0,
     "color": "hsl(254.0872352592045, 100%, 70%)",
     "textColor": "white",
-    "radius": 39,
+    "radius": 55,
     "font": "Arial",
     "image": "images/w9.png",
     "glow": true,
