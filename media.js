@@ -484,19 +484,11 @@ function initVideoPlayer() {
     playlist.style.visibility = 'hidden';
   }
   
-  // Load default playlist if not already loaded
-  if (videoPlaylist.length === 0) {
-    // Try to load playlist, but don't fail if it doesn't work
-    setTimeout(() => {
-      loadVideoPlaylist().then(() => {
-        console.log('🎥 Video player initialized with playlist');
-      }).catch(error => {
-        console.log('🎥 Video player initialized with empty playlist (file not accessible)');
-      });
-    }, 100);
-  } else {
-    console.log('🎥 Video player initialized with existing playlist');
-  }
+  // Pre-load playlists from root folder
+  setTimeout(async () => {
+    await preloadPlaylists();
+    console.log('🎥 Video player initialized with pre-loaded playlists');
+  }, 100);
   
   // Load video control images
   loadVideoControlImages();
@@ -1036,15 +1028,20 @@ async function updateVideoPlaylistDisplay() {
     const videoId = extractYouTubeId(url);
     let title = videoTitles[index];
     
-    // If title not cached, fetch it
-    if (!title && videoId) {
+    // If title not cached, fetch it (but only if we haven't already tried)
+    if (!title && videoId && !videoTitles[index]) {
       try {
         title = await fetchVideoTitle(videoId);
         if (title) {
           videoTitles[index] = title;
+        } else {
+          // Mark as attempted to avoid repeated failed requests
+          videoTitles[index] = null;
         }
       } catch (error) {
         console.error('❌ Error fetching video title:', error);
+        // Mark as attempted to avoid repeated failed requests
+        videoTitles[index] = null;
       }
     }
     
@@ -1441,6 +1438,59 @@ function updateVideoPlayButtonIcon() {
     const filename = videoIsPlaying ? 'pause.png' : 'play.png';
     playButton.style.backgroundImage = `url(images/${filename})`;
     console.log(`🎥 Updated video play button to ${filename} (playing: ${videoIsPlaying})`);
+  }
+}
+
+// ===== PRE-LOAD PLAYLISTS FROM ROOT FOLDER =====
+async function preloadPlaylists() {
+  const playlistFiles = ['s25_playlist.txt', 'Argyle🎧Podcasts.txt'];
+  
+  console.log('📋 Pre-loading playlists from root folder...');
+  
+  for (const filename of playlistFiles) {
+    try {
+      const response = await fetch(filename);
+      if (response.ok) {
+        const content = await response.text();
+        const lines = content.split('\n').filter(line => line.trim() !== '');
+        
+        // Extract YouTube URLs from lines
+        const youtubeUrls = lines.filter(line => {
+          return line.includes('youtube.com') || line.includes('youtu.be');
+        });
+        
+        if (youtubeUrls.length > 0) {
+          const playlistName = filename.replace('.txt', '');
+          
+          // Check if playlist already exists to avoid duplicates
+          const existingIndex = uploadedPlaylists.findIndex(p => p.name === playlistName);
+          if (existingIndex === -1) {
+            uploadedPlaylists.push({
+              name: playlistName,
+              urls: youtubeUrls
+            });
+            console.log(`📋 Pre-loaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
+          } else {
+            console.log(`📋 Playlist "${playlistName}" already exists, skipping`);
+          }
+        } else {
+          console.log(`⚠️ No YouTube URLs found in ${filename}`);
+        }
+      } else {
+        console.log(`⚠️ Could not load ${filename}: ${response.status}`);
+      }
+    } catch (error) {
+      console.log(`⚠️ Error loading ${filename}:`, error.message);
+    }
+  }
+  
+  // Set current playlist index if we have playlists
+  if (uploadedPlaylists.length > 0) {
+    currentPlaylistIndex = 0;
+    loadUploadedPlaylist(0);
+    console.log(`📋 Loaded ${uploadedPlaylists.length} playlists from root folder`);
+  } else {
+    console.log('📋 No playlists found in root folder');
   }
 }
 
