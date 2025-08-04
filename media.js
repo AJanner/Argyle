@@ -727,18 +727,9 @@ function loadUploadedPlaylist(index) {
     updateVideoPlaylistDisplay();
   }
   
-  // Play first video (but don't call updateVideoPlaylistDisplay again)
+  // Play first video
   if (typeof videoPlayVideo === 'function') {
-    // Temporarily disable the display update in videoPlayVideo
-    const originalUpdateDisplay = updateVideoPlaylistDisplay;
-    updateVideoPlaylistDisplay = () => {}; // Disable temporarily
-    
     videoPlayVideo(0);
-    
-    // Re-enable after a short delay
-    setTimeout(() => {
-      updateVideoPlaylistDisplay = originalUpdateDisplay;
-    }, 100);
   }
   
   console.log(`🔄 Loaded uploaded playlist: ${playlist.name} with ${playlist.urls.length} videos`);
@@ -790,7 +781,8 @@ function videoPlayVideo(index) {
     }, 1000);
   }
   
-  updateVideoPlaylistDisplay();
+  // Update display without triggering the flag system
+  updateVideoPlaylistDisplaySilent();
 }
 
 function videoTogglePlay() {
@@ -1098,6 +1090,48 @@ async function updateVideoPlaylistDisplay() {
   isUpdatingPlaylistDisplay = false;
 }
 
+// Silent version that doesn't use the flag system
+async function updateVideoPlaylistDisplaySilent() {
+  const playlistContainer = document.getElementById('videoPlaylistItems');
+  if (!playlistContainer) {
+    console.error('❌ Video Playlist container not found');
+    return;
+  }
+  
+  // Update playlist header to show current playlist name
+  const playlistHeader = document.querySelector('#videoPlaylist h3');
+  const currentPlaylistLabel = document.getElementById('currentPlaylistLabel');
+  
+  if (uploadedPlaylists.length > 0 && currentPlaylistIndex >= 0 && currentPlaylistIndex < uploadedPlaylists.length) {
+    const currentPlaylist = uploadedPlaylists[currentPlaylistIndex];
+    if (playlistHeader) {
+      playlistHeader.textContent = `💚 ${currentPlaylist.name} (${currentPlaylist.urls.length} videos) ♻️`;
+    }
+    if (currentPlaylistLabel) {
+      currentPlaylistLabel.textContent = `Playing: ${currentPlaylist.name}`;
+    }
+  } else {
+    if (playlistHeader) {
+      playlistHeader.textContent = '💚 YouTube Playlist ♻️';
+    }
+    if (currentPlaylistLabel) {
+      currentPlaylistLabel.textContent = '📋 Upload Playlist (.txt):';
+    }
+  }
+  
+  // Update the playing indicator without rebuilding the entire list
+  const items = playlistContainer.querySelectorAll('.playlist-item');
+  items.forEach((item, index) => {
+    if (index === videoCurrentIndex) {
+      item.classList.add('playing');
+    } else {
+      item.classList.remove('playing');
+    }
+  });
+  
+  console.log('📋 Video Playlist display updated (silent)');
+}
+
 async function toggleVideoPlayer() {
   const player = document.getElementById('videoPlayer');
   const controls = document.getElementById('videoControls');
@@ -1190,12 +1224,14 @@ async function toggleVideoPlayer() {
     } else {
       // Always play first video when video player is opened
       const videoIframe = document.getElementById('videoIframe');
-      if (videoIframe && videoIframe.src) {
+      if (videoIframe && videoIframe.src && videoIframe.src !== '') {
         console.log('🎥 Video player shown (playback continues)');
       } else {
         // Start playing the first video
-        videoPlayVideo(0);
-        console.log('🎥 Video player opened and started playing first video');
+        setTimeout(() => {
+          videoPlayVideo(0);
+          console.log('🎥 Video player opened and started playing first video');
+        }, 500); // Small delay to ensure iframe is ready
       }
     }
     
