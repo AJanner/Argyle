@@ -623,12 +623,24 @@ async function uploadPlaylist() {
     videoCurrentIndex = 0;
     videoTitles = []; // Clear cached titles
     
-    // Add to uploaded playlists for cycling
+    // Add to uploaded playlists for cycling (check for duplicates)
     const playlistName = file.name.replace('.txt', '');
-    uploadedPlaylists.push({
-      name: playlistName,
-      urls: youtubeUrls
-    });
+    const existingIndex = uploadedPlaylists.findIndex(p => p.name === playlistName);
+    
+    if (existingIndex === -1) {
+      uploadedPlaylists.push({
+        name: playlistName,
+        urls: youtubeUrls
+      });
+      currentPlaylistIndex = uploadedPlaylists.length - 1; // Set to the newly uploaded playlist
+    } else {
+      // Replace existing playlist
+      uploadedPlaylists[existingIndex] = {
+        name: playlistName,
+        urls: youtubeUrls
+      };
+      currentPlaylistIndex = existingIndex;
+    }
     
     // Update display to show the new playlist
     if (typeof updateVideoPlaylistDisplay === 'function') {
@@ -1132,7 +1144,12 @@ async function toggleVideoPlayer() {
     
     // Initialize video player and load playlist if empty
     if (videoPlaylist.length === 0) {
-      if (typeof loadVideoPlaylist === 'function') {
+      // Try to load pre-loaded playlists first
+      if (uploadedPlaylists.length > 0) {
+        currentPlaylistIndex = 0;
+        loadUploadedPlaylist(0);
+        console.log('🎥 Video player opened with pre-loaded playlist');
+      } else if (typeof loadVideoPlaylist === 'function') {
         // Try to load playlist, but don't block the UI
         setTimeout(() => {
           loadVideoPlaylist().then(() => {
@@ -1149,13 +1166,14 @@ async function toggleVideoPlayer() {
         updateVideoPlaylistDisplay();
       }
     } else {
-      // Don't restart video if it's already playing, just show the player
+      // Check if we have a video loaded
       const videoIframe = document.getElementById('videoIframe');
       if (videoIframe && videoIframe.src) {
         console.log('🎥 Video player shown (playback continues)');
       } else if (videoPlaylist.length > 0) {
-        // Only start playing if no video is currently loaded
+        // Start playing the first video if no video is currently loaded
         videoPlayVideo(0);
+        console.log('🎥 Video player opened and started playing first video');
       }
     }
     
@@ -1447,6 +1465,12 @@ async function preloadPlaylists() {
   
   console.log('📋 Pre-loading playlists from root folder...');
   
+  // Clear existing playlists to prevent duplication
+  uploadedPlaylists.length = 0;
+  videoPlaylist = [];
+  videoTitles = [];
+  videoCurrentIndex = 0;
+  
   for (const filename of playlistFiles) {
     try {
       const response = await fetch(filename);
@@ -1462,17 +1486,11 @@ async function preloadPlaylists() {
         if (youtubeUrls.length > 0) {
           const playlistName = filename.replace('.txt', '');
           
-          // Check if playlist already exists to avoid duplicates
-          const existingIndex = uploadedPlaylists.findIndex(p => p.name === playlistName);
-          if (existingIndex === -1) {
-            uploadedPlaylists.push({
-              name: playlistName,
-              urls: youtubeUrls
-            });
-            console.log(`📋 Pre-loaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
-          } else {
-            console.log(`📋 Playlist "${playlistName}" already exists, skipping`);
-          }
+          uploadedPlaylists.push({
+            name: playlistName,
+            urls: youtubeUrls
+          });
+          console.log(`📋 Pre-loaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
         } else {
           console.log(`⚠️ No YouTube URLs found in ${filename}`);
         }
