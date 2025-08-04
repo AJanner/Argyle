@@ -10,14 +10,14 @@
 <body>
   <!-- Toolbar -->
   <div id="toolbar">
-    <button onclick="toggleMediaToolbar()" title="Media Toolbar">🎛️</button>
-    <button onclick="captureCanvasOnly()" title="Snapshot">📷</button>
-    <button onclick="rollDice()" oncontextmenu="showDiceSlider(); return false;" title="Random (Right-click for slider)">🎲</button>
+    <button onclick="toggleMediaToolbar()" title="Media Toolbar" class="toolbar-btn" data-icon="media">🎛️</button>
+    <button onclick="captureCanvasOnly()" title="Snapshot" class="toolbar-btn" data-icon="snapshot">📷</button>
+    <button onclick="rollDice()" oncontextmenu="showDiceSlider(); return false;" title="Random (Right-click for slider)" class="toolbar-btn" data-icon="dice">🎲</button>
     <span id="diceResult" style="color: gold; margin: 0 15px; font-weight: bold;"></span>
-    <button onclick="toggleMusicPanel()" title="Music Panel">🎶</button>
-    <button onclick="location.reload()" title="Reset">Ⓡ</button>
-    <button onclick="rotateBackground()" style="margin-left:10px;" title="Rotate Background">🔃</button>
-    <button onclick="cycleBackground()" style="margin-left:10px;" title="Change Background">🔄</button>
+    <button onclick="toggleMusicPanel()" title="Music Panel" class="toolbar-btn" data-icon="music">🎶</button>
+    <button onclick="location.reload()" title="Reset" class="toolbar-btn" data-icon="reset">Ⓡ</button>
+    <button onclick="rotateBackground()" style="margin-left:10px;" title="Rotate Background" class="toolbar-btn" data-icon="rotate">🔃</button>
+    <button onclick="cycleBackground()" style="margin-left:10px;" title="Change Background" class="toolbar-btn" data-icon="cycle">🔄</button>
     
     <div>
       <strong style="font-size: 0.5em;">🤔💭ME💬v4😎</strong>
@@ -39,16 +39,16 @@
       </select>
       <label style="margin-left: 1px;" title="Motion (Right-click to pause/unpause)"> 
         ⬅️
-        <button onclick="togglePauseButton()" style="margin: 0 5px; padding: 2px 6px; font-size: 12px;" title="Pause/Unpause">⏯️</button>
+        <button onclick="togglePauseButton()" style="margin: 0 5px; padding: 2px 6px; font-size: 12px;" title="Pause/Unpause" class="toolbar-btn" data-icon="pause">⏯️</button>
         <input max="3" min="0.0" onchange="const slider = this; if(parseFloat(slider.value) !== 0) { previousSpeed = parseFloat(slider.value); slider.classList.remove('paused'); } else { slider.classList.add('paused'); } speedMultiplier = parseFloat(slider.value)" oncontextmenu="toggleSpeed(); return false;" step="0.1" type="range" value="1"/>
       </label>
     </div>
     
-    <button onclick="saveIdeas()" title="Save .json File">💾Save.json</button>
+    <button onclick="saveIdeas()" title="Save .json File" class="toolbar-btn" data-icon="save">💾Save.json</button>
     <input accept=".json" id="fileLoader" style="display:none" type="file"/>
-    <button onclick="document.getElementById('fileLoader').click()" title="Load .json File">🆙 Load.json</button>
-    <button onclick="deleteAllIdeas()" style="margin-left:0px;" title="Blank Canvas">🚮Clear💭Ideas🗑️</button>
-    <button onclick="toggleVideoPlayer()" style="margin-left:10px;" title="Toggle Video Player">📹</button>
+    <button onclick="document.getElementById('fileLoader').click()" title="Load .json File" class="toolbar-btn" data-icon="load">🆙 Load.json</button>
+    <button onclick="deleteAllIdeas()" style="margin-left:0px;" title="Blank Canvas" class="toolbar-btn" data-icon="clear">🚮Clear💭Ideas🗑️</button>
+    <button onclick="toggleVideoPlayer()" style="margin-left:10px;" title="Toggle Video Player" class="toolbar-btn" data-icon="video">📹</button>
   </div>
 
   <!-- Media Toolbar -->
@@ -61,12 +61,12 @@
     </label>
     <label>🎥 YouTube:
       <input id="youtubeLink" placeholder="Paste Video URL" type="text"/>
-      <button onclick="loadYouTubeVideo()">Load</button>
+      <button onclick="loadYouTubeVideo()" class="toolbar-btn" data-icon="youtube">Load</button>
     </label>
     <div class="media-separator"></div>
-    <button onclick="recordState('start')" class="record-btn start-btn" title="Mark In Point">🎬 In</button>
-    <button onclick="recordState('end')" class="record-btn end-btn" title="Mark Out Point">🏁 Out</button>
-    <button onclick="startPlayback()" class="play-btn" title="Play In to Out">▶️ Play</button>
+    <button onclick="recordState('start')" class="record-btn start-btn toolbar-btn" data-icon="record-in" title="Mark In Point">🎬 In</button>
+    <button onclick="recordState('end')" class="record-btn end-btn toolbar-btn" data-icon="record-out" title="Mark Out Point">🏁 Out</button>
+    <button onclick="startPlayback()" class="play-btn toolbar-btn" data-icon="play" title="Play In to Out">▶️ Play</button>
     <div class="timeline-control">
       <span>Timeline:</span>
       <input id="mediaPlaybackSlider" max="1" min="0" step="0.01" type="range" value="0"/>
@@ -81,7 +81,7 @@
         <option value="30000">30s</option>
       </select>
     </div>
-    <button onclick="captureCanvas()" class="snapshot-btn" title="Snapshot">📷 Snapshot</button>
+    <button onclick="captureCanvas()" class="snapshot-btn toolbar-btn" data-icon="snapshot-media" title="Snapshot">📷 Snapshot</button>
   </div>
 
   <!-- Video Elements -->
@@ -372,8 +372,9 @@
       window.setupMediaEventListeners = setupMediaEventListeners;
       window.closePlaylist = closePlaylist;
       window.minimizePlaylist = minimizePlaylist;
-      window.debugVideoControls = debugVideoControls;
-      window.testPngAccess = testPngAccess;
+              window.debugVideoControls = debugVideoControls;
+        window.testPngAccess = testPngAccess;
+        window.loadToolbarButtonImages = loadToolbarButtonImages;
       
       // Test function
       window.testFunction = function() {

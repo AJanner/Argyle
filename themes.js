@@ -1347,6 +1347,21 @@ const themePresets = {
     "glow": false,
     "transparent": false
   },
+{
+    "title": "",
+    "description": "",
+    "x": 208.87618028868897,
+    "y": 274.4980284523315,
+    "vx": 0,
+    "vy": 0,
+    "color": "hsl(254.0872352592045, 100%, 70%)",
+    "textColor": "white",
+    "radius": 39,
+    "font": "Arial",
+    "image": "images/w9.png",
+    "glow": false,
+    "transparent": false
+  },
   {
     "title": "",
     "description": "",

@@ -513,6 +513,7 @@ function initVideoPlayer() {
   setTimeout(() => {
     debugVideoControls();
     testPngAccess();
+    loadToolbarButtonImages();
   }, 1000);
   
   // Add click handler for minimized playlist
@@ -1255,6 +1256,65 @@ function testPngAccess() {
       console.log(`❌ PNG file not accessible: ${fileName}`);
     };
     img.src = `images/${fileName}`;
+  });
+}
+
+function loadToolbarButtonImages() {
+  console.log('🎛️ Loading toolbar button images...');
+  
+  const imageNames = ['media', 'snapshot', 'dice', 'music', 'reset', 'rotate', 'cycle', 'pause', 'save', 'load', 'clear', 'video', 'youtube', 'record-in', 'record-out', 'play', 'snapshot-media'];
+  const imageFileMap = {
+    'media': 'media.png',
+    'snapshot': 'snapshot.png',
+    'dice': 'dice.png',
+    'music': 'music.png',
+    'reset': 'reset.png',
+    'rotate': 'rotate.png',
+    'cycle': 'cycle.png',
+    'pause': 'pause.png',
+    'save': 'save.png',
+    'load': 'load.png',
+    'clear': 'clear.png',
+    'video': 'video.png',
+    'youtube': 'youtube.png',
+    'record-in': 'record-in.png',
+    'record-out': 'record-out.png',
+    'play': 'play.png',
+    'snapshot-media': 'snapshot.png'
+  };
+  
+  const buttons = document.querySelectorAll('.toolbar-btn');
+  let loadedCount = 0;
+  let totalButtons = buttons.length;
+  
+  buttons.forEach(button => {
+    const iconName = button.getAttribute('data-icon');
+    const filename = imageFileMap[iconName];
+    
+    if (filename) {
+      const img = new Image();
+      img.onload = () => {
+        button.style.backgroundImage = `url(images/${filename})`;
+        button.style.color = 'transparent';
+        button.style.fontSize = '0';
+        button.classList.add('has-png');
+        loadedCount++;
+        console.log(`✅ Loaded ${filename} for ${iconName} button`);
+        
+        if (loadedCount === totalButtons) {
+          console.log('🎛️ All toolbar button images loaded successfully');
+        }
+      };
+      img.onerror = () => {
+        console.log(`❌ Failed to load ${filename} for ${iconName} button`);
+        // Keep the emoji as fallback
+        button.style.color = 'gold';
+        button.style.fontSize = 'inherit';
+      };
+      img.src = `images/${filename}`;
+    } else {
+      console.log(`⚠️ No PNG mapping found for ${iconName} button`);
+    }
   });
 }
 

@@ -41,6 +41,21 @@ html, body {
   transform: scale(1.05);
 }
 
+.toolbar-btn {
+  background-image: none;
+  background-size: 24px 24px;
+  background-repeat: no-repeat;
+  background-position: center;
+  color: transparent;
+  font-size: 0;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.toolbar-btn.has-png {
+  background-image: var(--png-url);
+}
+
 /* ===== CANVAS STYLES ===== */
 #canvas {
   display: block;
