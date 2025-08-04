@@ -1246,33 +1246,217 @@ async function toggleVideoPlayer() {
   console.log('🎥 Video player toggled:', isVisible ? 'hidden' : 'shown');
 }
 
-// ===== RECORDING FUNCTIONS =====
+// ===== ANIMATION RECORDING SYSTEM =====
 
-let recordingStartTime = null;
-let recordingEndTime = null;
+// Animation state
+let animationData = {
+  inPoint: null,
+  outPoint: null,
+  keyframes: [],
+  duration: 10000, // Default 10 seconds
+  isRecording: false,
+  isPlaying: false
+};
+
+// Timeline markers
+let timelineMarkers = [];
 
 function recordState(type) {
+  const currentTime = Date.now();
+  
   if (type === 'start') {
-    recordingStartTime = Date.now();
-    console.log('🎬 Recording start point marked');
+    animationData.inPoint = currentTime;
+    animationData.isRecording = true;
+    console.log('🎬 In point marked at:', new Date(currentTime).toLocaleTimeString());
+    
+    // Add marker to timeline
+    addTimelineMarker('in', currentTime);
+    
+    // Capture current bubble positions
+    captureBubblePositions();
+    
   } else if (type === 'end') {
-    recordingEndTime = Date.now();
-    console.log('🏁 Recording end point marked');
+    animationData.outPoint = currentTime;
+    animationData.isRecording = false;
+    console.log('🏁 Out point marked at:', new Date(currentTime).toLocaleTimeString());
+    
+    // Add marker to timeline
+    addTimelineMarker('out', currentTime);
+    
+    // Capture final bubble positions
+    captureBubblePositions();
+    
+  } else if (type === 'keyframe') {
+    if (!animationData.isRecording) {
+      alert('Please start recording first (mark in point)');
+      return;
+    }
+    
+    // Add keyframe
+    const keyframe = {
+      time: currentTime,
+      positions: captureBubblePositions()
+    };
+    
+    animationData.keyframes.push(keyframe);
+    addTimelineMarker('keyframe', currentTime);
+    
+    console.log('📍 Keyframe added at:', new Date(currentTime).toLocaleTimeString());
   }
 }
 
+function captureBubblePositions() {
+  const bubbles = document.querySelectorAll('.bubble');
+  const positions = [];
+  
+  bubbles.forEach((bubble, index) => {
+    const rect = bubble.getBoundingClientRect();
+    positions.push({
+      id: index,
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+      scale: bubble.style.transform.match(/scale\(([^)]+)\)/) ? parseFloat(bubble.style.transform.match(/scale\(([^)]+)\)/)[1]) : 1,
+      rotation: bubble.style.transform.match(/rotate\(([^)]+)deg\)/) ? parseFloat(bubble.style.transform.match(/rotate\(([^)]+)deg\)/)[1]) : 0
+    });
+  });
+  
+  return positions;
+}
+
+function addTimelineMarker(type, time) {
+  const marker = {
+    type: type,
+    time: time,
+    position: ((time - (animationData.inPoint || time)) / animationData.duration) * 100
+  };
+  
+  timelineMarkers.push(marker);
+  updateTimelineDisplay();
+}
+
+function updateTimelineDisplay() {
+  const timeline = document.getElementById('mediaPlaybackSlider');
+  if (!timeline) return;
+  
+  // Clear existing markers
+  const existingMarkers = timeline.parentNode.querySelectorAll('.timeline-marker');
+  existingMarkers.forEach(marker => marker.remove());
+  
+  // Add new markers
+  timelineMarkers.forEach(marker => {
+    const markerElement = document.createElement('div');
+    markerElement.className = 'timeline-marker';
+    markerElement.style.left = `${marker.position}%`;
+    markerElement.style.backgroundColor = marker.type === 'in' ? '#4CAF50' : 
+                                       marker.type === 'out' ? '#f44336' : '#FF9800';
+    markerElement.title = `${marker.type} point`;
+    
+    timeline.parentNode.appendChild(markerElement);
+  });
+}
+
 function startPlayback() {
-  if (!recordingStartTime || !recordingEndTime) {
-    alert('Please mark both start and end points first');
+  if (!animationData.inPoint || !animationData.outPoint) {
+    alert('Please mark both in and out points first');
     return;
   }
   
-  const duration = recordingEndTime - recordingStartTime;
-  console.log('▶️ Playing back recording:', duration, 'ms');
+  if (animationData.isPlaying) {
+    stopPlayback();
+    return;
+  }
   
-  // For now, just log the playback
-  // This could be expanded to actually replay the recorded actions
-  alert(`Playback started: ${Math.round(duration / 1000)}s duration`);
+  animationData.isPlaying = true;
+  const duration = animationData.outPoint - animationData.inPoint;
+  
+  console.log('▶️ Starting animation playback:', duration, 'ms');
+  
+  // Start the animation
+  animateBubbles(duration);
+}
+
+function stopPlayback() {
+  animationData.isPlaying = false;
+  console.log('⏹️ Animation playback stopped');
+}
+
+function animateBubbles(duration) {
+  if (!animationData.isPlaying) return;
+  
+  const startTime = Date.now();
+  const endTime = startTime + duration;
+  
+  function animate() {
+    if (!animationData.isPlaying) return;
+    
+    const currentTime = Date.now();
+    const progress = Math.min((currentTime - startTime) / duration, 1);
+    
+    // Update timeline slider
+    const timelineSlider = document.getElementById('mediaPlaybackSlider');
+    if (timelineSlider) {
+      timelineSlider.value = progress;
+    }
+    
+    // Interpolate bubble positions
+    interpolateBubblePositions(progress);
+    
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      // Animation complete
+      animationData.isPlaying = false;
+      console.log('✅ Animation playback complete');
+    }
+  }
+  
+  animate();
+}
+
+function interpolateBubblePositions(progress) {
+  // Get all keyframes including in/out points
+  const allKeyframes = [
+    { time: animationData.inPoint, positions: animationData.keyframes[0]?.positions || [] },
+    ...animationData.keyframes,
+    { time: animationData.outPoint, positions: animationData.keyframes[animationData.keyframes.length - 1]?.positions || [] }
+  ].filter(kf => kf.positions.length > 0);
+  
+  if (allKeyframes.length < 2) return;
+  
+  // Find the two keyframes to interpolate between
+  const currentTime = animationData.inPoint + (progress * (animationData.outPoint - animationData.inPoint));
+  
+  let startKeyframe = allKeyframes[0];
+  let endKeyframe = allKeyframes[allKeyframes.length - 1];
+  
+  for (let i = 0; i < allKeyframes.length - 1; i++) {
+    if (currentTime >= allKeyframes[i].time && currentTime <= allKeyframes[i + 1].time) {
+      startKeyframe = allKeyframes[i];
+      endKeyframe = allKeyframes[i + 1];
+      break;
+    }
+  }
+  
+  // Calculate interpolation factor
+  const segmentProgress = (currentTime - startKeyframe.time) / (endKeyframe.time - startKeyframe.time);
+  
+  // Apply interpolated positions to bubbles
+  const bubbles = document.querySelectorAll('.bubble');
+  bubbles.forEach((bubble, index) => {
+    const startPos = startKeyframe.positions[index];
+    const endPos = endKeyframe.positions[index];
+    
+    if (startPos && endPos) {
+      const x = startPos.x + (endPos.x - startPos.x) * segmentProgress;
+      const y = startPos.y + (endPos.y - startPos.y) * segmentProgress;
+      const scale = startPos.scale + (endPos.scale - startPos.scale) * segmentProgress;
+      const rotation = startPos.rotation + (endPos.rotation - startPos.rotation) * segmentProgress;
+      
+      bubble.style.left = `${x}px`;
+      bubble.style.top = `${y}px`;
+      bubble.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+    }
+  });
 }
 
 // ===== VIDEO CONTROL IMAGE HANDLING =====
@@ -1428,7 +1612,7 @@ function testPngAccess() {
 function loadToolbarButtonImages() {
   console.log('🎛️ Loading toolbar button images...');
   
-  const imageNames = ['media', 'snapshot', 'dice', 'music', 'reset', 'rotate', 'cycle', 'pause', 'save', 'load', 'clear', 'video', 'youtube', 'record-in', 'record-out', 'play', 'snapshot-media'];
+  const imageNames = ['media', 'snapshot', 'dice', 'music', 'reset', 'rotate', 'cycle', 'pause', 'save', 'load', 'clear', 'video', 'youtube', 'record-in', 'record-out', 'keyframe', 'play', 'snapshot-media'];
   const imageFileMap = {
     'media': 'media.png',
     'snapshot': 'snapshot.png',
@@ -1445,6 +1629,7 @@ function loadToolbarButtonImages() {
     'youtube': 'youtube.png',
     'record-in': 'recordin.png',
     'record-out': 'recordout.png',
+    'keyframe': 'keyframe.png',
     'play': 'play.png',
     'snapshot-media': 'snapshot.png'
   };

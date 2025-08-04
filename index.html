@@ -64,6 +64,7 @@
     </label>
     <div class="media-separator"></div>
     <button onclick="recordState('start')" class="record-btn start-btn toolbar-btn" data-icon="record-in" title="Mark In Point">🎬 In</button>
+    <button onclick="recordState('keyframe')" class="record-btn keyframe-btn toolbar-btn" data-icon="keyframe" title="Add Keyframe">📍 Key</button>
     <button onclick="recordState('end')" class="record-btn end-btn toolbar-btn" data-icon="record-out" title="Mark Out Point">🏁 Out</button>
     <button onclick="startPlayback()" class="play-btn toolbar-btn" data-icon="play" title="Play In to Out">▶️ Play</button>
     <div class="timeline-control">
@@ -282,127 +283,151 @@
     // Global scope exports - ensure all functions are available immediately
     console.log("🔧 Setting up global function exports...");
     
-    try {
-      // Export all functions to global scope
-      window.loadYouTubeVideo = loadYouTubeVideo;
-      window.toggleMusicPanel = toggleMusicPanel;
-      window.loadMusicList = loadMusicList;
-      window.playMusic = playMusic;
-      window.stopMusic = stopMusic;
-      window.toggleMediaToolbar = toggleMediaToolbar;
-      window.handleBackgroundUpload = handleBackgroundUpload;
-      window.handleVideoUpload = handleVideoUpload;
-      window.captureCanvas = captureCanvas;
-      window.captureCanvasOnly = captureCanvasOnly;
-      window.rollDice = rollDice;
-      window.showDiceSlider = showDiceSlider;
-      window.hideDiceSlider = hideDiceSlider;
-      window.uploadPlaylist = uploadPlaylist;
-               window.nextPlaylist = nextPlaylist;
-         window.previousPlaylist = previousPlaylist;
-         window.playRandomVideo = playRandomVideo;
-         window.preloadPlaylists = preloadPlaylists;
-         window.updateVideoPlaylistDisplaySilent = updateVideoPlaylistDisplaySilent;
-      window.loadUploadedPlaylist = loadUploadedPlaylist;
-      window.loadVideoPlaylist = loadVideoPlaylist;
-      window.videoPlayVideo = videoPlayVideo;
-      window.videoPlay = videoPlay;
-      window.videoPause = videoPause;
-      window.videoTogglePlay = videoTogglePlay;
-      window.videoNext = videoNext;
-      window.videoPrev = videoPrev;
-      window.videoTogglePlaylist = videoTogglePlaylist;
-      window.videoToggleFullscreen = videoToggleFullscreen;
-      window.videoClose = videoClose;
-      window.showVideoControls = showVideoControls;
-      window.showVideoPlaylist = showVideoPlaylist;
-      window.updateVideoPlaylistDisplay = updateVideoPlaylistDisplay;
-      window.toggleVideoPlayer = toggleVideoPlayer;
-      window.initVideoPlayer = initVideoPlayer;
+    // Function to export all functions to global scope
+    function exportAllFunctions() {
+      console.log("🔧 Starting function export...");
+      console.log("🔧 Available functions:", {
+        loadYouTubeVideo: typeof loadYouTubeVideo,
+        toggleMediaToolbar: typeof toggleMediaToolbar,
+        captureCanvasOnly: typeof captureCanvasOnly
+      });
       
-      // Recording functions
-      window.recordState = recordState;
-      window.startPlayback = startPlayback;
-      
-      // Main.js functions
-      window.init = init;
-      window.setupEventListeners = setupEventListeners;
-      window.switchTheme = switchTheme;
-      window.addIdea = addIdea;
-      window.saveIdeas = saveIdeas;
-      window.deleteAllIdeas = deleteAllIdeas;
-      window.cycleBackground = cycleBackground;
-      window.rotateBackground = rotateBackground;
-      window.showPanel = showPanel;
-      window.savePanel = savePanel;
-      window.deleteIdea = deleteIdea;
-      window.closePanel = closePanel;
-      window.toggleGlow = toggleGlow;
-      window.toggleFlash = toggleFlash;
-      window.toggleAnimateColors = toggleAnimateColors;
-      window.toggleTransparent = toggleTransparent;
-      window.changeGlowColor = changeGlowColor;
-      window.toggleFixed = toggleFixed;
-      window.toggleStatic = toggleStatic;
-      window.changeColor = changeColor;
-      window.changeTextColor = changeTextColor;
-      window.cycleFont = cycleFont;
-      window.handleImageUpload = handleImageUpload;
-      window.handleImageSelect = handleImageSelect;
-      window.clearUploadedImage = clearUploadedImage;
-      window.loadBackgroundImage = loadBackgroundImage;
-      window.updatePresetSelector = updatePresetSelector;
-      window.switchPreset = switchPreset;
-      window.testImageUpload = testImageUpload;
-      window.testEffects = testEffects;
-      window.togglePanelSide = togglePanelSide;
-      window.toggleSpeed = toggleSpeed;
-      window.togglePauseButton = togglePauseButton;
-      window.toggleCheckeredBorder = toggleCheckeredBorder;
-      window.minimizePanel = minimizePanel;
-      window.restorePanel = restorePanel;
-      
-      // Video.js functions
-      window.videoPlayVideo = videoPlayVideo;
-      window.extractYouTubeId = extractYouTubeId;
-      window.fetchVideoTitle = fetchVideoTitle;
-      window.videoTogglePlaylist = videoTogglePlaylist;
-      window.videoToggleFullscreen = videoToggleFullscreen;
-      window.showVideoControls = showVideoControls;
-      window.showVideoPlaylist = showVideoPlaylist;
-      window.forceCloseVideo = forceCloseVideo;
-      window.updateVideoOpacity = updateVideoOpacity;
-      window.updateVideoSize = updateVideoSize;
-      window.loadVideoControlImages = loadVideoControlImages;
-      window.setupMediaEventListeners = setupMediaEventListeners;
-      window.closePlaylist = closePlaylist;
-      window.minimizePlaylist = minimizePlaylist;
-              window.debugVideoControls = debugVideoControls;
+      try {
+        // Export all functions to global scope
+        window.loadYouTubeVideo = loadYouTubeVideo;
+        window.toggleMusicPanel = toggleMusicPanel;
+        window.loadMusicList = loadMusicList;
+        window.playMusic = playMusic;
+        window.stopMusic = stopMusic;
+        window.toggleMediaToolbar = toggleMediaToolbar;
+        window.handleBackgroundUpload = handleBackgroundUpload;
+        window.handleVideoUpload = handleVideoUpload;
+        window.captureCanvas = captureCanvas;
+        window.captureCanvasOnly = captureCanvasOnly;
+        window.rollDice = rollDice;
+        window.showDiceSlider = showDiceSlider;
+        window.hideDiceSlider = hideDiceSlider;
+        window.uploadPlaylist = uploadPlaylist;
+        window.nextPlaylist = nextPlaylist;
+        window.previousPlaylist = previousPlaylist;
+        window.playRandomVideo = playRandomVideo;
+        window.preloadPlaylists = preloadPlaylists;
+        window.updateVideoPlaylistDisplaySilent = updateVideoPlaylistDisplaySilent;
+        window.captureBubblePositions = captureBubblePositions;
+        window.addTimelineMarker = addTimelineMarker;
+        window.updateTimelineDisplay = updateTimelineDisplay;
+        window.loadUploadedPlaylist = loadUploadedPlaylist;
+        window.loadVideoPlaylist = loadVideoPlaylist;
+        window.videoPlayVideo = videoPlayVideo;
+        window.videoPlay = videoPlay;
+        window.videoPause = videoPause;
+        window.videoTogglePlay = videoTogglePlay;
+        window.videoNext = videoNext;
+        window.videoPrev = videoPrev;
+        window.videoTogglePlaylist = videoTogglePlaylist;
+        window.videoToggleFullscreen = videoToggleFullscreen;
+        window.videoClose = videoClose;
+        window.showVideoControls = showVideoControls;
+        window.showVideoPlaylist = showVideoPlaylist;
+        window.updateVideoPlaylistDisplay = updateVideoPlaylistDisplay;
+        window.toggleVideoPlayer = toggleVideoPlayer;
+        window.initVideoPlayer = initVideoPlayer;
+        
+        // Recording functions
+        window.recordState = recordState;
+        window.startPlayback = startPlayback;
+        window.stopPlayback = stopPlayback;
+        window.animateBubbles = animateBubbles;
+        window.interpolateBubblePositions = interpolateBubblePositions;
+        
+        // Main.js functions
+        window.init = init;
+        window.setupEventListeners = setupEventListeners;
+        window.switchTheme = switchTheme;
+        window.addIdea = addIdea;
+        window.saveIdeas = saveIdeas;
+        window.deleteAllIdeas = deleteAllIdeas;
+        window.cycleBackground = cycleBackground;
+        window.rotateBackground = rotateBackground;
+        window.showPanel = showPanel;
+        window.savePanel = savePanel;
+        window.deleteIdea = deleteIdea;
+        window.closePanel = closePanel;
+        window.toggleGlow = toggleGlow;
+        window.toggleFlash = toggleFlash;
+        window.toggleAnimateColors = toggleAnimateColors;
+        window.toggleTransparent = toggleTransparent;
+        window.changeGlowColor = changeGlowColor;
+        window.toggleFixed = toggleFixed;
+        window.toggleStatic = toggleStatic;
+        window.changeColor = changeColor;
+        window.changeTextColor = changeTextColor;
+        window.cycleFont = cycleFont;
+        window.handleImageUpload = handleImageUpload;
+        window.handleImageSelect = handleImageSelect;
+        window.clearUploadedImage = clearUploadedImage;
+        window.loadBackgroundImage = loadBackgroundImage;
+        window.updatePresetSelector = updatePresetSelector;
+        window.switchPreset = switchPreset;
+        window.testImageUpload = testImageUpload;
+        window.testEffects = testEffects;
+        window.togglePanelSide = togglePanelSide;
+        window.toggleSpeed = toggleSpeed;
+        window.togglePauseButton = togglePauseButton;
+        window.toggleCheckeredBorder = toggleCheckeredBorder;
+        window.minimizePanel = minimizePanel;
+        window.restorePanel = restorePanel;
+        
+        // Video.js functions
+        window.videoPlayVideo = videoPlayVideo;
+        window.extractYouTubeId = extractYouTubeId;
+        window.fetchVideoTitle = fetchVideoTitle;
+        window.videoTogglePlaylist = videoTogglePlaylist;
+        window.videoToggleFullscreen = videoToggleFullscreen;
+        window.showVideoControls = showVideoControls;
+        window.showVideoPlaylist = showVideoPlaylist;
+              window.forceCloseVideo = forceCloseVideo;
+        window.updateVideoOpacity = updateVideoOpacity;
+        window.updateVideoSize = updateVideoSize;
+        window.loadVideoControlImages = loadVideoControlImages;
+        window.setupMediaEventListeners = setupMediaEventListeners;
+        window.closePlaylist = closePlaylist;
+        window.minimizePlaylist = minimizePlaylist;
+        window.debugVideoControls = debugVideoControls;
         window.testPngAccess = testPngAccess;
         window.loadToolbarButtonImages = loadToolbarButtonImages;
         window.updatePauseButtonIcon = updatePauseButtonIcon;
-      
-      // Test function
-      window.testFunction = function() {
-        console.log('✅ Test function is working!');
-        return 'test';
-      };
-      
-      // Test if functions are available
-      console.log("🔧 Testing function availability:");
-      console.log("  rollDice:", typeof window.rollDice);
-      console.log("  toggleMusicPanel:", typeof window.toggleMusicPanel);
-      console.log("  captureCanvasOnly:", typeof window.captureCanvasOnly);
-      console.log("  toggleMediaToolbar:", typeof window.toggleMediaToolbar);
-      console.log("  testFunction:", typeof window.testFunction);
-      
-    } catch (error) {
-      console.error("❌ Error setting up global functions:", error);
+        window.updateVideoPlayButtonIcon = updateVideoPlayButtonIcon;
+        
+        console.log("✅ All functions exported successfully");
+        
+      } catch (error) {
+        console.error("❌ Error setting up global functions:", error);
+      }
     }
+    
+    // Test function
+    window.testFunction = function() {
+      console.log('✅ Test function is working!');
+      return 'test';
+    };
     
     // Initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
       console.log("🚀 Starting MindsEye initialization...");
+      
+      // Export functions after DOM is ready
+      setTimeout(exportAllFunctions, 100);
+      
+      // Test if functions are available after export
+      setTimeout(() => {
+        console.log("🔧 Testing function availability:");
+        console.log("  rollDice:", typeof window.rollDice);
+        console.log("  toggleMusicPanel:", typeof window.toggleMusicPanel);
+        console.log("  captureCanvasOnly:", typeof window.captureCanvasOnly);
+        console.log("  toggleMediaToolbar:", typeof window.toggleMediaToolbar);
+        console.log("  testFunction:", typeof window.testFunction);
+      }, 300);
       
       // Initialize core functionality
       if (typeof init === 'function') {

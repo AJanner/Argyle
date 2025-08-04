@@ -399,6 +399,27 @@ html, body {
 
 /* Line indents removed - no borders between buttons */
 
+/* Timeline markers for animation recording */
+.timeline-marker {
+  position: absolute;
+  top: -5px;
+  width: 10px;
+  height: 20px;
+  border-radius: 2px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.timeline-control {
+  position: relative;
+  margin: 10px 0;
+}
+
+.timeline-control input[type="range"] {
+  width: 100%;
+  position: relative;
+}
+
 #videoControls button:hover {
   transform: scale(1.05);
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
