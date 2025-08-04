@@ -722,14 +722,23 @@ function loadUploadedPlaylist(index) {
   videoCurrentIndex = 0;
   videoTitles = []; // Clear cached titles for new playlist
   
-  // Update display
+  // Update display (only once)
   if (typeof updateVideoPlaylistDisplay === 'function') {
     updateVideoPlaylistDisplay();
   }
   
-  // Play first video
+  // Play first video (but don't call updateVideoPlaylistDisplay again)
   if (typeof videoPlayVideo === 'function') {
+    // Temporarily disable the display update in videoPlayVideo
+    const originalUpdateDisplay = updateVideoPlaylistDisplay;
+    updateVideoPlaylistDisplay = () => {}; // Disable temporarily
+    
     videoPlayVideo(0);
+    
+    // Re-enable after a short delay
+    setTimeout(() => {
+      updateVideoPlaylistDisplay = originalUpdateDisplay;
+    }, 100);
   }
   
   console.log(`🔄 Loaded uploaded playlist: ${playlist.name} with ${playlist.urls.length} videos`);
@@ -1000,10 +1009,22 @@ function showVideoPlaylist() {
 
 // Auto-hide functionality removed - playlist now only toggles via button
 
+// Flag to prevent multiple simultaneous updates
+let isUpdatingPlaylistDisplay = false;
+
 async function updateVideoPlaylistDisplay() {
+  // Prevent multiple simultaneous updates
+  if (isUpdatingPlaylistDisplay) {
+    console.log('📋 Playlist display update already in progress, skipping');
+    return;
+  }
+  
+  isUpdatingPlaylistDisplay = true;
+  
   const playlistContainer = document.getElementById('videoPlaylistItems');
   if (!playlistContainer) {
     console.error('❌ Video Playlist container not found');
+    isUpdatingPlaylistDisplay = false;
     return;
   }
   
@@ -1074,6 +1095,7 @@ async function updateVideoPlaylistDisplay() {
   }
   
   console.log('📋 Video Playlist display updated');
+  isUpdatingPlaylistDisplay = false;
 }
 
 async function toggleVideoPlayer() {
@@ -1166,12 +1188,12 @@ async function toggleVideoPlayer() {
         updateVideoPlaylistDisplay();
       }
     } else {
-      // Check if we have a video loaded
+      // Always play first video when video player is opened
       const videoIframe = document.getElementById('videoIframe');
       if (videoIframe && videoIframe.src) {
         console.log('🎥 Video player shown (playback continues)');
-      } else if (videoPlaylist.length > 0) {
-        // Start playing the first video if no video is currently loaded
+      } else {
+        // Start playing the first video
         videoPlayVideo(0);
         console.log('🎥 Video player opened and started playing first video');
       }
