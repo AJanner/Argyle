@@ -667,11 +667,6 @@ async function nextPlaylist() {
   currentPlaylistIndex = (currentPlaylistIndex + 1) % uploadedPlaylists.length;
   loadUploadedPlaylist(currentPlaylistIndex);
   
-  // Update display to show the switched playlist
-  if (typeof updateVideoPlaylistDisplay === 'function') {
-    updateVideoPlaylistDisplay();
-  }
-  
   const playlist = uploadedPlaylists[currentPlaylistIndex];
   console.log(`📋 Switched to next playlist: ${playlist.name} (${playlist.urls.length} videos)`);
 }
@@ -685,11 +680,6 @@ async function previousPlaylist() {
   // Loop to last playlist if at the beginning
   currentPlaylistIndex = currentPlaylistIndex === 0 ? uploadedPlaylists.length - 1 : currentPlaylistIndex - 1;
   loadUploadedPlaylist(currentPlaylistIndex);
-  
-  // Update display to show the switched playlist
-  if (typeof updateVideoPlaylistDisplay === 'function') {
-    updateVideoPlaylistDisplay();
-  }
   
   const playlist = uploadedPlaylists[currentPlaylistIndex];
   console.log(`📋 Switched to previous playlist: ${playlist.name} (${playlist.urls.length} videos)`);
@@ -716,22 +706,15 @@ function loadUploadedPlaylist(index) {
   videoCurrentIndex = 0;
   videoTitles = []; // Clear cached titles for new playlist
   
-  // Update display immediately
+  // Update display once
   if (typeof updateVideoPlaylistDisplay === 'function') {
     updateVideoPlaylistDisplay();
   }
   
-  // Play first video (this will also update the display)
+  // Play first video
   if (typeof videoPlayVideo === 'function') {
     videoPlayVideo(0);
   }
-  
-  // Force another display update to ensure it's correct
-  setTimeout(() => {
-    if (typeof updateVideoPlaylistDisplay === 'function') {
-      updateVideoPlaylistDisplay();
-    }
-  }, 100);
   
   console.log(`🔄 Loaded uploaded playlist: ${playlist.name} with ${playlist.urls.length} videos`);
 }
@@ -1004,6 +987,7 @@ function showVideoPlaylist() {
 
 // Flag to prevent multiple simultaneous updates
 let isUpdatingPlaylistDisplay = false;
+let videoPlayerInitialized = false;
 
 async function updateVideoPlaylistDisplay() {
   // Prevent multiple simultaneous updates
@@ -1199,8 +1183,11 @@ async function toggleVideoPlayer() {
       controls.style.visibility = 'visible';
     }
     
-    // Initialize video player and load playlist if empty
-    if (videoPlaylist.length === 0) {
+    // Initialize video player on first open
+    if (!videoPlayerInitialized) {
+      videoPlayerInitialized = true;
+      console.log('🎥 Video player initialized for first time');
+      
       // Try to load pre-loaded playlists first
       if (uploadedPlaylists.length > 0) {
         currentPlaylistIndex = 0;
@@ -1223,14 +1210,16 @@ async function toggleVideoPlayer() {
         updateVideoPlaylistDisplay();
       }
     } else {
-      // Always play first video when video player is opened
+      // Video player already initialized, just play first video if needed
       const videoIframe = document.getElementById('videoIframe');
-      if (videoIframe && videoIframe.src && videoIframe.src !== '') {
+      if (videoIframe && videoIframe.src && videoIframe.src !== '' && videoIframe.src !== 'about:blank') {
         console.log('🎥 Video player shown (playback continues)');
-      } else {
+      } else if (videoPlaylist.length > 0) {
         // Start playing the first video immediately
-        videoPlayVideo(0);
-        console.log('🎥 Video player opened and started playing first video');
+        setTimeout(() => {
+          videoPlayVideo(0);
+          console.log('🎥 Video player opened and started playing first video');
+        }, 100);
       }
     }
     
