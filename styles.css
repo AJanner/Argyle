@@ -353,7 +353,7 @@ html, body {
   z-index: -1;
   display: none;
   background: rgba(0, 0, 0, 0.8);
-  padding: 15px;
+  padding: 10px 30px;
   border-radius: 10px;
   border: 2px solid #4CAF50;
   box-shadow: 0 0 0 2px white;
@@ -361,16 +361,15 @@ html, body {
   opacity: 1;
   pointer-events: none;
   text-align: center;
+  font-size: 0;
 }
 
-#videoControls button {
-  display: inline-block;
-  margin: 0 2px;
-  white-space: nowrap;
-}
+
 
 #videoControls {
   white-space: nowrap;
+  letter-spacing: 0;
+  word-spacing: 0;
 }
 
 #videoControls button {
@@ -378,7 +377,7 @@ html, body {
   border: none;
   color: white;
   padding: 0;
-  margin: 0;
+  margin: 0 1px;
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
@@ -388,8 +387,14 @@ html, body {
   display: inline-block;
   align-items: center;
   justify-content: center;
-  vertical-align: middle;
+  vertical-align: top;
   position: relative;
+  font-size: 0;
+  box-sizing: border-box;
+}
+
+#videoControls button:hover {
+  border: 1px solid green;
 }
 
 /* Line indents removed - no borders between buttons */
@@ -406,6 +411,13 @@ html, body {
   background-repeat: no-repeat;
   background-position: center;
   position: relative;
+  border: none;
+  outline: none;
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 /* When PNG images are available, these classes will be used */

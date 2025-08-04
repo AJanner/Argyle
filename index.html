@@ -107,7 +107,7 @@
     <button onclick="videoTogglePlay()" title="Play/Pause" class="video-control-btn" data-icon="play">🟢</button>
 
     <button onclick="videoNext()" title="Next" class="video-control-btn" data-icon="next">⏭️</button>
-    <button onclick="videoToggleFullscreen()" title="Fullscreen" class="video-control-btn" data-icon="fullscreen">🖥️</button>
+
     <button onclick="videoClose()" title="Close" class="video-control-btn" data-icon="close">��</button>
   </div>
 
@@ -119,10 +119,12 @@
       <button onclick="closePlaylist()" title="Close" style="position: absolute; top: 5px; right: 5px; background: rgba(255,0,0,0.7); color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 10px;">✕</button>
     </div>
     <div style="margin-bottom: 10px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 5px;">
-      <label style="display: block; margin-bottom: 5px; color: gold;">📋 Upload Playlist (.txt):</label>
+      <label id="currentPlaylistLabel" style="display: block; margin-bottom: 5px; color: gold;">📋 Upload Playlist (.txt):</label>
       <input type="file" id="playlistUpload" accept=".txt" style="width: 100%; margin-bottom: 5px;"/>
       <button onclick="uploadPlaylist()" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: none; color: black; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px;">📤 Upload</button>
-      <button onclick="cyclePlaylists()" style="background: linear-gradient(45deg, #2196F3, #1976D2); border: none; color: black; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px;">🔄 Cycle</button>
+      <button onclick="previousPlaylist()" style="background: linear-gradient(45deg, #FF9800, #F57C00); border: none; color: black; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px;">◀️</button>
+      <button onclick="nextPlaylist()" style="background: linear-gradient(45deg, #2196F3, #1976D2); border: none; color: black; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px;">▶️</button>
+      <button onclick="playRandomVideo()" style="background: linear-gradient(45deg, #9C27B0, #7B1FA2); border: none; color: black; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px;">🔄</button>
     </div>
     <div id="videoPlaylistItems">
       <!-- Playlist items will be loaded here -->
@@ -296,7 +298,9 @@
       window.showDiceSlider = showDiceSlider;
       window.hideDiceSlider = hideDiceSlider;
       window.uploadPlaylist = uploadPlaylist;
-      window.cyclePlaylists = cyclePlaylists;
+               window.nextPlaylist = nextPlaylist;
+         window.previousPlaylist = previousPlaylist;
+         window.playRandomVideo = playRandomVideo;
       window.loadUploadedPlaylist = loadUploadedPlaylist;
       window.loadVideoPlaylist = loadVideoPlaylist;
       window.videoPlayVideo = videoPlayVideo;
