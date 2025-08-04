@@ -426,14 +426,17 @@ function toggleCheckeredBorder() {
   showPauseBorder = !showPauseBorder;
   console.log("🏁 Checkered border:", showPauseBorder ? "ON" : "OFF");
   
-  const button = event.target;
-  if (showPauseBorder) {
-    button.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
-    button.style.color = "black";
-  } else {
-    button.style.background = "";
-    button.style.color = "";
-  }
+  // Find the button that was clicked
+  const buttons = document.querySelectorAll('button[onclick="toggleCheckeredBorder()"]');
+  buttons.forEach(button => {
+    if (showPauseBorder) {
+      button.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
+      button.style.color = "black";
+    } else {
+      button.style.background = "";
+      button.style.color = "";
+    }
+  });
 }
 
 // ===== BUBBLE PROPERTIES =====
@@ -743,15 +746,7 @@ function draw() {
       ctx.restore();
     }
     
-    // Visual feedback for manual control (always available)
-    ctx.save();
-    ctx.translate(a.x, a.y);
-    ctx.beginPath();
-    ctx.arc(0, 0, a.radius + 1, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.restore();
+    // Visual feedback for manual control (always available) - REMOVED
     
     // Visual feedback for dragging
     if (isDragging && draggedIdea === a) {

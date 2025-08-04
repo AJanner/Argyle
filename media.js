@@ -499,11 +499,13 @@ function initVideoPlayer() {
   const opacitySlider = document.getElementById('videoOpacitySlider');
   if (opacitySlider && player) {
     player.style.opacity = opacitySlider.value;
+    console.log('🎥 Initial video opacity set to:', opacitySlider.value);
   }
   
   // Debug video controls after a short delay
   setTimeout(() => {
     debugVideoControls();
+    testPngAccess();
   }, 1000);
 }
 
@@ -710,10 +712,28 @@ function videoPlayVideo(index) {
   updateVideoPlaylistDisplay();
 }
 
+function videoTogglePlay() {
+  const iframe = document.getElementById('videoIframe');
+  if (iframe) {
+    // Toggle between play and pause
+    if (videoIsPlaying) {
+      iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+      videoIsPlaying = false;
+      console.log('⏸️ Video paused');
+    } else {
+      iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+      videoIsPlaying = true;
+      console.log('▶️ Video playing');
+    }
+  }
+}
+
+// Keep the old functions for backward compatibility
 function videoPlay() {
   const iframe = document.getElementById('videoIframe');
   if (iframe) {
     iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+    videoIsPlaying = true;
   }
 }
 
@@ -721,6 +741,7 @@ function videoPause() {
   const iframe = document.getElementById('videoIframe');
   if (iframe) {
     iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+    videoIsPlaying = false;
   }
 }
 
@@ -819,6 +840,11 @@ function updateVideoOpacity(value) {
   if (player) {
     player.style.opacity = value;
     console.log('🎥 Video opacity updated to:', value);
+    
+    // If opacity is 0, make sure the player is still functional
+    if (parseFloat(value) === 0) {
+      console.log('🎥 Video player is now invisible but still functional');
+    }
   }
 }
 
@@ -1061,11 +1087,10 @@ function startPlayback() {
 // ===== VIDEO CONTROL IMAGE HANDLING =====
 
 function loadVideoControlImages() {
-  const imageNames = ['prev', 'play', 'pause', 'next', 'playlist', 'fullscreen', 'close'];
+  const imageNames = ['prev', 'play', 'next', 'playlist', 'fullscreen', 'close'];
   const imageFileMap = {
     'prev': 'previous.png',
     'play': 'play.png',
-    'pause': 'stop.png',
     'next': 'next.png',
     'playlist': 'playlist.png',
     'fullscreen': 'fullscreen.png',
@@ -1074,6 +1099,10 @@ function loadVideoControlImages() {
   
   console.log('🎨 Loading video control PNG images...');
   
+  // First, let's check if the buttons exist
+  const buttons = document.querySelectorAll('.video-control-btn');
+  console.log(`Found ${buttons.length} video control buttons`);
+  
   imageNames.forEach(iconName => {
     const fileName = imageFileMap[iconName];
     const img = new Image();
@@ -1081,9 +1110,18 @@ function loadVideoControlImages() {
     img.onload = function() {
       // Image loaded successfully, update button style
       const buttons = document.querySelectorAll(`[data-icon="${iconName}"]`);
+      console.log(`Found ${buttons.length} buttons for ${iconName}`);
+      
       buttons.forEach(button => {
-        button.classList.add('has-png');
-        console.log(`✅ Loaded video control image: ${fileName} for ${iconName} button`);
+        // Set the background image directly
+        button.style.backgroundImage = `url('images/${fileName}')`;
+        button.style.color = 'transparent';
+        button.style.fontSize = '0';
+        button.style.backgroundSize = '36px 36px';
+        button.style.backgroundRepeat = 'no-repeat';
+        button.style.backgroundPosition = 'center';
+        
+        console.log(`✅ Applied ${fileName} to ${iconName} button`);
       });
     };
     
@@ -1092,6 +1130,7 @@ function loadVideoControlImages() {
       console.log(`⚠️ Video control image not found: ${fileName} for ${iconName} button (using emoji fallback)`);
     };
     
+    // Set the source to trigger loading
     img.src = `images/${fileName}`;
     console.log(`🔄 Attempting to load: images/${fileName}`);
   });
@@ -1123,9 +1162,26 @@ function debugVideoControls() {
   
   buttons.forEach((button, index) => {
     const icon = button.getAttribute('data-icon');
-    const hasPng = button.classList.contains('has-png');
     const backgroundImage = getComputedStyle(button).backgroundImage;
-    console.log(`Button ${index + 1}: icon="${icon}", has-png=${hasPng}, background="${backgroundImage}"`);
+    const color = getComputedStyle(button).color;
+    const fontSize = getComputedStyle(button).fontSize;
+    console.log(`Button ${index + 1}: icon="${icon}", background="${backgroundImage}", color="${color}", fontSize="${fontSize}"`);
+  });
+}
+
+function testPngAccess() {
+  console.log('🧪 Testing PNG file access...');
+  const testFiles = ['previous.png', 'play.png', 'next.png', 'playlist.png', 'fullscreen.png'];
+  
+  testFiles.forEach(fileName => {
+    const img = new Image();
+    img.onload = function() {
+      console.log(`✅ PNG file accessible: ${fileName}`);
+    };
+    img.onerror = function() {
+      console.log(`❌ PNG file not accessible: ${fileName}`);
+    };
+    img.src = `images/${fileName}`;
   });
 }
 

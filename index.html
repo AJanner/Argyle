@@ -97,12 +97,12 @@
   <div id="videoControls">
     <div style="margin-bottom: 10px;">
       <label style="color: white; font-size: 12px;">Opacity: 
-        <input type="range" id="videoOpacitySlider" min="0.1" max="1.0" step="0.1" value="0.5" style="width: 100px; margin-left: 5px;" oninput="updateVideoOpacity(this.value)"/>
+        <input type="range" id="videoOpacitySlider" min="0.0" max="1.0" step="0.1" value="0.5" style="width: 100px; margin-left: 5px;" oninput="updateVideoOpacity(this.value)"/>
       </label>
     </div>
     <button onclick="videoPrev()" title="Previous" class="video-control-btn" data-icon="prev">⏮️</button>
-    <button onclick="videoPlay()" title="Play" class="video-control-btn" data-icon="play">🟢</button>
-    <button onclick="videoPause()" title="Pause" class="video-control-btn" data-icon="pause">⏸️</button>
+    <button onclick="videoTogglePlay()" title="Play/Pause" class="video-control-btn" data-icon="play">🟢</button>
+
     <button onclick="videoNext()" title="Next" class="video-control-btn" data-icon="next">⏭️</button>
     <button onclick="videoTogglePlaylist()" title="Show Playlist" class="video-control-btn" data-icon="playlist">📋</button>
     <button onclick="videoToggleFullscreen()" title="Fullscreen" class="video-control-btn" data-icon="fullscreen">🖥️</button>
@@ -297,6 +297,7 @@
         window.videoPlayVideo = videoPlayVideo;
         window.videoPlay = videoPlay;
         window.videoPause = videoPause;
+        window.videoTogglePlay = videoTogglePlay;
         window.videoNext = videoNext;
         window.videoPrev = videoPrev;
         window.videoTogglePlaylist = videoTogglePlaylist;
@@ -304,7 +305,6 @@
         window.videoClose = videoClose;
         window.showVideoControls = showVideoControls;
         window.showVideoPlaylist = showVideoPlaylist;
-        window.startVideoPlaylistFadeOut = startVideoPlaylistFadeOut;
         window.updateVideoPlaylistDisplay = updateVideoPlaylistDisplay;
         window.toggleVideoPlayer = toggleVideoPlayer;
         window.initVideoPlayer = initVideoPlayer;
@@ -355,8 +355,6 @@
         window.fetchVideoTitle = fetchVideoTitle;
         window.videoTogglePlaylist = videoTogglePlaylist;
         window.videoToggleFullscreen = videoToggleFullscreen;
-        window.startVideoControlsFadeOut = startVideoControlsFadeOut;
-        window.startVideoPlaylistFadeOut = startVideoPlaylistFadeOut;
         window.showVideoControls = showVideoControls;
         window.showVideoPlaylist = showVideoPlaylist;
         window.forceCloseVideo = forceCloseVideo;
@@ -364,6 +362,7 @@
         window.loadVideoControlImages = loadVideoControlImages;
         window.setupMediaEventListeners = setupMediaEventListeners;
         window.debugVideoControls = debugVideoControls;
+        window.testPngAccess = testPngAccess;
         
         // Test function
         window.testFunction = function() {
