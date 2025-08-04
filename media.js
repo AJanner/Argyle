@@ -1306,8 +1306,8 @@ function loadToolbarButtonImages() {
     'clear': 'clear.png',
     'video': 'video.png',
     'youtube': 'youtube.png',
-    'record-in': 'record-in.png',
-    'record-out': 'record-out.png',
+    'record-in': 'recordin.png',
+    'record-out': 'recordout.png',
     'play': 'play.png',
     'snapshot-media': 'snapshot.png'
   };
