@@ -185,6 +185,7 @@
       </select>
     </div>
     <div style="margin: 10px 0; text-align: center;">
+      <button onclick="switchToBubbleMode()" style="background: linear-gradient(45deg, #2196F3, #1976D2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 5px;">🫧 Switch to Bubble Mode</button>
       <button onclick="clearDrawingFromPanel()" style="background: linear-gradient(45deg, #f44336, #da190b); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 5px;">🧹 Clear Drawing</button>
       <button onclick="toggleDrawingFlash()" id="flashDrawingBtn" style="background: linear-gradient(45deg, #FFD700, #FFA500); border: none; color: black; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 5px;">✨ Flash Drawing</button>
       <button onclick="smoothLastLine()" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">🔄 Smooth Last Line</button>
@@ -457,6 +458,7 @@
         window.toggleDrawingFlash = toggleDrawingFlash;
         window.smoothLastLine = smoothLastLine;
         window.debugDrawingPaths = debugDrawingPaths;
+        window.switchToBubbleMode = switchToBubbleMode;
         
         // Video.js functions
         window.videoPlayVideo = videoPlayVideo;

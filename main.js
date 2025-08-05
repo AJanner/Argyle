@@ -89,6 +89,9 @@ function toggleDrawingMode() {
     console.log('🎨 Drawing mode activated - click and drag to draw');
     console.log('⌨️ Keyboard shortcuts: C=Clear, D=Color, W=Width');
     console.log('💡 Animation paused, bubble creation disabled');
+    
+    // Drawings will be automatically redrawn by the draw loop
+    console.log('🎨 Drawing mode activated - drawings will be preserved');
   } else {
     // Restore previous speed
     speedMultiplier = previousSpeedForDrawing;
@@ -688,6 +691,33 @@ function clearDrawingFromPanel() {
   closeDrawingSettings();
   console.log('🧹 All drawings cleared from panel and paths array emptied');
 }
+
+function switchToBubbleMode() {
+  // Exit drawing mode while preserving drawings
+  isDrawingMode = false;
+  
+  // Restore animation speed
+  speedMultiplier = previousSpeedForDrawing;
+  
+  // Update UI
+  canvas.classList.remove('drawing-mode');
+  canvas.style.cursor = 'default';
+  
+  // Stop flash animation if running
+  if (drawingFlash) {
+    stopFlashAnimation();
+    drawingFlash = false;
+  }
+  
+  // Close drawing settings panel
+  closeDrawingSettings();
+  
+  // Resume normal canvas drawing (bubbles will be drawn again)
+  console.log('🫧 Switched to bubble mode - drawings preserved');
+  console.log('📊 Preserved', drawingPaths.length, 'drawing paths');
+}
+
+
 
 function resize() {
   width = canvas.width = window.innerWidth;
@@ -1433,6 +1463,28 @@ function draw() {
       ctx.restore();
     }
     } // Close if (!isDrawingMode) block
+  }
+
+  // Draw preserved drawings when not in drawing mode
+  if (!isDrawingMode && drawingPaths.length > 0) {
+    for (let i = 0; i < drawingPaths.length; i++) {
+      const path = drawingPaths[i];
+      const pathColor = path.color || drawingColor;
+      const pathWidth = path.width || drawingWidth;
+      
+      ctx.beginPath();
+      ctx.moveTo(path[0].x, path[0].y);
+      
+      for (let j = 1; j < path.length; j++) {
+        ctx.lineTo(path[j].x, path[j].y);
+      }
+      
+      ctx.strokeStyle = pathColor;
+      ctx.lineWidth = pathWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    }
   }
 
   requestAnimationFrame(draw);
