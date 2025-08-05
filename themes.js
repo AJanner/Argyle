@@ -232,6 +232,8 @@ const themePresets = {
     "flash": false,
     "glow": true,
     "fontSize": 10,
+    "fixed": true,
+    "static": true,
     "rotation": 0
   },
   {
@@ -280,7 +282,6 @@ const themePresets = {
     "radius": 33,
     "font": "Arial",
     "image": "images/p27.png",
-    "static": true,
     "fontSize": 14,
     "rotation": 0,
     "glow": true
