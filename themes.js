@@ -112,7 +112,7 @@ const themePresets = {
     "fontSize": 8,
     "rotation": 0,
     "fixed": true,
-    "static": fasle
+    "static": false
   },
   {
     "title": "11.Bali     Mumba",
