@@ -20,7 +20,8 @@ function videoPlayVideo(index) {
   const videoId = extractYouTubeId(url);
   
   if (videoId) {
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=0`;
+    // Try different autoplay settings to work around restrictions
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=0&enablejsapi=1&origin=${window.location.origin}`;
     const videoIframe = document.getElementById('videoIframe');
     if (videoIframe) {
       videoIframe.src = embedUrl;
@@ -29,6 +30,20 @@ function videoPlayVideo(index) {
       videoIsPlaying = true;
       updateVideoPlaylistDisplay();
       console.log('🎵 Video Playing video:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+      
+      // Add event listener for iframe load to handle autoplay restrictions
+      videoIframe.onload = function() {
+        console.log('🎥 Video iframe loaded');
+        // Try to force play after load
+        setTimeout(() => {
+          try {
+            videoIframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+            console.log('🎥 Attempted to force play video');
+          } catch (error) {
+            console.log('⚠️ Could not force play video (autoplay restriction)');
+          }
+        }, 1000);
+      };
     }
   } else {
     console.error('❌ Invalid YouTube URL:', url);

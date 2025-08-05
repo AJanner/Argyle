@@ -774,21 +774,63 @@ function videoTogglePlay() {
   console.log('🎥 videoIsPlaying before:', videoIsPlaying);
   
   if (iframe) {
-    // Toggle between play and pause
-    if (videoIsPlaying) {
-      iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-      videoIsPlaying = false;
-      console.log('⏸️ Video paused');
-    } else {
-      iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-      videoIsPlaying = true;
-      console.log('▶️ Video playing');
+    try {
+      // Toggle between play and pause
+      if (videoIsPlaying) {
+        // Try multiple methods to pause the video
+        iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+        iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+        videoIsPlaying = false;
+        console.log('⏸️ Video paused');
+      } else {
+        // Try multiple methods to play the video
+        iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":[]}', '*');
+        videoIsPlaying = true;
+        console.log('▶️ Video playing');
+      }
+      
+      console.log('🎥 videoIsPlaying after:', videoIsPlaying);
+      
+      // Update the play button icon
+      updateVideoPlayButtonIcon();
+      
+      // Also try to reload the iframe if postMessage fails
+      setTimeout(() => {
+        if (videoIsPlaying && iframe.src) {
+          console.log('🔄 Attempting to force play by reloading iframe');
+          const currentSrc = iframe.src;
+          iframe.src = currentSrc.replace('autoplay=0', 'autoplay=1');
+          setTimeout(() => {
+            iframe.src = currentSrc;
+          }, 100);
+        }
+      }, 500);
+      
+      // Alternative approach: try to click the play button inside the iframe
+      setTimeout(() => {
+        if (videoIsPlaying) {
+          console.log('🎥 Attempting alternative play method');
+          try {
+            // Try to find and click the play button inside the iframe
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            const playButton = iframeDoc.querySelector('.ytp-play-button');
+            if (playButton) {
+              playButton.click();
+              console.log('🎥 Clicked play button inside iframe');
+            }
+          } catch (error) {
+            console.log('⚠️ Could not access iframe content (CORS restriction)');
+          }
+        }
+      }, 1000);
+      
+    } catch (error) {
+      console.error('❌ Error toggling video:', error);
+      // Fallback: just toggle the state and update button
+      videoIsPlaying = !videoIsPlaying;
+      updateVideoPlayButtonIcon();
     }
-    
-    console.log('🎥 videoIsPlaying after:', videoIsPlaying);
-    
-    // Update the play button icon
-    updateVideoPlayButtonIcon();
   } else {
     console.log('❌ No video iframe found');
   }
