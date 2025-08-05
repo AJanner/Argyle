@@ -697,7 +697,7 @@ const themePresets = {
             "glow": true,
             "image": "images/g2.png",
             "fontSize": 16,
-            "rotation": 0
+            "rotation": 213
           },
           {
             "title": "",
