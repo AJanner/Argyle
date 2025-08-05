@@ -769,6 +769,10 @@ function videoPlayVideo(index) {
 
 function videoTogglePlay() {
   const iframe = document.getElementById('videoIframe');
+  console.log('🎥 videoTogglePlay called');
+  console.log('🎥 iframe:', iframe);
+  console.log('🎥 videoIsPlaying before:', videoIsPlaying);
+  
   if (iframe) {
     // Toggle between play and pause
     if (videoIsPlaying) {
@@ -781,8 +785,12 @@ function videoTogglePlay() {
       console.log('▶️ Video playing');
     }
     
+    console.log('🎥 videoIsPlaying after:', videoIsPlaying);
+    
     // Update the play button icon
     updateVideoPlayButtonIcon();
+  } else {
+    console.log('❌ No video iframe found');
   }
 }
 
@@ -2145,7 +2153,7 @@ function updateVideoPlayButtonIcon() {
   const playButton = document.querySelector('.video-control-btn[data-icon="play"]');
   if (playButton) {
     const filename = videoIsPlaying ? 'pause.png' : 'play.png';
-    playButton.style.backgroundImage = `url(images/${filename})`;
+    PNGLoader.applyPNG(playButton, filename);
     console.log(`🎥 Updated video play button to ${filename} (playing: ${videoIsPlaying})`);
   }
 }
