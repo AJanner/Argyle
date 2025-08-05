@@ -105,6 +105,9 @@ function startDrawing(e) {
   e.preventDefault();
   e.stopPropagation();
   
+  // Close drawing settings panel when drawing starts
+  closeDrawingSettings();
+  
   isDrawing = true;
   drawingPath = [];
   
