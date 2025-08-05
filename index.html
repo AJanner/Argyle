@@ -101,12 +101,9 @@
   <!-- Video Controls -->
   <div id="videoControls">
     <div style="margin-bottom: 10px;">
-      <label style="color: white; font-size: 12px;">Opacity: 
-        <input type="range" id="videoOpacitySlider" min="0.0" max="1.0" step="0.1" value="0.5" style="width: 100px; margin-left: 5px;" oninput="updateVideoOpacity(this.value)"/>
-      </label>
-      <label style="color: white; font-size: 12px; margin-left: 10px;">Size: 
-        <input type="range" id="videoSizeSlider" min="0.3" max="1.5" step="0.1" value="1.0" style="width: 100px; margin-left: 5px;" oninput="updateVideoSize(this.value)"/>
-      </label>
+      <input type="range" id="videoOpacitySlider" min="0.0" max="1.0" step="0.1" value="0.5" style="width: 100px;" oninput="updateVideoOpacity(this.value)" title="Video Opacity"/>
+      <input type="range" id="videoSizeSlider" min="0.3" max="1.5" step="0.1" value="1.0" style="width: 100px; margin-left: 10px;" oninput="updateVideoSize(this.value)" title="Video Size"/>
+      <input type="range" id="videoVerticalSlider" min="-200" max="200" step="10" value="0" style="width: 100px; margin-left: 10px;" oninput="updateVideoVertical(this.value)" title="Video Vertical Position"/>
     </div>
     <button onclick="videoTogglePlaylist()" title="Show Playlist" class="video-control-btn" data-icon="playlist">📋</button>
     <button onclick="videoPrev()" title="Previous" class="video-control-btn" data-icon="prev">⏮️</button>
@@ -399,6 +396,7 @@
               window.forceCloseVideo = forceCloseVideo;
         window.updateVideoOpacity = updateVideoOpacity;
         window.updateVideoSize = updateVideoSize;
+        window.updateVideoVertical = updateVideoVertical;
         window.loadVideoControlImages = loadVideoControlImages;
         window.setupMediaEventListeners = setupMediaEventListeners;
         window.closePlaylist = closePlaylist;

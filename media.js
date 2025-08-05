@@ -910,8 +910,29 @@ function updateVideoSize(value) {
   const player = document.getElementById('videoPlayer');
   if (player) {
     const scale = parseFloat(value);
-    player.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    // Get current vertical offset from transform
+    const currentTransform = player.style.transform || '';
+    const verticalMatch = currentTransform.match(/calc\(-50% \+ (-?\d+)px\)/);
+    const verticalOffset = verticalMatch ? parseInt(verticalMatch[1]) : 0;
+    
+    // Apply scale with preserved vertical position
+    player.style.transform = `translate(-50%, calc(-50% + ${verticalOffset}px)) scale(${scale})`;
     console.log('🎥 Video size updated to:', scale);
+  }
+}
+
+function updateVideoVertical(value) {
+  const player = document.getElementById('videoPlayer');
+  if (player) {
+    const verticalOffset = parseInt(value);
+    // Get current scale from transform
+    const currentTransform = player.style.transform || '';
+    const scaleMatch = currentTransform.match(/scale\(([^)]+)\)/);
+    const scale = scaleMatch ? scaleMatch[1] : '1';
+    
+    // Apply vertical position with preserved scale (inverted)
+    player.style.transform = `translate(-50%, calc(-50% - ${verticalOffset}px)) scale(${scale})`;
+    console.log('🎥 Video vertical position updated to:', -verticalOffset, 'px');
   }
 }
 
@@ -959,11 +980,20 @@ function showVideoControls() {
   const player = document.getElementById('videoPlayer');
   const controls = document.getElementById('videoControls');
   
+  console.log('🎥 showVideoControls called');
+  console.log('🎥 Player:', player);
+  console.log('🎥 Controls:', controls);
+  console.log('🎥 Player display:', player ? player.style.display : 'no player');
+  
   // Only show controls if video player is visible
   if (controls && player && player.style.display !== 'none') {
     controls.style.display = 'block';
     controls.style.pointerEvents = 'auto';
+    controls.style.zIndex = '20001';
+    console.log('🎥 Video controls shown with z-index:', controls.style.zIndex);
     // Removed auto-hide functionality - controls stay visible
+  } else {
+    console.log('🎥 Video controls not shown - conditions not met');
   }
 }
 
