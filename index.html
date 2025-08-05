@@ -135,6 +135,58 @@
     </div>
   </div>
 
+  <!-- Drawing Settings Panel -->
+  <div id="drawingSettingsPanel" class="panel" style="display: none;">
+    <h3>🎨 Drawing Settings</h3>
+    <div style="margin: 10px 0;">
+      <label for="drawingColorSelect">Color:</label>
+      <select id="drawingColorSelect" onchange="setDrawingColor(this.value)">
+        <option value="#FF0000">Red</option>
+        <option value="#00FF00">Green</option>
+        <option value="#0000FF">Blue</option>
+        <option value="#FFFF00">Yellow</option>
+        <option value="#FF00FF">Magenta</option>
+        <option value="#00FFFF">Cyan</option>
+        <option value="#FFA500">Orange</option>
+        <option value="#800080">Purple</option>
+        <option value="#008000">Dark Green</option>
+        <option value="#000080">Navy</option>
+        <option value="#FFD700">Gold</option>
+        <option value="#FF69B4">Hot Pink</option>
+        <option value="#32CD32">Lime Green</option>
+        <option value="#FF4500">Orange Red</option>
+        <option value="#8A2BE2">Blue Violet</option>
+        <option value="#00CED1">Dark Turquoise</option>
+        <option value="#FF1493">Deep Pink</option>
+        <option value="#FF6347">Tomato</option>
+        <option value="#9370DB">Medium Purple</option>
+        <option value="#20B2AA">Light Sea Green</option>
+        <option value="#FFB6C1">Light Pink</option>
+        <option value="#DDA0DD">Plum</option>
+        <option value="#98FB98">Pale Green</option>
+        <option value="#F0E68C">Khaki</option>
+        <option value="#FFA07A">Light Salmon</option>
+        <option value="#87CEEB">Sky Blue</option>
+        <option value="#90EE90">Light Green</option>
+      </select>
+    </div>
+    <div style="margin: 10px 0;">
+      <label for="drawingWidthSelect">Width:</label>
+      <select id="drawingWidthSelect" onchange="setDrawingWidth(parseInt(this.value))">
+        <option value="1">1px</option>
+        <option value="2">2px</option>
+        <option value="3">3px</option>
+        <option value="4">4px</option>
+        <option value="5">5px</option>
+        <option value="8">8px</option>
+        <option value="12">12px</option>
+        <option value="16">16px</option>
+        <option value="20">20px</option>
+      </select>
+    </div>
+    <button onclick="closeDrawingSettings()" class="panel-close-btn">✖️</button>
+  </div>
+
   <!-- Dice Overlay -->
   <div class="dice-overlay" id="diceOverlay"></div>
 
@@ -391,6 +443,10 @@
         window.changeDrawingColor = changeDrawingColor;
         window.changeDrawingWidth = changeDrawingWidth;
         window.testDrawing = testDrawing;
+        window.showDrawingSettings = showDrawingSettings;
+        window.closeDrawingSettings = closeDrawingSettings;
+        window.setDrawingColor = setDrawingColor;
+        window.setDrawingWidth = setDrawingWidth;
         
         // Video.js functions
         window.videoPlayVideo = videoPlayVideo;

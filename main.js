@@ -54,7 +54,7 @@ let isDrawingMode = false;
 let isDrawing = false;
 let drawingPath = [];
 let drawingColor = '#FF0000';
-let drawingWidth = 3;
+let drawingWidth = 5;
 let previousSpeedForDrawing = 1; // Store speed when entering drawing mode
 
 // ===== UTILITY FUNCTIONS =====
@@ -163,7 +163,13 @@ function clearDrawing() {
 }
 
 function changeDrawingColor() {
-  const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#008000', '#000080'];
+  const colors = [
+    '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', 
+    '#FFA500', '#800080', '#008000', '#000080', '#FFD700', '#FF69B4',
+    '#32CD32', '#FF4500', '#8A2BE2', '#00CED1', '#FF1493', '#32CD32',
+    '#FF6347', '#9370DB', '#20B2AA', '#FFB6C1', '#DDA0DD', '#98FB98',
+    '#F0E68C', '#FFA07A', '#87CEEB', '#DDA0DD', '#90EE90', '#F0E68C'
+  ];
   const currentIndex = colors.indexOf(drawingColor);
   const nextIndex = (currentIndex + 1) % colors.length;
   drawingColor = colors[nextIndex];
@@ -171,7 +177,7 @@ function changeDrawingColor() {
 }
 
 function changeDrawingWidth() {
-  const widths = [1, 2, 3, 5, 8, 12, 16, 20];
+  const widths = [1, 2, 3, 4, 5, 8, 12, 16, 20];
   const currentIndex = widths.indexOf(drawingWidth);
   const nextIndex = (currentIndex + 1) % widths.length;
   drawingWidth = widths[nextIndex];
@@ -199,6 +205,46 @@ function testDrawing() {
   
   console.log('✅ Test line drawn from (100,100) to (200,200)');
   console.log('🎯 Check if red line appears on screen');
+}
+
+// ===== DRAWING SETTINGS PANEL FUNCTIONS =====
+
+function showDrawingSettings(e) {
+  if (!isDrawingMode) return;
+  
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const panel = document.getElementById('drawingSettingsPanel');
+  const colorSelect = document.getElementById('drawingColorSelect');
+  const widthSelect = document.getElementById('drawingWidthSelect');
+  
+  // Set current values
+  colorSelect.value = drawingColor;
+  widthSelect.value = drawingWidth;
+  
+  // Position panel near mouse
+  panel.style.left = e.clientX + 'px';
+  panel.style.top = e.clientY + 'px';
+  panel.style.display = 'block';
+  
+  console.log('🎨 Drawing settings panel opened');
+}
+
+function closeDrawingSettings() {
+  const panel = document.getElementById('drawingSettingsPanel');
+  panel.style.display = 'none';
+  console.log('🎨 Drawing settings panel closed');
+}
+
+function setDrawingColor(color) {
+  drawingColor = color;
+  console.log('🎨 Drawing color set to:', color);
+}
+
+function setDrawingWidth(width) {
+  drawingWidth = width;
+  console.log('📏 Drawing width set to:', width);
 }
 
 function resize() {
@@ -1010,6 +1056,12 @@ function setupEventListeners() {
   // Right-click for panel
   canvas.addEventListener("contextmenu", (e) => {
     e.preventDefault();
+    
+    // If in drawing mode, show drawing settings
+    if (isDrawingMode) {
+      showDrawingSettings(e);
+      return;
+    }
     
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
