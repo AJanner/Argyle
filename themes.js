@@ -175,7 +175,7 @@ const themePresets = {
     "textColor": "white",
     "radius": 18,
     "font": "Arial",
-    "image": "images/p1.png",
+    "image": "images/a30.png",
     "glow": true,
     "fixed": true,
     "static": true,
