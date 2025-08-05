@@ -92,6 +92,12 @@ function toggleDrawingMode() {
     
     // Drawings will be automatically redrawn by the draw loop
     console.log('🎨 Drawing mode activated - drawings will be preserved');
+    
+    // Update draw button to show active state
+    const drawButton = document.querySelector('[data-icon="draw"]');
+    if (drawButton && typeof PNGLoader !== 'undefined') {
+      PNGLoader.applyPNG(drawButton, 'draw2.png');
+    }
   } else {
     // Restore previous speed
     speedMultiplier = previousSpeedForDrawing;
@@ -100,6 +106,12 @@ function toggleDrawingMode() {
     canvas.classList.remove('drawing-mode');
     console.log('🎨 Drawing mode deactivated');
     console.log('💡 Animation resumed, bubble creation re-enabled');
+    
+    // Update draw button to show inactive state
+    const drawButton = document.querySelector('[data-icon="draw"]');
+    if (drawButton && typeof PNGLoader !== 'undefined') {
+      PNGLoader.applyPNG(drawButton, 'draw.png');
+    }
   }
 }
 
@@ -711,6 +723,12 @@ function switchToBubbleMode() {
   
   // Close drawing settings panel
   closeDrawingSettings();
+  
+  // Update draw button to show inactive state
+  const drawButton = document.querySelector('[data-icon="draw"]');
+  if (drawButton && typeof PNGLoader !== 'undefined') {
+    PNGLoader.applyPNG(drawButton, 'draw.png');
+  }
   
   // Resume normal canvas drawing (bubbles will be drawn again)
   console.log('🫧 Switched to bubble mode - drawings preserved');

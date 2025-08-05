@@ -1289,6 +1289,12 @@ async function toggleVideoPlayer() {
     }
     videoPlaylistVisible = false;
     console.log('🎥 Video player hidden (playback continues)');
+    
+    // Update video button to show inactive state
+    const videoButton = document.querySelector('[data-icon="video"]');
+    if (videoButton && typeof PNGLoader !== 'undefined') {
+      PNGLoader.applyPNG(videoButton, 'video.png');
+    }
   } else {
     // Show video player with proper z-index and current opacity
     if (player) {
@@ -1370,6 +1376,12 @@ async function toggleVideoPlayer() {
     
     // Reset playlist visibility state
     videoPlaylistVisible = false;
+    
+    // Update video button to show active state
+    const videoButton = document.querySelector('[data-icon="video"]');
+    if (videoButton && typeof PNGLoader !== 'undefined') {
+      PNGLoader.applyPNG(videoButton, 'video2.png');
+    }
   }
   
   console.log('🎥 Video player toggled:', isVisible ? 'hidden' : 'shown');
