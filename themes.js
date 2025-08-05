@@ -112,7 +112,7 @@ const themePresets = {
     "fontSize": 8,
     "rotation": 0,
     "fixed": true,
-    "static": false
+    "static": true
   },
   {
     "title": "11.Bali     Mumba",
@@ -233,7 +233,7 @@ const themePresets = {
     "glow": true,
     "fontSize": 10,
     "fixed": true,
-    "static": false,
+    "static": true,
     "rotation": 0
   },
   {
@@ -334,7 +334,7 @@ const themePresets = {
     "font": "Arial",
     "image": "images/p19.png",
     "glow": true,
-    "static": false,
+    "static": true,
     "fontSize": 14,
     "rotation": 0
   },
@@ -352,7 +352,7 @@ const themePresets = {
     "image": "images/p24.png",
     "glow": true,
     "fixed": true,
-    "static": false,
+    "static": true,
     "fontSize": 14,
     "rotation": 0
   },
@@ -401,7 +401,7 @@ const themePresets = {
     "font": "Arial",
     "image": "images/p28.png",
     "glow": true,
-    "static": false,
+    "static": true,
     "fixed": true,
     "fontSize": 14,
     "rotation": 0
@@ -415,7 +415,7 @@ const themePresets = {
     "vy": -2.6816082723842594,
     "color": "hsl(327.1227236875013, 100%, 70%)",
     "textColor": "white",
-    "radius": 25,
+    "radius": 27,
     "font": "Monaco",
     "glow": true,
     "flash": false,
@@ -423,7 +423,7 @@ const themePresets = {
     "transparent": false,
     "glowColor": "hsl(125.03993572644762, 100%, 70%)",
     "fixed": true,
-    "static": false,
+    "static": true,
     "image": "images/p15.png"
   }
         ],
