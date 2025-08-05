@@ -717,6 +717,33 @@ function switchToBubbleMode() {
   console.log('📊 Preserved', drawingPaths.length, 'drawing paths');
 }
 
+function clearDrawingsOnRightClick(event) {
+  event.preventDefault(); // Prevent default context menu
+  
+  // Clear only the drawings (like the panel button does)
+  clearDrawingOnly();
+  drawingPaths = [];
+  
+  // Stop flash animation if running
+  if (drawingFlash) {
+    stopFlashAnimation();
+    drawingFlash = false;
+  }
+  
+  console.log('🧹 All drawings cleared via right-click on toggle button');
+  
+  // Show a brief visual feedback
+  const button = event.target;
+  const originalText = button.innerHTML;
+  button.innerHTML = '🧹';
+  button.style.background = 'linear-gradient(45deg, #f44336, #da190b)';
+  
+  setTimeout(() => {
+    button.innerHTML = originalText;
+    button.style.background = 'linear-gradient(45deg, #FF6B6B, #FF8E53)';
+  }, 500);
+}
+
 
 
 function resize() {

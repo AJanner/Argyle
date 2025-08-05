@@ -48,7 +48,7 @@
     <button onclick="document.getElementById('fileLoader').click()" title="Load .json File" class="toolbar-btn" data-icon="load">🆙 Load.json</button>
     <button onclick="deleteAllIdeas()" title="Blank Canvas" class="toolbar-btn" data-icon="clear">🚮Clear💭Ideas🗑️</button>
     <button onclick="toggleVideoPlayer()" title="Toggle Video Player" class="toolbar-btn" data-icon="video">📹</button>
-    <button onclick="toggleDrawingMode()" title="Toggle Drawing Mode" class="toolbar-btn" data-icon="draw">✏️</button>
+    <button onclick="toggleDrawingMode()" oncontextmenu="clearDrawingsOnRightClick(event)" title="Toggle Drawing Mode (Right-click to clear drawings)" class="toolbar-btn" data-icon="draw">✏️</button>
   </div>
 
   <!-- Media Toolbar -->
@@ -459,6 +459,7 @@
         window.smoothLastLine = smoothLastLine;
         window.debugDrawingPaths = debugDrawingPaths;
         window.switchToBubbleMode = switchToBubbleMode;
+        window.clearDrawingsOnRightClick = clearDrawingsOnRightClick;
         
         // Video.js functions
         window.videoPlayVideo = videoPlayVideo;
