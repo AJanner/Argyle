@@ -55,6 +55,8 @@ let isDrawing = false;
 let drawingPath = [];
 let drawingColor = '#FF0000';
 let drawingWidth = 5;
+let drawingFlash = false;
+let drawingPaths = []; // Store all drawing paths for smoothing
 let previousSpeedForDrawing = 1; // Store speed when entering drawing mode
 
 // ===== UTILITY FUNCTIONS =====
@@ -144,7 +146,14 @@ function drawLine(e) {
     ctx.lineWidth = drawingWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    
+    // Apply flash effect if active
+    if (drawingFlash) {
+      ctx.globalAlpha = 0.3 + 0.7 * Math.sin(Date.now() / 200);
+    }
+    
     ctx.stroke();
+    ctx.globalAlpha = 1;
     
     console.log('✏️ Drawing line from', prev.x, prev.y, 'to', curr.x, curr.y, 'color:', drawingColor, 'width:', drawingWidth);
   }
@@ -154,6 +163,24 @@ function stopDrawing() {
   if (!isDrawingMode) return;
   
   isDrawing = false;
+  
+  // Save the completed path with color and width
+  if (drawingPath.length > 1) {
+    const pathWithMetadata = [...drawingPath];
+    // Always save the current drawing color and width
+    pathWithMetadata.color = drawingColor;
+    pathWithMetadata.width = drawingWidth;
+    drawingPaths.push(pathWithMetadata);
+    console.log('✏️ Drawing path saved with', drawingPath.length, 'points, color:', drawingColor, 'width:', drawingWidth);
+    console.log('📊 Total paths stored:', drawingPaths.length);
+    
+    // Debug: Check all stored paths
+    for (let i = 0; i < drawingPaths.length; i++) {
+      const path = drawingPaths[i];
+      console.log(`  Path ${i}: color=${path.color}, width=${path.width}, points=${path.length}`);
+    }
+  }
+  
   drawingPath = [];
   console.log('✏️ Stopped drawing');
 }
@@ -162,7 +189,392 @@ function clearDrawing() {
   // Clear the canvas and redraw everything
   ctx.clearRect(0, 0, width, height);
   draw(); // Redraw all bubbles and background
-  console.log('🧹 Drawing cleared');
+  
+  // Also clear the drawing paths array
+  drawingPaths = [];
+  
+  // Stop flash animation if it's running
+  if (drawingFlash) {
+    stopFlashAnimation();
+  }
+  
+  console.log('🧹 Drawing cleared and paths array emptied');
+}
+
+function clearDrawingOnly() {
+  // Only clear drawings, preserve bubbles and background
+  if (backgroundImage) {
+    // Redraw background to clear drawings
+    if (backgroundRotation !== 0) {
+      ctx.save();
+      ctx.translate(width / 2, height / 2);
+      ctx.rotate((backgroundRotation * Math.PI) / 180);
+      const maxDimension = Math.max(width, height);
+      const scaleX = width / backgroundImage.width;
+      const scaleY = height / backgroundImage.height;
+      const scale = Math.max(scaleX, scaleY) * 1.2;
+      
+      const scaledWidth = backgroundImage.width * scale;
+      const scaledHeight = backgroundImage.height * scale;
+      
+      ctx.drawImage(backgroundImage, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+      ctx.restore();
+    } else {
+      ctx.drawImage(backgroundImage, 0, 0, width, height);
+    }
+  } else {
+    // Clear with background color
+    ctx.clearRect(0, 0, width, height);
+  }
+  
+  // Redraw bubbles
+  for (let i = 0; i < ideas.length; i++) {
+    const a = ideas[i];
+    
+    // Draw bubble
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    if (a.rotation) {
+      ctx.rotate((a.rotation * Math.PI) / 180);
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, a.radius, 0, Math.PI * 2);
+    ctx.clip();
+
+    if (a.image) {
+      const src = a.image;
+      
+      if (loadedImages[src] && loadedImages[src].complete) {
+        try {
+          ctx.drawImage(loadedImages[src], -a.radius, -a.radius, a.radius * 2, a.radius * 2);
+        } catch (error) {
+          console.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
+          a.image = null;
+        }
+      } else {
+        if (!loadedImages[src]) {
+          const img = new Image();
+          img.onload = () => {
+            loadedImages[src] = img;
+          };
+          img.onerror = () => {
+            console.error("❌ Failed to load image:", src);
+            a.image = null;
+          };
+          img.src = src;
+        }
+        
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.fill();
+      }
+    } else {
+      if (a.transparent) {
+        ctx.fillStyle = "rgba(255,255,255,0.1)";
+      } else if (a.animateColors) {
+        ctx.fillStyle = `hsl(${(Date.now() * 0.08) % 360}, 100%, 70%)`;
+      } else {
+        ctx.fillStyle = a.color || "white";
+      }
+
+      if (a.glow) {
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = a.color || "white";
+      } else {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = a.color || "white";
+      }
+      
+      ctx.fill();
+    }
+
+    ctx.restore();
+
+    // Effects
+    if (a.glow || a.flash) {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      if (a.rotation) {
+        ctx.rotate((a.rotation * Math.PI) / 180);
+      }
+      
+      if (a.flash) {
+        ctx.globalAlpha = 0.5 + 0.5 * Math.sin(Date.now() / 100);
+        ctx.beginPath();
+        ctx.arc(0, 0, a.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+      
+      if (a.glow) {
+        const glowColor = a.glowColor || a.color || "white";
+        
+        ctx.globalAlpha = 0.8;
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 25;
+        ctx.beginPath();
+        ctx.arc(0, 0, a.radius + 3, 0, Math.PI * 2);
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.globalAlpha = 0.4;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(0, 0, a.radius + 5, 0, Math.PI * 2);
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      
+      ctx.restore();
+    }
+
+    // Text
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    if (a.rotation) {
+      ctx.rotate((a.rotation * Math.PI) / 180);
+    }
+    ctx.fillStyle = a.textColor || "white";
+    const fontSize = a.fontSize || 14;
+    ctx.font = `bold ${fontSize}px ${a.font || "Tahoma"}`;
+    ctx.textAlign = "center";
+    const words = a.title.split(" ");
+    const lineHeight = fontSize + 2;
+    words.forEach((word, idx) => {
+      ctx.fillText(word, 0, idx * lineHeight - (words.length - 1) * (lineHeight / 2));
+    });
+    ctx.restore();
+    
+    // Visual feedback for dragging and manual control
+    if (speedMultiplier === 0 && showPauseBorder) {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      ctx.beginPath();
+      ctx.arc(0, 0, a.radius + 3, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255, 255, 0, 0.5)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.stroke();
+      ctx.restore();
+    }
+    
+    // Visual feedback for dragging
+    if (isDragging && draggedIdea === a) {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      ctx.beginPath();
+      ctx.arc(0, 0, a.radius + 8, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+  
+  console.log('🧹 Only drawings cleared, bubbles and background preserved');
+}
+
+// ===== DRAWING FLASH AND SMOOTH FUNCTIONS =====
+
+function toggleDrawingFlash() {
+  drawingFlash = !drawingFlash;
+  const flashBtn = document.getElementById('flashDrawingBtn');
+  
+  if (drawingFlash) {
+    flashBtn.style.background = 'linear-gradient(45deg, #FF1493, #FF69B4)';
+    flashBtn.textContent = '✨ Flash ON';
+    console.log('✨ Drawing flash activated');
+    
+    // Start flash animation for existing drawings
+    startFlashAnimation();
+  } else {
+    flashBtn.style.background = 'linear-gradient(45deg, #FFD700, #FFA500)';
+    flashBtn.textContent = '✨ Flash Drawing';
+    console.log('✨ Drawing flash deactivated');
+    
+    // Stop flash animation
+    stopFlashAnimation();
+  }
+}
+
+let flashAnimationId = null;
+
+function startFlashAnimation() {
+  if (flashAnimationId) return;
+  
+  function flashLoop() {
+    if (!drawingFlash) return;
+    
+    // Redraw all paths with flash effect
+    clearDrawingOnly();
+    
+    for (let i = 0; i < drawingPaths.length; i++) {
+      const path = drawingPaths[i];
+      const pathColor = path.color || drawingColor;
+      const pathWidth = path.width || drawingWidth;
+      
+      // Debug: Log what color is being used for each path
+      console.log(`🎨 Flash drawing path ${i}: stored color=${path.color}, using color=${pathColor}`);
+      
+      // Draw path with its original color/width without changing global variables
+      ctx.beginPath();
+      ctx.moveTo(path[0].x, path[0].y);
+      
+      for (let j = 1; j < path.length; j++) {
+        ctx.lineTo(path[j].x, path[j].y);
+      }
+      
+      ctx.strokeStyle = pathColor;
+      ctx.lineWidth = pathWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      // Apply flash effect
+      ctx.globalAlpha = 0.3 + 0.7 * Math.sin(Date.now() / 200);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    
+    flashAnimationId = setTimeout(flashLoop, 100); // Slower flash animation
+  }
+  
+  flashLoop();
+}
+
+function stopFlashAnimation() {
+  if (flashAnimationId) {
+    clearTimeout(flashAnimationId);
+    flashAnimationId = null;
+  }
+}
+
+function debugDrawingPaths() {
+  console.log('🔍 Debugging drawing paths:');
+  console.log('📊 Total paths:', drawingPaths.length);
+  for (let i = 0; i < drawingPaths.length; i++) {
+    const path = drawingPaths[i];
+    console.log(`  Path ${i}: color=${path.color}, width=${path.width}, points=${path.length}`);
+  }
+}
+
+function smoothLastLine() {
+  if (drawingPaths.length === 0) {
+    console.log('⚠️ No lines to smooth');
+    return;
+  }
+  
+  const lastPath = drawingPaths[drawingPaths.length - 1];
+  if (!lastPath || lastPath.length < 3) {
+    console.log('⚠️ Last line too short to smooth');
+    return;
+  }
+  
+  // Store original color and width
+  const originalColor = drawingColor;
+  const originalWidth = drawingWidth;
+  
+  // Clear the last line
+  clearDrawingOnly();
+  
+  // Redraw all paths except the last one with their original colors
+  for (let i = 0; i < drawingPaths.length - 1; i++) {
+    const path = drawingPaths[i];
+    const pathColor = path.color || originalColor;
+    const pathWidth = path.width || originalWidth;
+    
+    // Draw path with its original color/width without changing global variables
+    ctx.beginPath();
+    ctx.moveTo(path[0].x, path[0].y);
+    
+    for (let j = 1; j < path.length; j++) {
+      ctx.lineTo(path[j].x, path[j].y);
+    }
+    
+    ctx.strokeStyle = pathColor;
+    ctx.lineWidth = pathWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+  
+  // Create smoothed version of the last path
+  const smoothedPath = smoothPath(lastPath);
+  
+  // Replace the last path with smoothed version
+  drawingPaths[drawingPaths.length - 1] = smoothedPath;
+  
+  // Draw the smoothed path with original color/width
+  ctx.beginPath();
+  ctx.moveTo(smoothedPath[0].x, smoothedPath[0].y);
+  
+  for (let i = 1; i < smoothedPath.length; i++) {
+    ctx.lineTo(smoothedPath[i].x, smoothedPath[i].y);
+  }
+  
+  ctx.strokeStyle = originalColor;
+  ctx.lineWidth = originalWidth;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+  
+  console.log('🔄 Last line smoothed');
+}
+
+function smoothPath(path) {
+  if (path.length < 3) return path;
+  
+  const smoothed = [];
+  const tension = 0.3; // Reduced smoothing factor for less strict smoothing
+  
+  // Add first point
+  smoothed.push(path[0]);
+  
+  // Smooth intermediate points
+  for (let i = 1; i < path.length - 1; i++) {
+    const prev = path[i - 1];
+    const curr = path[i];
+    const next = path[i + 1];
+    
+    // Calculate smoothed point with gentler smoothing
+    const smoothedX = curr.x + (prev.x + next.x - 2 * curr.x) * tension * 0.3;
+    const smoothedY = curr.y + (prev.y + next.y - 2 * curr.y) * tension * 0.3;
+    
+    smoothed.push({ x: smoothedX, y: smoothedY });
+  }
+  
+  // Add last point
+  smoothed.push(path[path.length - 1]);
+  
+  return smoothed;
+}
+
+function drawPath(path) {
+  if (path.length < 2) return;
+  
+  ctx.beginPath();
+  ctx.moveTo(path[0].x, path[0].y);
+  
+  for (let i = 1; i < path.length; i++) {
+    ctx.lineTo(path[i].x, path[i].y);
+  }
+  
+  // Use path's stored color and width, or fall back to current
+  const pathColor = path.color || drawingColor;
+  const pathWidth = path.width || drawingWidth;
+  
+  ctx.strokeStyle = pathColor;
+  ctx.lineWidth = pathWidth;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  
+  if (drawingFlash) {
+    ctx.globalAlpha = 0.5 + 0.5 * Math.sin(Date.now() / 100);
+  }
+  
+  ctx.stroke();
+  ctx.globalAlpha = 1;
 }
 
 function changeDrawingColor() {
@@ -195,6 +607,17 @@ function testDrawing() {
   console.log('✏️ Drawing mode:', isDrawingMode);
   console.log('🎯 Canvas context:', ctx);
   console.log('🎨 Canvas z-index:', canvas.style.zIndex || 'default');
+  
+  // Check computed z-index
+  const computedStyle = window.getComputedStyle(canvas);
+  console.log('🎨 Computed canvas z-index:', computedStyle.zIndex);
+  
+  // Check video player z-index
+  const videoPlayer = document.getElementById('videoPlayer');
+  if (videoPlayer) {
+    const videoComputedStyle = window.getComputedStyle(videoPlayer);
+    console.log('🎥 Video player z-index:', videoComputedStyle.zIndex);
+  }
   
   // Draw a test line
   ctx.beginPath();
@@ -248,6 +671,22 @@ function setDrawingColor(color) {
 function setDrawingWidth(width) {
   drawingWidth = width;
   console.log('📏 Drawing width set to:', width);
+}
+
+function clearDrawingFromPanel() {
+  // Clear the visual canvas
+  clearDrawingOnly();
+  
+  // Actually remove all drawing paths from the array
+  drawingPaths = [];
+  
+  // Stop flash animation if it's running
+  if (drawingFlash) {
+    stopFlashAnimation();
+  }
+  
+  closeDrawingSettings();
+  console.log('🧹 All drawings cleared from panel and paths array emptied');
 }
 
 function resize() {

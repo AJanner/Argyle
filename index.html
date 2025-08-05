@@ -136,8 +136,8 @@
   </div>
 
   <!-- Drawing Settings Panel -->
-  <div id="drawingSettingsPanel" class="panel" style="display: none;">
-    <h3>🎨 Drawing Settings</h3>
+  <div id="drawingSettingsPanel" class="panel" style="display: none; width: 15%;">
+    <h3 style="margin: 5px 0;">🎨 Drawing Settings</h3>
     <div style="margin: 10px 0;">
       <label for="drawingColorSelect">Color:</label>
       <select id="drawingColorSelect" onchange="setDrawingColor(this.value)">
@@ -183,6 +183,11 @@
         <option value="16">16px</option>
         <option value="20">20px</option>
       </select>
+    </div>
+    <div style="margin: 10px 0; text-align: center;">
+      <button onclick="clearDrawingFromPanel()" style="background: linear-gradient(45deg, #f44336, #da190b); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 5px;">🧹 Clear Drawing</button>
+      <button onclick="toggleDrawingFlash()" id="flashDrawingBtn" style="background: linear-gradient(45deg, #FFD700, #FFA500); border: none; color: black; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 5px;">✨ Flash Drawing</button>
+      <button onclick="smoothLastLine()" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">🔄 Smooth Last Line</button>
     </div>
     <button onclick="closeDrawingSettings()" class="panel-close-btn">✖️</button>
   </div>
@@ -447,6 +452,11 @@
         window.closeDrawingSettings = closeDrawingSettings;
         window.setDrawingColor = setDrawingColor;
         window.setDrawingWidth = setDrawingWidth;
+        window.clearDrawingFromPanel = clearDrawingFromPanel;
+        window.clearDrawingOnly = clearDrawingOnly;
+        window.toggleDrawingFlash = toggleDrawingFlash;
+        window.smoothLastLine = smoothLastLine;
+        window.debugDrawingPaths = debugDrawingPaths;
         
         // Video.js functions
         window.videoPlayVideo = videoPlayVideo;

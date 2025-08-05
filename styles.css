@@ -75,7 +75,7 @@ html, body {
 /* ===== CANVAS STYLES ===== */
 #canvas {
   display: block;
-  z-index: 25001;
+  z-index: 50000;
 }
 
 /* Drawing mode cursor */
