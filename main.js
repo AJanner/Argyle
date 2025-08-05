@@ -49,6 +49,14 @@ let videoPlaylistVisible = false;
 let videoPlaylistTimeout = null;
 let videoTitles = [];
 
+// Drawing mode variables
+let isDrawingMode = false;
+let isDrawing = false;
+let drawingPath = [];
+let drawingColor = '#FF0000';
+let drawingWidth = 3;
+let previousSpeedForDrawing = 1; // Store speed when entering drawing mode
+
 // ===== UTILITY FUNCTIONS =====
 
 function randomColor() {
@@ -60,6 +68,137 @@ function randomTextColor() {
   const saturation = 100;
   const lightness = 50 + Math.random() * 10;
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
+// ===== DRAWING FUNCTIONS =====
+
+function toggleDrawingMode() {
+  isDrawingMode = !isDrawingMode;
+  console.log('✏️ Drawing mode:', isDrawingMode ? 'ON' : 'OFF');
+  
+  // Update cursor and CSS class
+  if (isDrawingMode) {
+    // Store current speed and pause animation
+    previousSpeedForDrawing = speedMultiplier;
+    speedMultiplier = 0;
+    
+    canvas.style.cursor = 'crosshair';
+    canvas.classList.add('drawing-mode');
+    console.log('🎨 Drawing mode activated - click and drag to draw');
+    console.log('⌨️ Keyboard shortcuts: C=Clear, D=Color, W=Width');
+    console.log('💡 Animation paused, bubble creation disabled');
+  } else {
+    // Restore previous speed
+    speedMultiplier = previousSpeedForDrawing;
+    
+    canvas.style.cursor = 'default';
+    canvas.classList.remove('drawing-mode');
+    console.log('🎨 Drawing mode deactivated');
+    console.log('💡 Animation resumed, bubble creation re-enabled');
+  }
+}
+
+function startDrawing(e) {
+  if (!isDrawingMode) return;
+  
+  // Prevent bubble creation when drawing
+  e.preventDefault();
+  e.stopPropagation();
+  
+  isDrawing = true;
+  drawingPath = [];
+  
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  
+  drawingPath.push({ x, y });
+  console.log('✏️ Started drawing at:', x, y);
+}
+
+function drawLine(e) {
+  if (!isDrawingMode || !isDrawing) return;
+  
+  // Prevent bubble creation when drawing
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  
+  drawingPath.push({ x, y });
+  
+  // Draw the line segment directly on the main canvas
+  if (drawingPath.length >= 2) {
+    const prev = drawingPath[drawingPath.length - 2];
+    const curr = drawingPath[drawingPath.length - 1];
+    
+    ctx.beginPath();
+    ctx.moveTo(prev.x, prev.y);
+    ctx.lineTo(curr.x, curr.y);
+    ctx.strokeStyle = drawingColor;
+    ctx.lineWidth = drawingWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    
+    console.log('✏️ Drawing line from', prev.x, prev.y, 'to', curr.x, curr.y, 'color:', drawingColor, 'width:', drawingWidth);
+  }
+}
+
+function stopDrawing() {
+  if (!isDrawingMode) return;
+  
+  isDrawing = false;
+  drawingPath = [];
+  console.log('✏️ Stopped drawing');
+}
+
+function clearDrawing() {
+  // Clear the canvas and redraw everything
+  ctx.clearRect(0, 0, width, height);
+  draw(); // Redraw all bubbles and background
+  console.log('🧹 Drawing cleared');
+}
+
+function changeDrawingColor() {
+  const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#008000', '#000080'];
+  const currentIndex = colors.indexOf(drawingColor);
+  const nextIndex = (currentIndex + 1) % colors.length;
+  drawingColor = colors[nextIndex];
+  console.log('🎨 Drawing color changed to:', drawingColor);
+}
+
+function changeDrawingWidth() {
+  const widths = [1, 2, 3, 5, 8, 12, 16, 20];
+  const currentIndex = widths.indexOf(drawingWidth);
+  const nextIndex = (currentIndex + 1) % widths.length;
+  drawingWidth = widths[nextIndex];
+  console.log('📏 Drawing width changed to:', drawingWidth);
+}
+
+// Test function to verify drawing is working
+function testDrawing() {
+  console.log('🧪 Testing drawing functionality...');
+  console.log('🎨 Current drawing color:', drawingColor);
+  console.log('📏 Current drawing width:', drawingWidth);
+  console.log('✏️ Drawing mode:', isDrawingMode);
+  console.log('🎯 Canvas context:', ctx);
+  console.log('🎨 Canvas z-index:', canvas.style.zIndex || 'default');
+  
+  // Draw a test line
+  ctx.beginPath();
+  ctx.moveTo(100, 100);
+  ctx.lineTo(200, 200);
+  ctx.strokeStyle = '#FF0000';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+  
+  console.log('✅ Test line drawn from (100,100) to (200,200)');
+  console.log('🎯 Check if red line appears on screen');
 }
 
 function resize() {
@@ -581,30 +720,34 @@ function deleteAllIdeas() {
 // ===== CANVAS RENDERING =====
 
 function draw() {
-  // Draw background
-  if (backgroundImage) {
-    if (backgroundRotation !== 0) {
-      ctx.save();
-      ctx.translate(width / 2, height / 2);
-      ctx.rotate((backgroundRotation * Math.PI) / 180);
-      const maxDimension = Math.max(width, height);
-      const scaleX = width / backgroundImage.width;
-      const scaleY = height / backgroundImage.height;
-      const scale = Math.max(scaleX, scaleY) * 1.2;
-      
-      const scaledWidth = backgroundImage.width * scale;
-      const scaledHeight = backgroundImage.height * scale;
-      
-      ctx.drawImage(backgroundImage, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
-      ctx.restore();
+  // Only clear canvas if not in drawing mode
+  if (!isDrawingMode) {
+    // Draw background
+    if (backgroundImage) {
+      if (backgroundRotation !== 0) {
+        ctx.save();
+        ctx.translate(width / 2, height / 2);
+        ctx.rotate((backgroundRotation * Math.PI) / 180);
+        const maxDimension = Math.max(width, height);
+        const scaleX = width / backgroundImage.width;
+        const scaleY = height / backgroundImage.height;
+        const scale = Math.max(scaleX, scaleY) * 1.2;
+        
+        const scaledWidth = backgroundImage.width * scale;
+        const scaledHeight = backgroundImage.height * scale;
+        
+        ctx.drawImage(backgroundImage, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+        ctx.restore();
+      } else {
+        ctx.drawImage(backgroundImage, 0, 0, width, height);
+      }
     } else {
-      ctx.drawImage(backgroundImage, 0, 0, width, height);
+      ctx.clearRect(0, 0, width, height);
     }
-  } else {
-    ctx.clearRect(0, 0, width, height);
   }
+  // If in drawing mode, don't clear the canvas - preserve drawings
 
-  // Update and draw ideas
+  // Update and draw ideas (skip drawing if in drawing mode)
   for (let i = 0; i < ideas.length; i++) {
     const a = ideas[i];
     const actualSpeed = movementDelayActive ? 0 : speedMultiplier;
@@ -658,15 +801,16 @@ function draw() {
       }
     }
 
-    // Draw bubble
-    ctx.save();
-    ctx.translate(a.x, a.y);
-    if (a.rotation) {
-      ctx.rotate((a.rotation * Math.PI) / 180);
-    }
-    ctx.beginPath();
-    ctx.arc(0, 0, a.radius, 0, Math.PI * 2);
-    ctx.clip();
+    // Draw bubble (skip if in drawing mode)
+    if (!isDrawingMode) {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      if (a.rotation) {
+        ctx.rotate((a.rotation * Math.PI) / 180);
+      }
+      ctx.beginPath();
+      ctx.arc(0, 0, a.radius, 0, Math.PI * 2);
+      ctx.clip();
 
     if (a.image) {
       const src = a.image;
@@ -800,6 +944,7 @@ function draw() {
       ctx.stroke();
       ctx.restore();
     }
+    } // Close if (!isDrawingMode) block
   }
 
   requestAnimationFrame(draw);
@@ -840,6 +985,7 @@ function setupEventListeners() {
   // Canvas click (left click for adding bubbles)
   canvas.addEventListener("click", (e) => {
     if (isDragging) return; // Don't add bubbles while dragging
+    if (isDrawingMode) return; // Don't add bubbles while in drawing mode
     
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -883,6 +1029,8 @@ function setupEventListeners() {
 
   // Drag and drop functionality
   canvas.addEventListener("mousedown", (e) => {
+    if (isDrawingMode) return; // Don't drag bubbles while in drawing mode
+    
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -1048,6 +1196,32 @@ function setupEventListeners() {
       }
     });
   }
+  
+  // Drawing mode event listeners (higher priority)
+  canvas.addEventListener('mousedown', startDrawing, true);
+  canvas.addEventListener('mousemove', drawLine, true);
+  canvas.addEventListener('mouseup', stopDrawing, true);
+  canvas.addEventListener('mouseleave', stopDrawing, true);
+  
+  // Keyboard shortcuts for drawing
+  document.addEventListener('keydown', (e) => {
+    if (isDrawingMode) {
+      switch(e.key) {
+        case 'c':
+        case 'C':
+          clearDrawing();
+          break;
+        case 'd':
+        case 'D':
+          changeDrawingColor();
+          break;
+        case 'w':
+        case 'W':
+          changeDrawingWidth();
+          break;
+      }
+    }
+  });
 }
 
 function toggleSpeed() {

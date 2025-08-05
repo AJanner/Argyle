@@ -4,6 +4,10 @@
 let uploadedPlaylists = [];
 let currentPlaylistIndex = -1;
 
+// ===== VIDEO CONTROLS AUTO-HIDE VARIABLES =====
+let videoControlsTimeout = null;
+let videoControlsVisible = true;
+
 // ===== UTILITY FUNCTIONS =====
 function formatTime(seconds) {
   if (isNaN(seconds)) return '00:00';
@@ -1041,7 +1045,9 @@ function showVideoControls() {
     controls.style.pointerEvents = 'auto';
     controls.style.zIndex = '20001';
     console.log('🎥 Video controls shown with z-index:', controls.style.zIndex);
-    // Removed auto-hide functionality - controls stay visible
+    
+    // Start auto-hide timer when controls are shown
+    startVideoControlsAutoHide();
   } else {
     console.log('🎥 Video controls not shown - conditions not met');
   }
@@ -1058,6 +1064,51 @@ function showVideoPlaylist() {
     playlist.style.pointerEvents = 'auto';
     playlist.style.zIndex = '9999';
     playlist.style.visibility = 'visible';
+  }
+}
+
+// ===== VIDEO CONTROLS AUTO-HIDE FUNCTIONS =====
+
+function startVideoControlsAutoHide() {
+  // Clear any existing timeout
+  if (videoControlsTimeout) {
+    clearTimeout(videoControlsTimeout);
+  }
+  
+  // Set new timeout to hide controls after 30 seconds
+  videoControlsTimeout = setTimeout(() => {
+    hideVideoControls();
+  }, 30000);
+  
+  console.log('⏰ Video controls auto-hide timer started (30s)');
+}
+
+function hideVideoControls() {
+  const controls = document.getElementById('videoControls');
+  if (controls && controls.style.display !== 'none') {
+    controls.classList.add('fade-out');
+    videoControlsVisible = false;
+    console.log('👻 Video controls faded out');
+  }
+}
+
+function showVideoControlsOnMouseMove() {
+  const controls = document.getElementById('videoControls');
+  if (controls && controls.style.display !== 'none') {
+    // Clear existing timeout
+    if (videoControlsTimeout) {
+      clearTimeout(videoControlsTimeout);
+    }
+    
+    // Show controls if they were hidden
+    if (!videoControlsVisible) {
+      controls.classList.remove('fade-out');
+      videoControlsVisible = true;
+      console.log('👁️ Video controls shown on mouse move');
+    }
+    
+    // Restart auto-hide timer
+    startVideoControlsAutoHide();
   }
 }
 
@@ -2066,7 +2117,8 @@ const PNG_CONFIG = {
     { dataIcon: 'video', file: 'video.png' },
     { dataIcon: 'snapshot', file: 'snapshot.png' },
     { dataIcon: 'save', file: 'save.png' },
-    { dataIcon: 'load', file: 'load.png' }
+    { dataIcon: 'load', file: 'load.png' },
+    { dataIcon: 'draw', file: 'draw.png' }
   ],
   // Video control buttons
   videoControls: [

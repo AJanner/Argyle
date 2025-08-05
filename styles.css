@@ -75,8 +75,15 @@ html, body {
 /* ===== CANVAS STYLES ===== */
 #canvas {
   display: block;
-  z-index: -1;
+  z-index: 25000;
 }
+
+/* Drawing mode cursor */
+#canvas.drawing-mode {
+  cursor: crosshair !important;
+}
+
+
 
 /* ===== PANEL STYLES ===== */
 .panel {
@@ -200,7 +207,7 @@ html, body {
   padding: 40px;
   border-radius: 20px;
   border: 3px solid darkgreen;
-  z-index: 2000;
+  z-index: 30000;
   display: none;
   animation: diceFadeIn 0.3s ease-in;
 }
@@ -362,6 +369,11 @@ html, body {
   pointer-events: auto;
   text-align: center;
   font-size: 0;
+}
+
+#videoControls.fade-out {
+  opacity: 0;
+  pointer-events: none;
 }
 
 
