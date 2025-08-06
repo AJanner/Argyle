@@ -11,7 +11,7 @@
   <!-- Toolbar -->
   <div id="toolbar">
     <button onclick="toggleVideoPlayer()" oncontextmenu="captureCanvasOnly(); return false;" title="Toggle Video Player (Right-click for snapshot)" class="toolbar-btn" data-icon="video">📹</button>
-    <button onclick="toggleMusicPanel()" title="Music Panel" class="toolbar-btn" data-icon="music">🎶</button>
+    <button onclick="toggleMusicPanel()" oncontextmenu="handleMusicRightClick(); return false;" title="Music Panel (Right-click to start playlist, then play/pause)" class="toolbar-btn" data-icon="music">🎶</button>
     <button onclick="rollDice()" oncontextmenu="showDiceSlider(); return false;" title="Random (Right-click for slider)" class="toolbar-btn" data-icon="dice" id="diceButton"></button>
     <button onclick="cycleBackground()" oncontextmenu="rotateBackground(); return false;" title="Change Background (Right-click to rotate)" class="toolbar-btn" data-icon="cycle">🔄</button>
     <button onclick="toggleMediaToolbar()" title="Media Toolbar" class="toolbar-btn" data-icon="media">🎛️</button>
@@ -201,10 +201,17 @@
   <!-- Music Panel -->
   <div class="music-panel" id="musicPanel">
     <h3>🎵 Music Player</h3>
+    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+      <button onclick="previousMusicTrack()" style="background: linear-gradient(45deg, #FF9800, #F57C00); border: none; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;">⏮️ Previous</button>
+      <button onclick="nextMusicTrack()" style="background: linear-gradient(45deg, #2196F3, #1976D2); border: none; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;">⏭️ Next</button>
+    </div>
     <div id="musicList">
       <!-- Music items will be loaded here -->
     </div>
-    <button onclick="stopMusic()" style="background: linear-gradient(45deg, #f44336, #da190b); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 100%;">⏯️Play🎚️</button>
+    <div style="display: flex; gap: 5px; margin-top: 10px;">
+      <button onclick="stopMusic()" style="background: linear-gradient(45deg, #f44336, #da190b); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;">⏯️Play🎚️</button>
+      <button onclick="loadRadioStation()" style="background: linear-gradient(45deg, #9C27B0, #7B1FA2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;">📻 Radio</button>
+    </div>
   </div>
 
   <!-- Main Panel -->
@@ -359,6 +366,15 @@
         window.loadMusicList = loadMusicList;
         window.playMusic = playMusic;
         window.stopMusic = stopMusic;
+        window.startMusicPlaylist = startMusicPlaylist;
+        window.playMusicFromPlaylist = playMusicFromPlaylist;
+        window.nextMusicTrack = nextMusicTrack;
+        window.previousMusicTrack = previousMusicTrack;
+        window.loadRadioStation = loadRadioStation;
+        window.handleMusicRightClick = handleMusicRightClick;
+        window.loadMusicPlaylist = loadMusicPlaylist;
+        window.getDefaultPlaylist = getDefaultPlaylist;
+        window.playRadioStream = playRadioStream;
         window.toggleMediaToolbar = toggleMediaToolbar;
         window.handleBackgroundUpload = handleBackgroundUpload;
         window.handleVideoUpload = handleVideoUpload;

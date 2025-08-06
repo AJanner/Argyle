@@ -54,23 +54,40 @@ function toggleMusicPanel() {
   }
 }
 
-function loadMusicList() {
+async function loadMusicList() {
   const musicList = document.getElementById('musicList');
   
-  // Get actual MP3 files from the mp3 folder
-  const musicFiles = [
-    'mp3/track1.mp3',
-    'mp3/Track1NGE.mp3',
-    'mp3/Stereotype Anomaly - HEMPHILL (2025).mp3',
-    'mp3/Track2D+B.mp3',
-    'mp3/track2.mp3',
-    'mp3/track3.mp3',
-    'mp3/track4.mp3',
-    'mp3/track5.mp3',
-    'mp3/track6.mp3',
-    'mp3/track7.mp3',
-    'mp3/track8.mp3'
+  // Try to load tracks from tracklist.txt, fall back to default
+  let musicFiles = [];
+  const possiblePaths = [
+    'tracklist.txt',
+    './tracklist.txt',
+    '/tracklist.txt'
   ];
+  
+  let loaded = false;
+  for (const path of possiblePaths) {
+    try {
+      console.log(`🎵 Attempting to load tracklist from ${path} for music panel`);
+      const response = await fetch(path);
+      if (response.ok) {
+        const content = await response.text();
+        musicFiles = content.split('\n').filter(line => line.trim() !== '');
+        console.log(`🎵 Loaded ${musicFiles.length} tracks from ${path} for music panel`);
+        loaded = true;
+        break;
+      } else {
+        console.log(`⚠️ Could not load ${path} for music panel, status:`, response.status);
+      }
+    } catch (error) {
+      console.log(`⚠️ Error loading ${path} for music panel:`, error);
+    }
+  }
+  
+  if (!loaded) {
+    console.log('⚠️ Could not load tracklist.txt from any path for music panel, using default tracks');
+    musicFiles = getDefaultPlaylist();
+  }
   
   musicList.innerHTML = '';
   
@@ -87,19 +104,34 @@ function loadMusicList() {
     const musicItem = document.createElement('div');
     musicItem.className = 'music-item';
     
-    // Show filename with format indicator
-    const filename = file.split('/').pop();
-    const isOpus = filename.toLowerCase().endsWith('.opus');
-    const displayName = isOpus ? `${filename} 🎵` : filename;
-    musicItem.textContent = displayName;
-    
-    // Add visual indicator for OPUS files
-    if (isOpus) {
-      musicItem.style.borderLeft = '3px solid #ff6b6b';
-      musicItem.title = 'OPUS format - may not work in all browsers';
+    // Check if it's a radio stream or local file
+    if (file.startsWith('http://') || file.startsWith('https://')) {
+      // Radio stream
+      const displayName = `📻 ${file.split('/').pop() || 'Radio Stream'}`;
+      musicItem.textContent = displayName;
+      musicItem.style.borderLeft = '3px solid #9C27B0';
+      musicItem.title = `Radio Stream: ${file}`;
+    } else {
+      // Local file
+      const filename = file.split('/').pop();
+      const isOpus = filename.toLowerCase().endsWith('.opus');
+      const displayName = isOpus ? `${filename} 🎵` : filename;
+      musicItem.textContent = displayName;
+      
+      // Add visual indicator for OPUS files
+      if (isOpus) {
+        musicItem.style.borderLeft = '3px solid #ff6b6b';
+        musicItem.title = 'OPUS format - may not work in all browsers';
+      }
     }
     
-    musicItem.onclick = (event) => playMusic(file, event);
+    musicItem.onclick = (event) => {
+      if (file.startsWith('http://') || file.startsWith('https://')) {
+        playRadioStream(file);
+      } else {
+        playMusic(file, event);
+      }
+    };
     musicList.appendChild(musicItem);
   });
   
@@ -180,8 +212,50 @@ function playMusic(filename, event) {
 
   window.currentAudio = audio;
 
+  // Add event listeners to detect when music ends naturally
+  audio.addEventListener('ended', () => {
+    console.log('🎵 Music track ended naturally');
+    
+    // Auto-advance to next track if we're in playlist mode
+    if (musicPlaylist.length > 0 && isMusicLooping) {
+      setTimeout(() => {
+        nextMusicTrack();
+      }, 1000); // 1 second delay before next track
+    } else {
+      // Update music button to show inactive state
+      const musicButton = document.querySelector('[data-icon="music"]');
+      if (musicButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(musicButton, 'music.png');
+      }
+    }
+  });
+
+  audio.addEventListener('pause', () => {
+    console.log('🎵 Music paused');
+    // Update music button to show inactive state
+    const musicButton = document.querySelector('[data-icon="music"]');
+    if (musicButton && typeof PNGLoader !== 'undefined') {
+      PNGLoader.applyPNG(musicButton, 'music.png');
+    }
+  });
+
+  audio.addEventListener('play', () => {
+    console.log('🎵 Music started playing');
+    // Update music button to show active state
+    const musicButton = document.querySelector('[data-icon="music"]');
+    if (musicButton && typeof PNGLoader !== 'undefined') {
+      PNGLoader.applyPNG(musicButton, 'music2.png');
+    }
+  });
+
   audio.play().then(() => {
     console.log(`🎵 Successfully started playing: ${filename}`);
+    
+    // Update music button to show active state
+    const musicButton = document.querySelector('[data-icon="music"]');
+    if (musicButton && typeof PNGLoader !== 'undefined') {
+      PNGLoader.applyPNG(musicButton, 'music2.png');
+    }
   }).catch(err => {
     console.error(`❌ Error playing audio: ${err}`);
     
@@ -200,18 +274,267 @@ function playMusic(filename, event) {
   });
 }
 
+// Global music playlist variables
+let musicPlaylist = [];
+let currentMusicIndex = 0;
+let isMusicLooping = true;
+let isPlaylistStarted = false; // Track if playlist has been started
+
 function stopMusic() {
   // Toggle play/pause for currently playing audio
   if (window.currentAudio) {
     if (window.currentAudio.paused) {
       window.currentAudio.play();
       console.log("▶️ Music resumed");
+      
+      // Update music button to show active state
+      const musicButton = document.querySelector('[data-icon="music"]');
+      if (musicButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(musicButton, 'music2.png');
+      }
     } else {
       window.currentAudio.pause();
       console.log("⏸️ Music paused");
+      
+      // Update music button to show inactive state
+      const musicButton = document.querySelector('[data-icon="music"]');
+      if (musicButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(musicButton, 'music.png');
+      }
     }
   } else {
     console.log("🔇 No music currently loaded");
+    
+    // Update music button to show inactive state
+    const musicButton = document.querySelector('[data-icon="music"]');
+    if (musicButton && typeof PNGLoader !== 'undefined') {
+      PNGLoader.applyPNG(musicButton, 'music.png');
+    }
+  }
+}
+
+async function loadMusicPlaylist() {
+  // Try different possible paths for the tracklist file
+  const possiblePaths = [
+    'tracklist.txt',
+    './tracklist.txt',
+    '/tracklist.txt'
+  ];
+  
+  for (const path of possiblePaths) {
+    try {
+      console.log(`🎵 Attempting to load tracklist from: ${path}`);
+      const response = await fetch(path);
+      console.log(`🎵 Fetch response status for ${path}:`, response.status, response.statusText);
+      
+      if (response.ok) {
+        const content = await response.text();
+        console.log('🎵 File content length:', content.length);
+        const tracks = content.split('\n').filter(line => line.trim() !== '');
+        musicPlaylist = tracks;
+        console.log(`🎵 Loaded ${tracks.length} tracks from ${path}:`, tracks);
+        return true;
+      } else {
+        console.log(`⚠️ Could not load ${path}, status:`, response.status);
+      }
+    } catch (error) {
+      console.log(`⚠️ Error loading ${path}:`, error);
+    }
+  }
+  
+  console.log('⚠️ Could not load tracklist.txt from any path, using default tracks');
+  return false;
+}
+
+function getDefaultPlaylist() {
+  return [
+    'mp3/track1.mp3',
+    'mp3/Track1NGE.mp3',
+    'mp3/Stereotype Anomaly - HEMPHILL (2025).mp3',
+    'mp3/Track2D+B.mp3',
+    'mp3/track2.mp3',
+    'mp3/track3.mp3',
+    'mp3/track4.mp3',
+    'mp3/track5.mp3',
+    'mp3/track6.mp3',
+    'mp3/track7.mp3',
+    'mp3/track8.mp3'
+  ];
+}
+
+async function startMusicPlaylist() {
+  // Load playlist from file if not already loaded
+  if (musicPlaylist.length === 0) {
+    const loaded = await loadMusicPlaylist();
+    if (!loaded) {
+      musicPlaylist = getDefaultPlaylist();
+    }
+  }
+  
+  // Start playing from the beginning
+  if (musicPlaylist.length > 0) {
+    currentMusicIndex = 0;
+    isPlaylistStarted = true;
+    playMusicFromPlaylist(currentMusicIndex);
+  }
+}
+
+function playMusicFromPlaylist(index) {
+  if (index >= 0 && index < musicPlaylist.length) {
+    currentMusicIndex = index;
+    const track = musicPlaylist[index];
+    
+    // Update visual indicators
+    document.querySelectorAll('.music-item').forEach((item, i) => {
+      item.classList.remove('playing');
+      if (i === index) {
+        item.classList.add('playing');
+      }
+    });
+    
+    // Check if it's a radio stream (URL) or local file
+    if (track.startsWith('http://') || track.startsWith('https://')) {
+      playRadioStream(track);
+      console.log(`📻 Playing radio stream ${index + 1}/${musicPlaylist.length}: ${track}`);
+    } else {
+      playMusic(track);
+      console.log(`🎵 Playing track ${index + 1}/${musicPlaylist.length}: ${track}`);
+    }
+  }
+}
+
+function playRadioStream(radioUrl) {
+  try {
+    // Stop current music
+    if (window.currentAudio) {
+      window.currentAudio.pause();
+      window.currentAudio = null;
+    }
+    
+    // Create new audio element for radio
+    const audio = new Audio(radioUrl);
+    audio.volume = 0.5;
+    
+    // Add event listeners
+    audio.addEventListener('ended', () => {
+      console.log('📻 Radio stream ended');
+      const musicButton = document.querySelector('[data-icon="music"]');
+      if (musicButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(musicButton, 'music.png');
+      }
+    });
+
+    audio.addEventListener('pause', () => {
+      console.log('📻 Radio paused');
+      const musicButton = document.querySelector('[data-icon="music"]');
+      if (musicButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(musicButton, 'music.png');
+      }
+    });
+
+    audio.addEventListener('play', () => {
+      console.log('📻 Radio started playing');
+      const musicButton = document.querySelector('[data-icon="music"]');
+      if (musicButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(musicButton, 'music2.png');
+      }
+    });
+    
+    window.currentAudio = audio;
+    audio.play().then(() => {
+      console.log('📻 Radio station loaded and playing');
+      const musicButton = document.querySelector('[data-icon="music"]');
+      if (musicButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(musicButton, 'music2.png');
+      }
+    }).catch(err => {
+      console.error('❌ Error loading radio station:', err);
+      alert('Failed to load radio station. Please check the URL.');
+    });
+  } catch (error) {
+    console.error('❌ Error creating radio audio:', error);
+    alert('Failed to load radio station. Please check the URL.');
+  }
+}
+
+function nextMusicTrack() {
+  if (musicPlaylist.length > 0) {
+    currentMusicIndex = (currentMusicIndex + 1) % musicPlaylist.length;
+    playMusicFromPlaylist(currentMusicIndex);
+  }
+}
+
+function previousMusicTrack() {
+  if (musicPlaylist.length > 0) {
+    currentMusicIndex = (currentMusicIndex - 1 + musicPlaylist.length) % musicPlaylist.length;
+    playMusicFromPlaylist(currentMusicIndex);
+  }
+}
+
+async function handleMusicRightClick() {
+  if (!isPlaylistStarted) {
+    // First right-click: start the playlist
+    await startMusicPlaylist();
+  } else {
+    // Subsequent right-clicks: toggle play/pause
+    stopMusic();
+  }
+}
+
+function loadRadioStation() {
+  const radioUrl = prompt('Enter radio station URL (stream URL):');
+  if (radioUrl && radioUrl.trim() !== '') {
+    try {
+      // Stop current music
+      if (window.currentAudio) {
+        window.currentAudio.pause();
+        window.currentAudio = null;
+      }
+      
+      // Create new audio element for radio
+      const audio = new Audio(radioUrl);
+      audio.volume = 0.5;
+      
+      // Add event listeners
+      audio.addEventListener('ended', () => {
+        console.log('🎵 Radio stream ended');
+        const musicButton = document.querySelector('[data-icon="music"]');
+        if (musicButton && typeof PNGLoader !== 'undefined') {
+          PNGLoader.applyPNG(musicButton, 'music.png');
+        }
+      });
+
+      audio.addEventListener('pause', () => {
+        console.log('🎵 Radio paused');
+        const musicButton = document.querySelector('[data-icon="music"]');
+        if (musicButton && typeof PNGLoader !== 'undefined') {
+          PNGLoader.applyPNG(musicButton, 'music.png');
+        }
+      });
+
+      audio.addEventListener('play', () => {
+        console.log('🎵 Radio started playing');
+        const musicButton = document.querySelector('[data-icon="music"]');
+        if (musicButton && typeof PNGLoader !== 'undefined') {
+          PNGLoader.applyPNG(musicButton, 'music2.png');
+        }
+      });
+      
+      window.currentAudio = audio;
+      audio.play().then(() => {
+        console.log('🎵 Radio station loaded and playing');
+        const musicButton = document.querySelector('[data-icon="music"]');
+        if (musicButton && typeof PNGLoader !== 'undefined') {
+          PNGLoader.applyPNG(musicButton, 'music2.png');
+        }
+      }).catch(err => {
+        console.error('❌ Error loading radio station:', err);
+        alert('Failed to load radio station. Please check the URL.');
+      });
+    } catch (error) {
+      console.error('❌ Error creating radio audio:', error);
+      alert('Failed to load radio station. Please check the URL.');
+    }
   }
 }
 
