@@ -86,6 +86,7 @@
     <button onclick="saveAnimation()" class="save-btn toolbar-btn" data-icon="save" title="Save Animation">💾 Save</button>
     <button onclick="loadAnimation()" class="load-btn toolbar-btn" data-icon="load" title="Load Animation">📂 Load</button>
     <button onclick="captureCanvas()" class="snapshot-btn toolbar-btn" data-icon="snapshot-media" title="Snapshot">📷 Snapshot</button>
+    <button onclick="toggleMediaToolbarMinimize()" class="minimize-btn toolbar-btn" title="Hide/Show">📏</button>
   </div>
 
   <!-- Video Elements -->
@@ -389,6 +390,7 @@
         window.showReadPanel = showReadPanel;
         window.hideReadPanel = hideReadPanel;
         window.toggleMediaToolbar = toggleMediaToolbar;
+        window.toggleMediaToolbarMinimize = toggleMediaToolbarMinimize;
         window.handleBackgroundUpload = handleBackgroundUpload;
         window.handleVideoUpload = handleVideoUpload;
         window.captureCanvas = captureCanvas;

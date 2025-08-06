@@ -312,6 +312,7 @@ let musicPlaylist = [];
 let currentMusicIndex = 0;
 let isMusicLooping = true;
 let isPlaylistStarted = false; // Track if playlist has been started
+let isMediaToolbarMinimized = false; // Track if media toolbar is minimized
 
 function stopMusic() {
   // Toggle play/pause for currently playing audio
@@ -701,6 +702,21 @@ function toggleMediaToolbar() {
     const currentDisplay = bar.style.display || getComputedStyle(bar).display;
     bar.style.display = (currentDisplay === "none" || currentDisplay === "") ? "flex" : "none";
     console.log("📺 Media toolbar toggled:", bar.style.display);
+  }
+}
+
+function toggleMediaToolbarMinimize() {
+  const bar = document.getElementById("mediaToolbar");
+  if (bar) {
+    isMediaToolbarMinimized = !isMediaToolbarMinimized;
+    
+    if (isMediaToolbarMinimized) {
+      bar.classList.add('minimized');
+      console.log("📺 Media toolbar minimized");
+    } else {
+      bar.classList.remove('minimized');
+      console.log("📺 Media toolbar expanded");
+    }
   }
 }
 

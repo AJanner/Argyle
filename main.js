@@ -1838,6 +1838,11 @@ function togglePauseButton() {
     speedMultiplier = previousSpeed;
     speedSlider.value = previousSpeed;
     speedSlider.classList.remove('paused');
+    
+    // Toggle media toolbar when unpausing (only if not minimized)
+    if (typeof toggleMediaToolbar === 'function' && typeof isMediaToolbarMinimized !== 'undefined' && !isMediaToolbarMinimized) {
+      toggleMediaToolbar();
+    }
   } else {
     // If currently running, pause and remember current speed
     previousSpeed = speedMultiplier;
@@ -1845,8 +1850,8 @@ function togglePauseButton() {
     speedSlider.value = 0;
     speedSlider.classList.add('paused');
     
-    // Open media toolbar when pausing
-    if (typeof toggleMediaToolbar === 'function') {
+    // Toggle media toolbar when pausing (only if not minimized)
+    if (typeof toggleMediaToolbar === 'function' && typeof isMediaToolbarMinimized !== 'undefined' && !isMediaToolbarMinimized) {
       toggleMediaToolbar();
     }
   }
