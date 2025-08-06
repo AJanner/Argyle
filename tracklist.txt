@@ -15,7 +15,6 @@ https://streaming.broadcast.radio/housefm
 https://stream.bigfm.de/deeptechhouse/mp3-128/
 https://stream.technolovers.fm/vocal-trance
 http://mp3.stream.tb-group.fm/tb.mp3
-http://hi5.streamingsoundtracks.com
 https://electro-fm.stream.laut.fm/electro-fm
 http://stream.kissfm.de/kissfm-dance/mp3-128/
 http://myhouseradiofm.out.airtime.pro:8000/myhouseradiofm_b
