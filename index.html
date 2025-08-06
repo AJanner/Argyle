@@ -14,7 +14,6 @@
     <button onclick="toggleMusicPanel()" oncontextmenu="handleMusicRightClick(); return false;" title="Music Panel (Right-click to start playlist, then play/pause)" class="toolbar-btn" data-icon="music">🎶</button>
     <button onclick="rollDice()" oncontextmenu="showDiceSlider(); return false;" title="Random (Right-click for slider)" class="toolbar-btn" data-icon="dice" id="diceButton"></button>
     <button onclick="cycleBackground()" oncontextmenu="rotateBackground(); return false;" title="Change Background (Right-click to rotate)" class="toolbar-btn" data-icon="cycle">🔄</button>
-    <button onclick="toggleMediaToolbar()" title="Media Toolbar" class="toolbar-btn" data-icon="media">🎛️</button>
     <button onclick="togglePauseButton()" title="Pause/Unpause" class="toolbar-btn" data-icon="pause">⏯️</button>
     
     <div>
@@ -194,6 +193,17 @@
 
   <!-- Dice Overlay -->
   <div class="dice-overlay" id="diceOverlay"></div>
+
+  <!-- Read Panel -->
+  <div class="read-panel" id="readPanel">
+    <div style="margin-bottom: 15px; font-weight: bold; color: gold;">📖 Read:</div>
+    <div style="color: white; margin-bottom: 20px; line-height: 1.4;">
+      Welcome to MindsEye! This is a creative space for capturing ideas, thoughts, and inspiration. 
+      Use the drawing tools to sketch, the music panel for background ambiance, and the video player for visual inspiration.
+      Click on the canvas to create idea bubbles, and explore the various themes and presets available.
+    </div>
+    <button onclick="hideReadPanel()" style="padding: 8px 16px; background: rgba(0, 0, 0, 0.7); color: gold; border: 2px solid darkgreen; border-radius: 6px; cursor: pointer;">OK</button>
+  </div>
 
   <!-- Canvas -->
   <canvas id="canvas"></canvas>
@@ -376,6 +386,8 @@
         window.getDefaultPlaylist = getDefaultPlaylist;
         window.playRadioStream = playRadioStream;
         window.handleVideoRightClick = handleVideoRightClick;
+        window.showReadPanel = showReadPanel;
+        window.hideReadPanel = hideReadPanel;
         window.toggleMediaToolbar = toggleMediaToolbar;
         window.handleBackgroundUpload = handleBackgroundUpload;
         window.handleVideoUpload = handleVideoUpload;

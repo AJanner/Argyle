@@ -232,6 +232,24 @@ html, body {
   border: 2px solid darkgreen;
 }
 
+/* ===== READ PANEL STYLES ===== */
+.read-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: gold;
+  padding: 20px;
+  border-radius: 10px;
+  border: 2px solid darkgreen;
+  z-index: 60000;
+  display: none;
+  animation: diceFadeIn 0.3s ease-in;
+  min-width: 300px;
+  max-width: 500px;
+}
+
 #diceSlider input[type="range"] {
   -webkit-appearance: none;
   appearance: none;

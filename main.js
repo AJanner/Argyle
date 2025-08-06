@@ -1844,6 +1844,11 @@ function togglePauseButton() {
     speedMultiplier = 0;
     speedSlider.value = 0;
     speedSlider.classList.add('paused');
+    
+    // Open media toolbar when pausing
+    if (typeof toggleMediaToolbar === 'function') {
+      toggleMediaToolbar();
+    }
   }
   
   // Update the pause button icon

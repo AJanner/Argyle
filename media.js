@@ -611,12 +611,28 @@ function handleVideoRightClick() {
       
       console.log('🎥 Video player closed via right-click');
     } else {
-      // If video player is closed, take a snapshot instead
-      captureCanvasOnly();
+      // If video player is closed, show read panel
+      showReadPanel();
     }
   } else {
-    // Fallback to snapshot if player element not found
-    captureCanvasOnly();
+    // Fallback to read panel if player element not found
+    showReadPanel();
+  }
+}
+
+function showReadPanel() {
+  const readPanel = document.getElementById('readPanel');
+  if (readPanel) {
+    readPanel.style.display = 'block';
+    console.log('📖 Read panel shown');
+  }
+}
+
+function hideReadPanel() {
+  const readPanel = document.getElementById('readPanel');
+  if (readPanel) {
+    readPanel.style.display = 'none';
+    console.log('📖 Read panel hidden');
   }
 }
 
