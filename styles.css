@@ -30,7 +30,7 @@ html, body {
 #toolbar button {
   background-color: rgba(0, 0, 0, 0.7);
   color: gold;
-  border: 2px solid transparent;
+  border: none;
   font-family: 'Monaco', serif;
   border-radius: 6px;
   padding: 0;
@@ -46,10 +46,6 @@ html, body {
   aspect-ratio: 1;
   box-sizing: border-box;
   overflow: hidden;
-}
-
-#toolbar button:hover {
-  border: 2px solid rgba(255, 183, 5, 0.5);
 }
 
 .toolbar-btn {
