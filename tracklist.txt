@@ -23,3 +23,6 @@ Reggae Radio|https://reggae.stream.laut.fm/reggae
 Los Santos Radio|https://los-santos-radio.stream.laut.fm/los-santos-radio
 ClassicFM|https://media-ssl.musicradio.com/ClassicFMMP3
 GoaFM|https://goafm.stream.laut.fm/goafm
+BeatsRadio|https://stream.klassikradio.de/beats-national/mp3-192/
+UrbanClubBeats|https://stream.bigfm.de/urbanclubbeats/mp3-128/
+106 Chill|https://stream.spreeradio.de/spree-chill/mp3-192/
