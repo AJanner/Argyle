@@ -199,14 +199,16 @@ async function loadMusicList() {
 }
 
 function playMusic(filename, event) {
-  // Remove playing class from all items
+  // Remove playing class from all items and reset background
   document.querySelectorAll('.music-item').forEach(item => {
     item.classList.remove('playing');
+    item.style.background = 'rgba(0, 0, 0, 0.6)';
   });
 
   // Add playing class to clicked item
   if (event && event.target) {
     event.target.classList.add('playing');
+    event.target.style.background = '#35CF3A';
   }
 
   console.log(`🎵 Playing: ${filename}`);
@@ -438,8 +440,10 @@ function playMusicFromPlaylist(index) {
     // Update visual indicators
     document.querySelectorAll('.music-item').forEach((item, i) => {
       item.classList.remove('playing');
+      item.style.background = 'rgba(0, 0, 0, 0.6)';
       if (i === index) {
         item.classList.add('playing');
+        item.style.background = '#35CF3A';
       }
     });
     
@@ -513,15 +517,45 @@ function playRadioStream(radioUrl) {
 
 function nextMusicTrack() {
   if (musicPlaylist.length > 0) {
-    currentMusicIndex = (currentMusicIndex + 1) % musicPlaylist.length;
-    playMusicFromPlaylist(currentMusicIndex);
+    // Find the currently playing track index
+    let currentIndex = currentMusicIndex;
+    const playingItem = document.querySelector('.music-item.playing');
+    if (playingItem) {
+      // Find the index of the currently playing item
+      const allItems = document.querySelectorAll('.music-item');
+      for (let i = 0; i < allItems.length; i++) {
+        if (allItems[i] === playingItem) {
+          currentIndex = i;
+          break;
+        }
+      }
+    }
+    
+    // Go to next track
+    const nextIndex = (currentIndex + 1) % musicPlaylist.length;
+    playMusicFromPlaylist(nextIndex);
   }
 }
 
 function previousMusicTrack() {
   if (musicPlaylist.length > 0) {
-    currentMusicIndex = (currentMusicIndex - 1 + musicPlaylist.length) % musicPlaylist.length;
-    playMusicFromPlaylist(currentMusicIndex);
+    // Find the currently playing track index
+    let currentIndex = currentMusicIndex;
+    const playingItem = document.querySelector('.music-item.playing');
+    if (playingItem) {
+      // Find the index of the currently playing item
+      const allItems = document.querySelectorAll('.music-item');
+      for (let i = 0; i < allItems.length; i++) {
+        if (allItems[i] === playingItem) {
+          currentIndex = i;
+          break;
+        }
+      }
+    }
+    
+    // Go to previous track
+    const prevIndex = (currentIndex - 1 + musicPlaylist.length) % musicPlaylist.length;
+    playMusicFromPlaylist(prevIndex);
   }
 }
 

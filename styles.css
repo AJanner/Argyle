@@ -305,9 +305,10 @@ html, body {
 }
 
 .music-item.playing {
-  background: rgba(0, 100, 0, 0.6);
-  color: gold;
-  border-color: gold;
+  background: #35CF3A !important;
+  color: white;
+  border-color: #35CF3A;
+  font-weight: bold;
 }
 
 /* ===== VIDEO PLAYER STYLES ===== */
