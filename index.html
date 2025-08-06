@@ -16,23 +16,25 @@
     <button onclick="cycleBackground()" oncontextmenu="rotateBackground(); return false;" title="Change Background (Right-click to rotate)" class="toolbar-btn" data-icon="cycle">🔄</button>
     <button onclick="togglePauseButton()" title="Pause/Unpause" class="toolbar-btn" data-icon="pause">⏯️</button>
     
-    <div>
-      <select id="themeSelector" onchange="switchTheme(this.value)" title="Select Use">
-        <option value="default">Start 😀</option>
-        <option value="argyle">Argyle ♻️</option>
-        <option value="games">Games 🎮</option>
-        <option value="blank">Blank 😶</option>
-        <option value="meme">Memes 🙄</option>
-        <option value="foods">Food 😋</option>
-        <option value="sleep">🥱 😴</option>
-        <option value="credits"> 💚</option>
-      </select>
-      
-      <select id="presetSelector" onchange="switchPreset(this.value)" title="Select Preset" style="margin-left: 1px;">
-        <option value="">😇 Preset</option>
-      </select>
-      <label style="margin-left: 1px;" title="Motion (Right-click to pause/unpause)"> 
-        <input max="3" min="0.0" onchange="const slider = this; if(parseFloat(slider.value) !== 0) { previousSpeed = parseFloat(slider.value); slider.classList.remove('paused'); } else { slider.classList.add('paused'); } speedMultiplier = parseFloat(slider.value)" oncontextmenu="toggleSpeed(); return false;" step="0.1" type="range" value="1"/>
+    <div style="display: flex; flex-direction: column; flex: 1; min-width: 200px; max-width: 400px;">
+      <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+        <select id="themeSelector" onchange="switchTheme(this.value)" title="Select Use" style="flex: 1;">
+          <option value="default">Start 😀</option>
+          <option value="argyle">Argyle ♻️</option>
+          <option value="games">Games 🎮</option>
+          <option value="blank">Blank 😶</option>
+          <option value="meme">Memes 🙄</option>
+          <option value="foods">Food 😋</option>
+          <option value="sleep">🥱 😴</option>
+          <option value="credits"> 💚</option>
+        </select>
+        
+        <select id="presetSelector" onchange="switchPreset(this.value)" title="Select Preset" style="flex: 1;">
+          <option value="">😇 Preset</option>
+        </select>
+      </div>
+      <label title="Motion (Right-click to pause/unpause)" style="width: 100%; display: block; margin: 0; padding: 0;"> 
+        <input max="3" min="0.0" onchange="const slider = this; if(parseFloat(slider.value) !== 0) { previousSpeed = parseFloat(slider.value); slider.classList.remove('paused'); } else { slider.classList.add('paused'); } speedMultiplier = parseFloat(slider.value)" oncontextmenu="toggleSpeed(); return false;" step="0.1" type="range" value="1" style="width: 100%; margin: 0; padding: 0;"/>
       </label>
     </div>
     
