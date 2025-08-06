@@ -12,7 +12,7 @@ Track 8|mp3/track8.mp3
 442|mp3/track9.mp3
 ReggaeDancehall|https://stream.bigfm.de/dancehall/mp3-128/
 House FM|https://streaming.broadcast.radio/housefm
-BIGfm🎧 - DeepTechnoHouse|https://stream.bigfm.de/deeptechhouse/mp3-128/
+BIGfm🎧HouseBeats|https://stream.bigfm.de/deeptechhouse/mp3-128/
 TechnoLovers|https://stream.technolovers.fm/vocal-trance
 Techno2|http://mp3.stream.tb-group.fm/tb.mp3
 Electro FM|https://electro-fm.stream.laut.fm/electro-fm
