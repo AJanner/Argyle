@@ -463,7 +463,8 @@ function playMusicFromPlaylist(index) {
     
     // Check if it's a radio stream (URL) or local file
     if (track.url.startsWith('http://') || track.url.startsWith('https://')) {
-      playRadioStream(track.url);
+      // For radio streams, we need to pass the index to maintain highlighting
+      playRadioStreamFromPlaylist(track.url, index);
       console.log(`📻 Playing radio stream ${index + 1}/${musicPlaylist.length}: ${track.title}`);
     } else {
       playMusic(track.url);
@@ -474,6 +475,8 @@ function playMusicFromPlaylist(index) {
 
 function playRadioStream(radioUrl) {
   try {
+    console.log(`📻 playRadioStream called with URL: ${radioUrl}`);
+    
     // Stop current music
     if (window.currentAudio) {
       window.currentAudio.pause();
@@ -482,6 +485,59 @@ function playRadioStream(radioUrl) {
     
     // Mark playlist as started when radio is played
     isPlaylistStarted = true;
+    
+    // Find and highlight the radio item in the music panel
+    const musicItems = document.querySelectorAll('.music-item');
+    console.log(`📻 Found ${musicItems.length} music items to check for radio`);
+    
+    musicItems.forEach((item, index) => {
+      item.classList.remove('playing');
+      item.style.background = 'rgba(0, 0, 0, 0.6)';
+      
+      // Check if this item contains the radio URL
+      const itemText = item.textContent || '';
+      if (itemText.includes(radioUrl) || item.getAttribute('onclick')?.includes(radioUrl)) {
+        item.classList.add('playing');
+        item.style.background = '#35CF3A';
+        console.log(`📻 Highlighted radio item ${index}:`, itemText);
+      }
+    });
+    
+    // Create new audio element for radio
+    const audio = new Audio(radioUrl);
+    audio.volume = 0.5;
+  } catch (error) {
+    console.error('❌ Error creating radio audio:', error);
+    alert('Failed to load radio station. Please check the URL.');
+  }
+}
+
+function playRadioStreamFromPlaylist(radioUrl, index) {
+  try {
+    console.log(`📻 playRadioStreamFromPlaylist called with URL: ${radioUrl}, index: ${index}`);
+    
+    // Stop current music
+    if (window.currentAudio) {
+      window.currentAudio.pause();
+      window.currentAudio = null;
+    }
+    
+    // Mark playlist as started when radio is played
+    isPlaylistStarted = true;
+    
+    // Update visual indicators using the index
+    const musicItems = document.querySelectorAll('.music-item');
+    console.log(`📻 Found ${musicItems.length} music items to highlight`);
+    
+    musicItems.forEach((item, i) => {
+      item.classList.remove('playing');
+      item.style.background = 'rgba(0, 0, 0, 0.6)';
+      if (i === index) {
+        item.classList.add('playing');
+        item.style.background = '#35CF3A';
+        console.log(`📻 Highlighted radio item ${i}:`, item.textContent);
+      }
+    });
     
     // Create new audio element for radio
     const audio = new Audio(radioUrl);
