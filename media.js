@@ -89,6 +89,34 @@ async function loadMusicList() {
     musicFiles = getDefaultPlaylist();
   }
   
+  // Parse tracks into the new object format
+  const parsedTracks = musicFiles.map(track => {
+    if (typeof track === 'object' && track.title && track.url) {
+      // Already in correct format
+      return track;
+    } else if (typeof track === 'string') {
+      // Parse string format (Title|URL or just URL)
+      const parts = track.split('|');
+      if (parts.length === 2) {
+        return {
+          title: parts[0].trim(),
+          url: parts[1].trim()
+        };
+      } else {
+        // Fallback for old format - use filename as title
+        const url = track.trim();
+        const filename = url.split('/').pop() || url;
+        return {
+          title: filename,
+          url: url
+        };
+      }
+    }
+    return track;
+  });
+  
+  musicFiles = parsedTracks;
+  
   musicList.innerHTML = '';
   
   // Check browser audio support
