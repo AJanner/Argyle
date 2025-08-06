@@ -579,8 +579,37 @@ function handleVideoRightClick() {
                      getComputedStyle(player).visibility !== 'hidden';
     
     if (isVisible) {
-      // Close the video player
-      toggleVideoPlayer();
+      // Close the video player using the same logic as the close button
+      if (player) {
+        player.style.display = 'none';
+        player.style.pointerEvents = 'none';
+        player.style.zIndex = '-1';
+        player.style.visibility = 'hidden';
+      }
+      
+      const controls = document.getElementById('videoControls');
+      if (controls) {
+        controls.style.display = 'none';
+        controls.style.pointerEvents = 'none';
+        controls.style.zIndex = '-1';
+        controls.style.visibility = 'hidden';
+      }
+      
+      const playlist = document.getElementById('videoPlaylist');
+      if (playlist) {
+        playlist.style.display = 'none';
+        playlist.style.pointerEvents = 'none';
+        playlist.style.zIndex = '-1';
+        playlist.style.visibility = 'hidden';
+      }
+      
+      // Update video button to show inactive state
+      const videoButton = document.querySelector('[data-icon="video"]');
+      if (videoButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(videoButton, 'video.png');
+      }
+      
+      console.log('🎥 Video player closed via right-click');
     } else {
       // If video player is closed, take a snapshot instead
       captureCanvasOnly();
