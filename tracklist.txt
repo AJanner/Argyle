@@ -19,7 +19,6 @@ http://hi5.streamingsoundtracks.com
 https://electro-fm.stream.laut.fm/electro-fm
 http://stream.kissfm.de/kissfm-dance/mp3-128/
 http://myhouseradiofm.out.airtime.pro:8000/myhouseradiofm_b
-http://listen.eurekabroadcast.com/204
 https://radio4.vip-radios.fm:18015/stream-128kmp3-DeepHouseIbiza
 http://198.15.94.34:8006/stream
 http://live.dancemusic.ro:7000/
