@@ -686,36 +686,8 @@ function handleVideoRightClick() {
                      getComputedStyle(player).visibility !== 'hidden';
     
     if (isVisible) {
-      // Close the video player using the same logic as the close button
-      if (player) {
-        player.style.display = 'none';
-        player.style.pointerEvents = 'none';
-        player.style.zIndex = '-1';
-        player.style.visibility = 'hidden';
-      }
-      
-      const controls = document.getElementById('videoControls');
-      if (controls) {
-        controls.style.display = 'none';
-        controls.style.pointerEvents = 'none';
-        controls.style.zIndex = '-1';
-        controls.style.visibility = 'hidden';
-      }
-      
-      const playlist = document.getElementById('videoPlaylist');
-      if (playlist) {
-        playlist.style.display = 'none';
-        playlist.style.pointerEvents = 'none';
-        playlist.style.zIndex = '-1';
-        playlist.style.visibility = 'hidden';
-      }
-      
-      // Update video button to show inactive state
-      const videoButton = document.querySelector('[data-icon="video"]');
-      if (videoButton && typeof PNGLoader !== 'undefined') {
-        PNGLoader.applyPNG(videoButton, 'video.png');
-      }
-      
+      // Use the same logic as videoClose() to properly close the video
+      videoClose();
       console.log('🎥 Video player closed via right-click');
     } else {
       // If video player is closed, show read panel
@@ -1640,6 +1612,13 @@ function videoClose() {
   }
   
   videoPlaylistVisible = false;
+  
+  // Update video button to show inactive state
+  const videoButton = document.querySelector('[data-icon="video"]');
+  if (videoButton && typeof PNGLoader !== 'undefined') {
+    PNGLoader.applyPNG(videoButton, 'video.png');
+  }
+  
   console.log('🎥 Video player closed and video stopped');
 }
 
@@ -1958,17 +1937,39 @@ async function toggleVideoPlayer() {
         updateVideoPlaylistDisplay();
       }
     } else {
-      // Video player already initialized, just play first video if needed
-      const videoIframe = document.getElementById('videoIframe');
-      if (videoIframe && videoIframe.src && videoIframe.src !== '' && videoIframe.src !== 'about:blank') {
-        console.log('🎥 Video player shown (playback continues)');
-      } else if (videoPlaylist.length > 0) {
-        // Start playing the first video immediately
-        setTimeout(() => {
-          videoPlayVideo(0);
-          console.log('🎥 Video player opened and started playing first video');
-        }, 100);
+      // If video player was previously closed, ensure a video is playing
+      const iframe = document.getElementById('videoIframe');
+      if (iframe && (!iframe.src || iframe.src === '')) {
+        console.log('🎥 Video player reopened - ensuring video is playing');
+        
+        // Try to load and play a video if none is currently playing
+        if (videoPlaylist.length > 0) {
+          videoPlayVideo(videoCurrentIndex);
+        } else if (typeof loadVideoPlaylist === 'function') {
+          // Load playlist and play first video
+          setTimeout(() => {
+            loadVideoPlaylist().then(() => {
+              if (videoPlaylist.length > 0) {
+                videoPlayVideo(0);
+              }
+            }).catch(error => {
+              console.log('🎥 Playlist loading failed on reopen');
+            });
+          }, 100);
+        }
       }
+    }
+    
+    // Video player already initialized, just play first video if needed
+    const videoIframe = document.getElementById('videoIframe');
+    if (videoIframe && videoIframe.src && videoIframe.src !== '' && videoIframe.src !== 'about:blank') {
+      console.log('🎥 Video player shown (playback continues)');
+    } else if (videoPlaylist.length > 0) {
+      // Start playing the first video immediately
+      setTimeout(() => {
+        videoPlayVideo(0);
+        console.log('🎥 Video player opened and started playing first video');
+      }, 100);
     }
     
     // Start with playlist hidden and update button text

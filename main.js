@@ -84,6 +84,13 @@ function toggleDrawingMode() {
     previousSpeedForDrawing = speedMultiplier;
     speedMultiplier = 0;
     
+    // Update the speed slider to reflect paused state
+    const speedSlider = document.querySelector('input[type="range"]');
+    if (speedSlider) {
+      speedSlider.value = 0;
+      speedSlider.classList.add('paused');
+    }
+    
     canvas.style.cursor = 'crosshair';
     canvas.classList.add('drawing-mode');
     console.log('🎨 Drawing mode activated - click and drag to draw');
@@ -101,6 +108,13 @@ function toggleDrawingMode() {
   } else {
     // Restore previous speed
     speedMultiplier = previousSpeedForDrawing;
+    
+    // Update the speed slider to reflect restored state
+    const speedSlider = document.querySelector('input[type="range"]');
+    if (speedSlider) {
+      speedSlider.value = previousSpeedForDrawing;
+      speedSlider.classList.remove('paused');
+    }
     
     canvas.style.cursor = 'default';
     canvas.classList.remove('drawing-mode');
@@ -1833,6 +1847,14 @@ function toggleSpeed() {
 
 function togglePauseButton() {
   const speedSlider = document.querySelector('input[type="range"]');
+  
+  // If in drawing mode, exit drawing mode instead of toggling pause
+  if (isDrawingMode) {
+    console.log('⏯️ Pause button pressed while in drawing mode - exiting drawing mode');
+    toggleDrawingMode();
+    return;
+  }
+  
   if (speedMultiplier === 0) {
     // If currently paused, restore to previous speed
     speedMultiplier = previousSpeed;

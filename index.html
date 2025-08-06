@@ -17,9 +17,6 @@
     <button onclick="togglePauseButton()" title="Pause/Unpause" class="toolbar-btn" data-icon="pause">⏯️</button>
     
     <div>
-      <strong style="font-size: 0.5em;">🤔💭ME💬v4😎</strong>
-      <br>
-      ➡️ 
       <select id="themeSelector" onchange="switchTheme(this.value)" title="Select Use">
         <option value="default">Start 😀</option>
         <option value="argyle">Argyle ♻️</option>
@@ -35,7 +32,6 @@
         <option value="">😇 Preset</option>
       </select>
       <label style="margin-left: 1px;" title="Motion (Right-click to pause/unpause)"> 
-        ⬅️
         <input max="3" min="0.0" onchange="const slider = this; if(parseFloat(slider.value) !== 0) { previousSpeed = parseFloat(slider.value); slider.classList.remove('paused'); } else { slider.classList.add('paused'); } speedMultiplier = parseFloat(slider.value)" oncontextmenu="toggleSpeed(); return false;" step="0.1" type="range" value="1"/>
       </label>
     </div>
@@ -196,7 +192,7 @@
 
   <!-- Read Panel -->
   <div class="read-panel" id="readPanel">
-    <div style="margin-bottom: 15px; font-weight: bold; color: gold;">📖 Read:</div>
+    <div style="margin-bottom: 15px; font-weight: bold; color: gold;">🤔💭ME💬v5😎</div>
     <div style="color: white; margin-bottom: 20px; line-height: 1.4;">
       Welcome to MindsEye! This is a creative space for capturing ideas, thoughts, and inspiration. 
       Use the drawing tools to sketch, the music panel for background ambiance, and the video player for visual inspiration.
@@ -583,7 +579,9 @@
       // Video controls auto-hide on mouse movement
       function handleMouseMove() {
         showToolbar();
-        showVideoControlsOnMouseMove();
+        if (typeof showVideoControlsOnMouseMove === 'function') {
+          showVideoControlsOnMouseMove();
+        }
       }
       
       document.addEventListener("mousemove", handleMouseMove);
