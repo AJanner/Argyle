@@ -1,28 +1,28 @@
-mp3/track1.mp3
-mp3/Track1NGE.mp3
-mp3/Stereotype Anomaly - HEMPHILL (2025).mp3
-mp3/Track2D+B.mp3
-mp3/track2.mp3
-mp3/track3.mp3
-mp3/track4.mp3
-mp3/track5.mp3
-mp3/track6.mp3
-mp3/track7.mp3
-mp3/track8.mp3
-mp3/track9.mp3
-https://stream.bigfm.de/dancehall/mp3-128/
-https://streaming.broadcast.radio/housefm
-https://stream.bigfm.de/deeptechhouse/mp3-128/
-https://stream.technolovers.fm/vocal-trance
-http://mp3.stream.tb-group.fm/tb.mp3
-https://electro-fm.stream.laut.fm/electro-fm
-http://stream.kissfm.de/kissfm-dance/mp3-128/
-http://myhouseradiofm.out.airtime.pro:8000/myhouseradiofm_b
-https://radio4.vip-radios.fm:18015/stream-128kmp3-DeepHouseIbiza
-http://198.15.94.34:8006/stream
-http://live.dancemusic.ro:7000/
-https://reggae.stream.laut.fm/reggae
-http://s7.nexuscast.com:8026/
-https://los-santos-radio.stream.laut.fm/los-santos-radio
-https://media-ssl.musicradio.com/ClassicFMMP3
-https://goafm.stream.laut.fm/goafm
+Janners|mp3/track1.mp3
+NGE|mp3/Track1NGE.mp3
+Stereotype Anomaly - HEMPHILL (2025)|mp3/Stereotype Anomaly - HEMPHILL (2025).mp3
+Liquid D+B|mp3/Track2D+B.mp3
+Track 2|mp3/track2.mp3
+Track 3|mp3/track3.mp3
+Track 4|mp3/track4.mp3
+Track 5|mp3/track5.mp3
+Track 6|mp3/track6.mp3
+Track 7|mp3/track7.mp3
+Track 8|mp3/track8.mp3
+442|mp3/track9.mp3
+ReggaeDancehall|https://stream.bigfm.de/dancehall/mp3-128/
+House FM|https://streaming.broadcast.radio/housefm
+DeepTechnoHouse|https://stream.bigfm.de/deeptechhouse/mp3-128/
+TechnoLovers|https://stream.technolovers.fm/vocal-trance
+Techno2|http://mp3.stream.tb-group.fm/tb.mp3
+Electro FM|https://electro-fm.stream.laut.fm/electro-fm
+KissFM Dance|http://stream.kissfm.de/kissfm-dance/mp3-128/
+My House Radio|http://myhouseradiofm.out.airtime.pro:8000/myhouseradiofm_b
+DeepHouseIbiza|https://radio4.vip-radios.fm:18015/stream-128kmp3-DeepHouseIbiza
+VocalChill|http://198.15.94.34:8006/stream
+Dance Music|http://live.dancemusic.ro:7000/
+Reggae Radio|https://reggae.stream.laut.fm/reggae
+The Valut(40s-99)|http://s7.nexuscast.com:8026/
+Los Santos Radio|https://los-santos-radio.stream.laut.fm/los-santos-radio
+ClassicFM|https://media-ssl.musicradio.com/ClassicFMMP3
+GoaFM|https://goafm.stream.laut.fm/goafm

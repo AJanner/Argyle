@@ -10,7 +10,7 @@
 <body>
   <!-- Toolbar -->
   <div id="toolbar">
-    <button onclick="toggleVideoPlayer()" oncontextmenu="captureCanvasOnly(); return false;" title="Toggle Video Player (Right-click for snapshot)" class="toolbar-btn" data-icon="video">📹</button>
+    <button onclick="toggleVideoPlayer()" oncontextmenu="handleVideoRightClick(); return false;" title="Toggle Video Player (Right-click to close)" class="toolbar-btn" data-icon="video">📹</button>
     <button onclick="toggleMusicPanel()" oncontextmenu="handleMusicRightClick(); return false;" title="Music Panel (Right-click to start playlist, then play/pause)" class="toolbar-btn" data-icon="music">🎶</button>
     <button onclick="rollDice()" oncontextmenu="showDiceSlider(); return false;" title="Random (Right-click for slider)" class="toolbar-btn" data-icon="dice" id="diceButton"></button>
     <button onclick="cycleBackground()" oncontextmenu="rotateBackground(); return false;" title="Change Background (Right-click to rotate)" class="toolbar-btn" data-icon="cycle">🔄</button>
@@ -375,6 +375,7 @@
         window.loadMusicPlaylist = loadMusicPlaylist;
         window.getDefaultPlaylist = getDefaultPlaylist;
         window.playRadioStream = playRadioStream;
+        window.handleVideoRightClick = handleVideoRightClick;
         window.toggleMediaToolbar = toggleMediaToolbar;
         window.handleBackgroundUpload = handleBackgroundUpload;
         window.handleVideoUpload = handleVideoUpload;

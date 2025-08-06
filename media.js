@@ -100,22 +100,22 @@ async function loadMusicList() {
   console.log('   MP3:', canPlayMp3);
   console.log('   OPUS:', canPlayOpus);
   
-  musicFiles.forEach(file => {
+  musicFiles.forEach(track => {
     const musicItem = document.createElement('div');
     musicItem.className = 'music-item';
     
     // Check if it's a radio stream or local file
-    if (file.startsWith('http://') || file.startsWith('https://')) {
+    if (track.url.startsWith('http://') || track.url.startsWith('https://')) {
       // Radio stream
-      const displayName = `📻 ${file.split('/').pop() || 'Radio Stream'}`;
+      const displayName = `📻 ${track.title}`;
       musicItem.textContent = displayName;
       musicItem.style.borderLeft = '3px solid #9C27B0';
-      musicItem.title = `Radio Stream: ${file}`;
+      musicItem.title = `Radio Stream: ${track.url}`;
     } else {
       // Local file
-      const filename = file.split('/').pop();
+      const filename = track.url.split('/').pop();
       const isOpus = filename.toLowerCase().endsWith('.opus');
-      const displayName = isOpus ? `${filename} 🎵` : filename;
+      const displayName = isOpus ? `${track.title} 🎵` : track.title;
       musicItem.textContent = displayName;
       
       // Add visual indicator for OPUS files
@@ -126,10 +126,10 @@ async function loadMusicList() {
     }
     
     musicItem.onclick = (event) => {
-      if (file.startsWith('http://') || file.startsWith('https://')) {
-        playRadioStream(file);
+      if (track.url.startsWith('http://') || track.url.startsWith('https://')) {
+        playRadioStream(track.url);
       } else {
-        playMusic(file, event);
+        playMusic(track.url, event);
       }
     };
     musicList.appendChild(musicItem);
@@ -333,7 +333,27 @@ async function loadMusicPlaylist() {
       if (response.ok) {
         const content = await response.text();
         console.log('🎵 File content length:', content.length);
-        const tracks = content.split('\n').filter(line => line.trim() !== '');
+        const lines = content.split('\n').filter(line => line.trim() !== '');
+        
+        // Parse tracks with titles (format: "Title|URL" or just "URL")
+        const tracks = lines.map(line => {
+          const parts = line.split('|');
+          if (parts.length === 2) {
+            return {
+              title: parts[0].trim(),
+              url: parts[1].trim()
+            };
+          } else {
+            // Fallback for old format - use filename as title
+            const url = line.trim();
+            const filename = url.split('/').pop() || url;
+            return {
+              title: filename,
+              url: url
+            };
+          }
+        });
+        
         musicPlaylist = tracks;
         console.log(`🎵 Loaded ${tracks.length} tracks from ${path}:`, tracks);
         return true;
@@ -351,17 +371,17 @@ async function loadMusicPlaylist() {
 
 function getDefaultPlaylist() {
   return [
-    'mp3/track1.mp3',
-    'mp3/Track1NGE.mp3',
-    'mp3/Stereotype Anomaly - HEMPHILL (2025).mp3',
-    'mp3/Track2D+B.mp3',
-    'mp3/track2.mp3',
-    'mp3/track3.mp3',
-    'mp3/track4.mp3',
-    'mp3/track5.mp3',
-    'mp3/track6.mp3',
-    'mp3/track7.mp3',
-    'mp3/track8.mp3'
+    { title: 'Track 1', url: 'mp3/track1.mp3' },
+    { title: 'Track 1 NGE', url: 'mp3/Track1NGE.mp3' },
+    { title: 'Stereotype Anomaly - HEMPHILL (2025)', url: 'mp3/Stereotype Anomaly - HEMPHILL (2025).mp3' },
+    { title: 'Track 2 D+B', url: 'mp3/Track2D+B.mp3' },
+    { title: 'Track 2', url: 'mp3/track2.mp3' },
+    { title: 'Track 3', url: 'mp3/track3.mp3' },
+    { title: 'Track 4', url: 'mp3/track4.mp3' },
+    { title: 'Track 5', url: 'mp3/track5.mp3' },
+    { title: 'Track 6', url: 'mp3/track6.mp3' },
+    { title: 'Track 7', url: 'mp3/track7.mp3' },
+    { title: 'Track 8', url: 'mp3/track8.mp3' }
   ];
 }
 
@@ -396,12 +416,12 @@ function playMusicFromPlaylist(index) {
     });
     
     // Check if it's a radio stream (URL) or local file
-    if (track.startsWith('http://') || track.startsWith('https://')) {
-      playRadioStream(track);
-      console.log(`📻 Playing radio stream ${index + 1}/${musicPlaylist.length}: ${track}`);
+    if (track.url.startsWith('http://') || track.url.startsWith('https://')) {
+      playRadioStream(track.url);
+      console.log(`📻 Playing radio stream ${index + 1}/${musicPlaylist.length}: ${track.title}`);
     } else {
-      playMusic(track);
-      console.log(`🎵 Playing track ${index + 1}/${musicPlaylist.length}: ${track}`);
+      playMusic(track.url);
+      console.log(`🎵 Playing track ${index + 1}/${musicPlaylist.length}: ${track.title}`);
     }
   }
 }
@@ -484,6 +504,28 @@ async function handleMusicRightClick() {
   } else {
     // Subsequent right-clicks: toggle play/pause
     stopMusic();
+  }
+}
+
+function handleVideoRightClick() {
+  const player = document.getElementById('videoPlayer');
+  if (player) {
+    // Check if video player is currently visible
+    const isVisible = player.style.display !== 'none' && 
+                     getComputedStyle(player).display !== 'none' &&
+                     player.style.visibility !== 'hidden' &&
+                     getComputedStyle(player).visibility !== 'hidden';
+    
+    if (isVisible) {
+      // Close the video player
+      toggleVideoPlayer();
+    } else {
+      // If video player is closed, take a snapshot instead
+      captureCanvasOnly();
+    }
+  } else {
+    // Fallback to snapshot if player element not found
+    captureCanvasOnly();
   }
 }
 
