@@ -506,6 +506,43 @@ function playRadioStream(radioUrl) {
     // Create new audio element for radio
     const audio = new Audio(radioUrl);
     audio.volume = 0.5;
+    
+    // Add event listeners
+    audio.addEventListener('ended', () => {
+      console.log('📻 Radio stream ended');
+      const musicButton = document.querySelector('[data-icon="music"]');
+      if (musicButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(musicButton, 'music.png');
+      }
+    });
+
+    audio.addEventListener('pause', () => {
+      console.log('📻 Radio paused');
+      const musicButton = document.querySelector('[data-icon="music"]');
+      if (musicButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(musicButton, 'music.png');
+      }
+    });
+
+    audio.addEventListener('play', () => {
+      console.log('📻 Radio started playing');
+      const musicButton = document.querySelector('[data-icon="music"]');
+      if (musicButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(musicButton, 'music2.png');
+      }
+    });
+    
+    window.currentAudio = audio;
+    audio.play().then(() => {
+      console.log('📻 Radio station loaded and playing');
+      const musicButton = document.querySelector('[data-icon="music"]');
+      if (musicButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(musicButton, 'music2.png');
+      }
+    }).catch(err => {
+      console.error('❌ Error loading radio station:', err);
+      alert('Failed to load radio station. Please check the URL.');
+    });
   } catch (error) {
     console.error('❌ Error creating radio audio:', error);
     alert('Failed to load radio station. Please check the URL.');
