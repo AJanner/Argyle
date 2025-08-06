@@ -182,6 +182,9 @@ function playMusic(filename, event) {
   }
 
   console.log(`🎵 Playing: ${filename}`);
+  
+  // Mark playlist as started when any music is played
+  isPlaylistStarted = true;
 
   // Check if it's an OPUS file
   const isOpus = filename.toLowerCase().endsWith('.opus');
@@ -410,6 +413,9 @@ function playRadioStream(radioUrl) {
       window.currentAudio.pause();
       window.currentAudio = null;
     }
+    
+    // Mark playlist as started when radio is played
+    isPlaylistStarted = true;
     
     // Create new audio element for radio
     const audio = new Audio(radioUrl);
@@ -735,7 +741,7 @@ function showDiceSlider() {
     padding: 20px;
     border-radius: 10px;
     border: 2px solid darkgreen;
-    z-index: 10000;
+    z-index: 60000;
     text-align: center;
     min-width: 200px;
   `;

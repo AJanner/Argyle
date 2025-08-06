@@ -220,6 +220,16 @@ html, body {
 /* ===== DICE SLIDER STYLES ===== */
 #diceSlider {
   animation: diceFadeIn 0.3s ease-in;
+  z-index: 60000;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: gold;
+  padding: 20px;
+  border-radius: 10px;
+  border: 2px solid darkgreen;
 }
 
 #diceSlider input[type="range"] {
