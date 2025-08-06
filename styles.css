@@ -755,6 +755,11 @@ html, body {
   font-size: 12px;
 }
 
+#mediaToolbar button[data-icon="hide"] {
+  transform: scale(0.5);
+  transform-origin: center;
+}
+
 #mediaToolbar label {
   display: flex;
   align-items: center;

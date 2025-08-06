@@ -199,8 +199,13 @@ async function loadMusicList() {
 }
 
 function playMusic(filename, event) {
+  console.log(`🎵 playMusic called with filename: ${filename}, event:`, event);
+  
   // Remove playing class from all items and reset background
-  document.querySelectorAll('.music-item').forEach(item => {
+  const musicItems = document.querySelectorAll('.music-item');
+  console.log(`🎵 Found ${musicItems.length} music items to reset`);
+  
+  musicItems.forEach(item => {
     item.classList.remove('playing');
     item.style.background = 'rgba(0, 0, 0, 0.6)';
   });
@@ -209,6 +214,7 @@ function playMusic(filename, event) {
   if (event && event.target) {
     event.target.classList.add('playing');
     event.target.style.background = '#35CF3A';
+    console.log(`🎵 Highlighted clicked item:`, event.target.textContent);
   }
 
   console.log(`🎵 Playing: ${filename}`);
@@ -439,13 +445,19 @@ function playMusicFromPlaylist(index) {
     currentMusicIndex = index;
     const track = musicPlaylist[index];
     
+    console.log(`🎵 playMusicFromPlaylist called with index: ${index}, track:`, track);
+    
     // Update visual indicators
-    document.querySelectorAll('.music-item').forEach((item, i) => {
+    const musicItems = document.querySelectorAll('.music-item');
+    console.log(`🎵 Found ${musicItems.length} music items`);
+    
+    musicItems.forEach((item, i) => {
       item.classList.remove('playing');
       item.style.background = 'rgba(0, 0, 0, 0.6)';
       if (i === index) {
         item.classList.add('playing');
         item.style.background = '#35CF3A';
+        console.log(`🎵 Highlighted item ${i}:`, item.textContent);
       }
     });
     
@@ -2620,7 +2632,8 @@ const PNG_CONFIG = {
     { dataIcon: 'save', file: 'saveanimation.png' },
     { dataIcon: 'load', file: 'loadanimation.png' },
     { dataIcon: 'snapshot-media', file: 'snapshot.png' },
-    { dataIcon: 'youtube', file: 'youtube.png' }
+    { dataIcon: 'youtube', file: 'youtube.png' },
+    { dataIcon: 'hide', file: 'hide.png' }
   ],
   // Main toolbar buttons (with specific selectors)
   mainToolbar: [
