@@ -9,5 +9,11 @@ mp3/track5.mp3
 mp3/track6.mp3
 mp3/track7.mp3
 mp3/track8.mp3
+mp3/track9.mp3
 https://reggae.stream.laut.fm/reggae
 https://stream.bigfm.de/dancehall/mp3-128/
+https://streaming.broadcast.radio/housefm
+https://stream.bigfm.de/deeptechhouse/mp3-128/
+https://stream.technolovers.fm/vocal-trance
+https://electro-fm.stream.laut.fm/electro-fm
+http://stream.kissfm.de/kissfm-dance/mp3-128/
