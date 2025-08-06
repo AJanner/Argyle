@@ -313,6 +313,7 @@ let currentMusicIndex = 0;
 let isMusicLooping = true;
 let isPlaylistStarted = false; // Track if playlist has been started
 let isMediaToolbarMinimized = false; // Track if media toolbar is minimized
+let isMediaToolbarVisible = false; // Track if media toolbar is visible
 
 function stopMusic() {
   // Toggle play/pause for currently playing audio
@@ -700,7 +701,9 @@ function toggleMediaToolbar() {
   const bar = document.getElementById("mediaToolbar");
   if (bar) {
     const currentDisplay = bar.style.display || getComputedStyle(bar).display;
-    bar.style.display = (currentDisplay === "none" || currentDisplay === "") ? "flex" : "none";
+    const newDisplay = (currentDisplay === "none" || currentDisplay === "") ? "flex" : "none";
+    bar.style.display = newDisplay;
+    isMediaToolbarVisible = (newDisplay === "flex");
     console.log("📺 Media toolbar toggled:", bar.style.display);
   }
 }
@@ -717,6 +720,17 @@ function toggleMediaToolbarMinimize() {
       bar.classList.remove('minimized');
       console.log("📺 Media toolbar expanded");
     }
+  }
+}
+
+function toggleMediaToolbarVisibility() {
+  const bar = document.getElementById("mediaToolbar");
+  if (bar) {
+    const currentDisplay = bar.style.display || getComputedStyle(bar).display;
+    const newDisplay = (currentDisplay === "none" || currentDisplay === "") ? "flex" : "none";
+    bar.style.display = newDisplay;
+    isMediaToolbarVisible = (newDisplay === "flex");
+    console.log("📺 Media toolbar visibility toggled:", bar.style.display);
   }
 }
 
