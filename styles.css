@@ -310,7 +310,7 @@ html, body {
   color: white;
   padding: 20px;
   border-radius: 16px;
-  z-index: 999;
+  z-index: 1001;
   display: none;
   max-height: 70vh;
   overflow-y: auto;

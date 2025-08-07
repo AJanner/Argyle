@@ -50,6 +50,9 @@ function toggleMusicPanel() {
     musicPanel.style.display = 'block';
     loadMusicList();
     
+    // Highlight currently playing track if any
+    highlightCurrentTrack();
+    
     // Auto-hide after 20 seconds
     setTimeout(() => {
       musicPanel.style.display = 'none';
@@ -98,23 +101,28 @@ async function loadMusicList() {
   const parsedTracks = musicFiles.map(track => {
     if (typeof track === 'object' && track.title && track.url) {
       // Already in correct format
+      console.log(`🎵 Parsed object track: ${track.title} -> ${track.url}`);
       return track;
     } else if (typeof track === 'string') {
       // Parse string format (Title|URL or just URL)
       const parts = track.split('|');
       if (parts.length === 2) {
-        return {
+        const parsedTrack = {
           title: parts[0].trim(),
           url: parts[1].trim()
         };
+        console.log(`🎵 Parsed string track: ${parsedTrack.title} -> ${parsedTrack.url}`);
+        return parsedTrack;
       } else {
         // Fallback for old format - use filename as title
         const url = track.trim();
         const filename = url.split('/').pop() || url;
-        return {
+        const parsedTrack = {
           title: filename,
           url: url
         };
+        console.log(`🎵 Parsed fallback track: ${parsedTrack.title} -> ${parsedTrack.url}`);
+        return parsedTrack;
       }
     }
     return track;
@@ -134,6 +142,7 @@ async function loadMusicList() {
   console.log('   OPUS:', canPlayOpus);
   
   musicFiles.forEach(track => {
+    console.log(`🎵 Processing track: ${track.title} -> ${track.url}`);
     const musicItem = document.createElement('div');
     musicItem.className = 'music-item';
     
@@ -144,6 +153,7 @@ async function loadMusicList() {
       musicItem.textContent = displayName;
       musicItem.style.borderLeft = '3px solid #9C27B0';
       musicItem.title = `Radio Stream: ${track.url}`;
+      console.log(`📻 Created radio item: ${displayName}`);
     } else {
       // Local file
       const filename = track.url.split('/').pop();
@@ -156,6 +166,7 @@ async function loadMusicList() {
         musicItem.style.borderLeft = '3px solid #ff6b6b';
         musicItem.title = 'OPUS format - may not work in all browsers';
       }
+      console.log(`🎵 Created music item: ${displayName}`);
     }
     
     musicItem.onclick = (event) => {
@@ -483,9 +494,15 @@ function playMusicFromPlaylist(index) {
       // For radio streams, we need to pass the index to maintain highlighting
       playRadioStreamFromPlaylist(track.url, index);
       console.log(`📻 Playing radio stream ${index + 1}/${musicPlaylist.length}: ${track.title}`);
+      // Start visualizer for radio streams
+      isMusicPlaying = true;
+      startMusicVisualizer();
     } else {
       playMusic(track.url);
       console.log(`🎵 Playing track ${index + 1}/${musicPlaylist.length}: ${track.title}`);
+      // Start visualizer for any music playback
+      isMusicPlaying = true;
+      startMusicVisualizer();
     }
   }
 }
@@ -3247,6 +3264,42 @@ window.autoUpdateKeyframes = autoUpdateKeyframes;
 window.updateKeyframesForCurrentPositions = updateKeyframesForCurrentPositions;
 
 // ===== MUSIC VISUALIZER FUNCTIONS =====
+
+function highlightCurrentTrack() {
+  // Find the currently playing audio and highlight it in the music panel
+  if (window.currentAudio && !window.currentAudio.paused) {
+    const musicItems = document.querySelectorAll('.music-item');
+    
+    musicItems.forEach((item, index) => {
+      item.classList.remove('playing');
+      item.style.background = 'rgba(0, 0, 0, 0.6)';
+      
+      // Check if this item corresponds to the currently playing track
+      const itemText = item.textContent || '';
+      const itemOnclick = item.getAttribute('onclick') || '';
+      
+      // For radio streams, check if the URL is in the onclick
+      if (itemOnclick.includes('playRadioStream') && window.currentAudio.src) {
+        const currentSrc = window.currentAudio.src;
+        if (itemOnclick.includes(currentSrc) || itemText.includes(currentSrc)) {
+          item.classList.add('playing');
+          item.style.background = '#35CF3A';
+          console.log(`🎵 Highlighted current radio track: ${itemText}`);
+        }
+      }
+      // For local files, check if the filename matches
+      else if (itemOnclick.includes('playMusic') && window.currentAudio.src) {
+        const currentSrc = window.currentAudio.src;
+        const filename = currentSrc.split('/').pop();
+        if (itemOnclick.includes(filename) || itemText.includes(filename)) {
+          item.classList.add('playing');
+          item.style.background = '#35CF3A';
+          console.log(`🎵 Highlighted current music track: ${itemText}`);
+        }
+      }
+    });
+  }
+}
 
 function startMusicVisualizer() {
   if (visualizerInterval) {
