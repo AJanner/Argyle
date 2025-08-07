@@ -96,7 +96,7 @@ html, body {
 
 /* Drawing mode cursor */
 #canvas.drawing-mode {
-  cursor: crosshair !important;
+  cursor: url(images/cross.png) 16 16, crosshair !important;
 }
 
 

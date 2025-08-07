@@ -66,7 +66,7 @@
       </label>
     </div>
     
-    <button onclick="toggleDrawingMode()" oncontextmenu="clearDrawingsOnRightClick(event)" title="Toggle Drawing Mode (Right-click to clear drawings)" class="toolbar-btn" data-icon="draw">✏️</button>
+    <button onclick="toggleDrawingMode()" oncontextmenu="showDrawingSettingsOnRightClick(event)" title="Toggle Drawing Mode (Right-click for settings)" class="toolbar-btn" data-icon="draw">✏️</button>
     <button onclick="captureCanvasOnly()" title="Snapshot" class="toolbar-btn" data-icon="snapshot">📷</button>
     <button onclick="saveIdeas()" title="Save .json File" class="toolbar-btn" data-icon="save">💾Save.json</button>
     <input accept=".json" id="fileLoader" style="display:none" type="file"/>

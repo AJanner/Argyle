@@ -172,7 +172,7 @@ function toggleDrawingMode() {
       speedSlider.classList.add('paused');
     }
     
-    canvas.style.cursor = 'crosshair';
+    canvas.style.cursor = 'url(images/cross.png) 16 16, crosshair';
     canvas.classList.add('drawing-mode');
     console.log('🎨 Drawing mode activated - click and drag to draw');
     console.log('⌨️ Keyboard shortcuts: C=Clear, D=Color, W=Width');
@@ -855,6 +855,89 @@ function clearDrawingsOnRightClick(event) {
     button.innerHTML = originalText;
     button.style.background = 'linear-gradient(45deg, #FF6B6B, #FF8E53)';
   }, 500);
+}
+
+let drawingSettingsFadeTimeout = null;
+
+function showDrawingSettingsOnRightClick(event) {
+  event.preventDefault(); // Prevent default context menu
+  event.stopPropagation();
+  
+  const panel = document.getElementById('drawingSettingsPanel');
+  const colorSelect = document.getElementById('drawingColorSelect');
+  const widthSelect = document.getElementById('drawingWidthSelect');
+  
+  // Toggle panel visibility if already visible
+  if (panel && panel.style.display === 'block') {
+    hideDrawingSettingsPanel();
+    return false;
+  }
+  
+  // Set current values
+  if (colorSelect) {
+    colorSelect.value = drawingColor;
+  }
+  
+  if (widthSelect) {
+    widthSelect.value = drawingWidth;
+  }
+  
+  // Position panel at the x-coordinate of the draw button
+  if (panel) {
+    const drawButton = event.target;
+    const buttonRect = drawButton.getBoundingClientRect();
+    
+    // Position panel at button's x-position
+    panel.style.position = 'fixed';
+    panel.style.left = buttonRect.left + 'px';
+    panel.style.top = (buttonRect.bottom + 10) + 'px'; // 10px below button
+    panel.style.display = 'block';
+    panel.style.zIndex = '10000';
+    panel.style.opacity = '1';
+    
+    console.log('🎨 Drawing settings panel opened at button position');
+    
+    // Clear any existing timeout
+    if (drawingSettingsFadeTimeout) {
+      clearTimeout(drawingSettingsFadeTimeout);
+    }
+    
+    // Set fade-out timeout for 10 seconds
+    drawingSettingsFadeTimeout = setTimeout(() => {
+      fadeOutDrawingSettingsPanel();
+    }, 10000);
+  }
+  
+  return false; // Ensure context menu doesn't show
+}
+
+function hideDrawingSettingsPanel() {
+  const panel = document.getElementById('drawingSettingsPanel');
+  if (panel) {
+    panel.style.display = 'none';
+    if (drawingSettingsFadeTimeout) {
+      clearTimeout(drawingSettingsFadeTimeout);
+      drawingSettingsFadeTimeout = null;
+    }
+    console.log('🎨 Drawing settings panel hidden');
+  }
+}
+
+function fadeOutDrawingSettingsPanel() {
+  const panel = document.getElementById('drawingSettingsPanel');
+  if (panel && panel.style.display === 'block') {
+    // Fade out animation
+    panel.style.transition = 'opacity 1s ease-out';
+    panel.style.opacity = '0';
+    
+    // Hide after fade completes
+    setTimeout(() => {
+      panel.style.display = 'none';
+      panel.style.transition = '';
+      drawingSettingsFadeTimeout = null;
+      console.log('🎨 Drawing settings panel faded out');
+    }, 1000);
+  }
 }
 
 
@@ -1950,9 +2033,11 @@ function setupEventListeners() {
   canvas.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     
-    // If in drawing mode, show drawing settings
+    // If in drawing mode, clear drawings
     if (isDrawingMode) {
-      showDrawingSettings(e);
+      clearDrawingOnly();
+      drawingPaths = [];
+      console.log('🧽 Drawings cleared');
       return;
     }
     
