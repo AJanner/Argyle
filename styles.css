@@ -1085,4 +1085,16 @@ input[type="text"] {
   overflow: auto;
   min-width: 200px;
   min-height: 150px;
+}
+
+/* ===== MUSIC VISUALIZER ===== */
+
+.viz-bar {
+  border-radius: 2px;
+  min-height: 2px;
+  transition: height 0.1s ease;
+}
+
+#musicVisualizer, #musicVisualizer2 {
+  border: none;
 } 

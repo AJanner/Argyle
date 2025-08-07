@@ -8,6 +8,11 @@ let currentPlaylistIndex = -1;
 let videoControlsTimeout = null;
 let videoControlsVisible = true;
 
+// ===== MUSIC VISUALIZER VARIABLES =====
+let visualizerInterval = null;
+let isMusicPlaying = false;
+let currentVisualizerColors = [];
+
 // ===== UTILITY FUNCTIONS =====
 function formatTime(seconds) {
   if (isNaN(seconds)) return '00:00';
@@ -254,6 +259,8 @@ function playMusic(filename, event) {
   // Add event listeners to detect when music ends naturally
   audio.addEventListener('ended', () => {
     console.log('🎵 Music track ended naturally');
+    isMusicPlaying = false;
+    stopMusicVisualizer();
     
     // Auto-advance to next track if we're in playlist mode
     if (musicPlaylist.length > 0 && isMusicLooping) {
@@ -271,6 +278,8 @@ function playMusic(filename, event) {
 
   audio.addEventListener('pause', () => {
     console.log('🎵 Music paused');
+    isMusicPlaying = false;
+    stopMusicVisualizer();
     // Update music button to show inactive state
     const musicButton = document.querySelector('[data-icon="music"]');
     if (musicButton && typeof PNGLoader !== 'undefined') {
@@ -280,6 +289,8 @@ function playMusic(filename, event) {
 
   audio.addEventListener('play', () => {
     console.log('🎵 Music started playing');
+    isMusicPlaying = true;
+    startMusicVisualizer();
     // Update music button to show active state
     const musicButton = document.querySelector('[data-icon="music"]');
     if (musicButton && typeof PNGLoader !== 'undefined') {
@@ -327,6 +338,8 @@ function stopMusic() {
     if (window.currentAudio.paused) {
       window.currentAudio.play();
       console.log("▶️ Music resumed");
+      isMusicPlaying = true;
+      startMusicVisualizer();
       
       // Update music button to show active state
       const musicButton = document.querySelector('[data-icon="music"]');
@@ -336,6 +349,8 @@ function stopMusic() {
     } else {
       window.currentAudio.pause();
       console.log("⏸️ Music paused");
+      isMusicPlaying = false;
+      stopMusicVisualizer();
       
       // Update music button to show inactive state
       const musicButton = document.querySelector('[data-icon="music"]');
@@ -345,6 +360,8 @@ function stopMusic() {
     }
   } else {
     console.log("🔇 No music currently loaded");
+    isMusicPlaying = false;
+    stopMusicVisualizer();
     
     // Update music button to show inactive state
     const musicButton = document.querySelector('[data-icon="music"]');
@@ -2763,9 +2780,18 @@ const PNGLoader = {
   applyPNG(button, pngFile) {
     if (!button || !pngFile) return false;
     
+    // Check if this PNG is already applied to avoid unnecessary reloads
+    const currentPng = button.style.getPropertyValue('--png-url');
+    const newPng = `url(images/${pngFile})`;
+    
+    if (currentPng === newPng) {
+      // PNG already applied, no need to reload
+      return true;
+    }
+    
     try {
       // Set CSS custom property for PNG URL
-      button.style.setProperty('--png-url', `url(images/${pngFile})`, 'important');
+      button.style.setProperty('--png-url', newPng, 'important');
       button.classList.add('has-png');
       
       console.log(`✅ PNG applied: ${pngFile} to ${button.getAttribute('data-icon')}`);
@@ -3218,4 +3244,85 @@ function autoUpdateKeyframes() {
 window.autoUpdateKeyframes = autoUpdateKeyframes;
 
 // Make it globally available
-window.updateKeyframesForCurrentPositions = updateKeyframesForCurrentPositions; 
+window.updateKeyframesForCurrentPositions = updateKeyframesForCurrentPositions;
+
+// ===== MUSIC VISUALIZER FUNCTIONS =====
+
+function startMusicVisualizer() {
+  if (visualizerInterval) {
+    clearInterval(visualizerInterval);
+  }
+  
+  const visualizer1 = document.getElementById('musicVisualizer');
+  const visualizer2 = document.getElementById('musicVisualizer2');
+  
+  if (visualizer1) visualizer1.style.display = 'block';
+  if (visualizer2) visualizer2.style.display = 'block';
+  
+  // Generate random colors for this session
+  currentVisualizerColors = [];
+  const colors = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+    '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2',
+    '#F7DC6F', '#A9CCE3', '#F8C471', '#82E0AA', '#F1948A'
+  ];
+  
+  // Generate 8 random colors for the bars
+  for (let i = 0; i < 8; i++) {
+    currentVisualizerColors.push(colors[Math.floor(Math.random() * colors.length)]);
+  }
+  
+  // Apply random colors to bars
+  const bars1 = document.querySelectorAll('#visualizerBars .viz-bar');
+  const bars2 = document.querySelectorAll('#visualizerBars2 .viz-bar');
+  
+  bars1.forEach((bar, index) => {
+    bar.style.background = currentVisualizerColors[index];
+  });
+  
+  bars2.forEach((bar, index) => {
+    bar.style.background = currentVisualizerColors[index];
+  });
+  
+  visualizerInterval = setInterval(() => {
+    if (!isMusicPlaying) {
+      stopMusicVisualizer();
+      return;
+    }
+    
+    // Animate visualizer bars
+    const bars1 = document.querySelectorAll('#visualizerBars .viz-bar');
+    const bars2 = document.querySelectorAll('#visualizerBars2 .viz-bar');
+    
+    bars1.forEach((bar, index) => {
+      const height = Math.random() * 100;
+      bar.style.height = `${height}%`;
+    });
+    
+    bars2.forEach((bar, index) => {
+      const height = Math.random() * 100;
+      bar.style.height = `${height}%`;
+    });
+  }, 100);
+}
+
+function stopMusicVisualizer() {
+  if (visualizerInterval) {
+    clearInterval(visualizerInterval);
+    visualizerInterval = null;
+  }
+  
+  const visualizer1 = document.getElementById('musicVisualizer');
+  const visualizer2 = document.getElementById('musicVisualizer2');
+  
+  if (visualizer1) visualizer1.style.display = 'none';
+  if (visualizer2) visualizer2.style.display = 'none';
+  
+  // Reset bar heights
+  const bars1 = document.querySelectorAll('#visualizerBars .viz-bar');
+  const bars2 = document.querySelectorAll('#visualizerBars2 .viz-bar');
+  
+  bars1.forEach(bar => bar.style.height = '0%');
+  bars2.forEach(bar => bar.style.height = '0%');
+} 

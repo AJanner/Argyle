@@ -10,8 +10,36 @@
 <body>
   <!-- Toolbar -->
   <div id="toolbar">
-    <button onclick="toggleVideoPlayer()" oncontextmenu="handleVideoRightClick(); return false;" title="Toggle Video Player (Right-click to close)" class="toolbar-btn" data-icon="video">📹</button>
-    <button onclick="toggleMusicPanel()" oncontextmenu="handleMusicRightClick(); return false;" title="Music Panel (Right-click to start playlist, then play/pause)" class="toolbar-btn" data-icon="music">🎶</button>
+    <div style="position: relative; display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 20px; max-width: 200px; min-height: 20px; max-height: 180px;">
+      <div id="musicVisualizer" style="display: none; position: absolute; top: 2px; left: 0; width: 100%; height: calc(100% - 4px); background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; z-index: 1;">
+        <div id="visualizerBars" style="display: flex; justify-content: space-around; align-items: flex-end; height: 100%; padding: 2px;">
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+        </div>
+      </div>
+      <button onclick="toggleVideoPlayer()" oncontextmenu="handleVideoRightClick(); return false;" title="Toggle Video Player (Right-click to close)" class="toolbar-btn" data-icon="video" style="position: relative; z-index: 2; width: 100%; height: 100%;">📹</button>
+    </div>
+    <div style="position: relative; display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 20px; max-width: 200px; min-height: 20px; max-height: 180px;">
+      <div id="musicVisualizer2" style="display: none; position: absolute; top: 2px; left: 0; width: 100%; height: calc(100% - 4px); background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; z-index: 1;">
+        <div id="visualizerBars2" style="display: flex; justify-content: space-around; align-items: flex-end; height: 100%; padding: 2px;">
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+          <div class="viz-bar" style="width: 4px; background: #8FE04A; transition: height 0.1s ease;"></div>
+        </div>
+      </div>
+      <button onclick="toggleMusicPanel()" oncontextmenu="handleMusicRightClick(); return false;" title="Music Panel (Right-click to start playlist, then play/pause)" class="toolbar-btn" data-icon="music" style="position: relative; z-index: 2; width: 100%; height: 100%;">🎶</button>
+    </div>
     <button onclick="rollDice()" oncontextmenu="showDiceSlider(); return false;" title="Random (Right-click for slider)" class="toolbar-btn" data-icon="dice" id="diceButton"></button>
     <button onclick="cycleBackground()" oncontextmenu="rotateBackground(); return false;" title="Change Background (Right-click to rotate)" class="toolbar-btn" data-icon="cycle">🔄</button>
     <button onclick="togglePauseButton()" title="Pause/Unpause" class="toolbar-btn" data-icon="pause">⏯️</button>
@@ -60,6 +88,7 @@
     </label>
     <div class="media-separator"></div>
     <button onclick="recordState('start')" class="record-btn start-btn toolbar-btn" data-icon="record-in" title="Mark In Point">🎬 In</button>
+    
     <button onclick="recordState('keyframe')" class="record-btn keyframe-btn toolbar-btn" data-icon="keyframe" title="Add Keyframe">📍 Key</button>
     <button onclick="recordState('end')" class="record-btn end-btn toolbar-btn" data-icon="record-out" title="Mark Out Point">🏁 Out</button>
     <button onclick="startPlayback()" class="play-btn toolbar-btn" data-icon="play" title="Play In to Out">▶️ Play</button>
