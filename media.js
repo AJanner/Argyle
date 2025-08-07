@@ -3261,16 +3261,53 @@ function startMusicVisualizer() {
   
   // Generate random colors for this session
   currentVisualizerColors = [];
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
-    '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2',
-    '#F7DC6F', '#A9CCE3', '#F8C471', '#82E0AA', '#F1948A'
+  const barColors = [
+    // Reds & Pinks
+    '#FF6B6B', '#FF4757', '#FF3838', '#FF1744', '#F50057',
+    '#E91E63', '#C2185B', '#AD1457', '#FF4081', '#F50057',
+    
+    // Oranges & Yellows
+    '#FF9800', '#FF5722', '#FF7043', '#FF8A65', '#FFAB40',
+    '#FFC107', '#FFD54F', '#FFEB3B', '#FFF176', '#FFF59D',
+    
+    // Greens
+    '#4CAF50', '#8BC34A', '#CDDC39', '#9CCC65', '#66BB6A',
+    '#4DB6AC', '#26A69A', '#00BCD4', '#00ACC1', '#009688',
+    
+    // Blues
+    '#2196F3', '#42A5F5', '#64B5F6', '#90CAF9', '#BBDEFB',
+    '#3F51B5', '#5C6BC0', '#7986CB', '#9FA8DA', '#C5CAE9',
+    
+    // Purples
+    '#9C27B0', '#BA68C8', '#CE93D8', '#E1BEE7', '#F3E5F5',
+    '#673AB7', '#7E57C2', '#9575CD', '#B39DDB', '#D1C4E9',
+    
+    // Cyans & Teals
+    '#00BCD4', '#26C6DA', '#4DD0E1', '#80DEEA', '#B2EBF2',
+    '#009688', '#26A69A', '#4DB6AC', '#80CBC4', '#B2DFDB',
+    
+    // Magentas
+    '#E91E63', '#F06292', '#F8BBD9', '#FCE4EC', '#F3E5F5',
+    '#9C27B0', '#BA68C8', '#CE93D8', '#E1BEE7', '#F3E5F5',
+    
+    // Special Colors
+    '#FFD700', '#FFA500', '#FF6347', '#FF4500', '#FF1493',
+    '#00FF00', '#00FFFF', '#FF00FF', '#FFFF00', '#FF69B4',
+    '#00CED1', '#FF8C00', '#32CD32', '#FF69B4', '#9370DB'
   ];
   
-  // Generate 8 random colors for the bars
+  const glowColors = [
+    '#FFD700', '#FF69B4', '#00FFFF', '#FF1493', '#32CD32',
+    '#FF6347', '#9370DB', '#00CED1', '#FF8C00', '#FF4500',
+    '#FF00FF', '#FFFF00', '#00FF00', '#FF69B4', '#FFD700',
+    '#FF1493', '#00FFFF', '#32CD32', '#FF6347', '#9370DB'
+  ];
+  
+  // Generate 8 random colors for the bars and glows
   for (let i = 0; i < 8; i++) {
-    currentVisualizerColors.push(colors[Math.floor(Math.random() * colors.length)]);
+    const barColor = barColors[Math.floor(Math.random() * barColors.length)];
+    const glowColor = glowColors[Math.floor(Math.random() * glowColors.length)];
+    currentVisualizerColors.push({ bar: barColor, glow: glowColor });
   }
   
   // Apply random colors to bars
@@ -3278,11 +3315,15 @@ function startMusicVisualizer() {
   const bars2 = document.querySelectorAll('#visualizerBars2 .viz-bar');
   
   bars1.forEach((bar, index) => {
-    bar.style.background = currentVisualizerColors[index];
+    bar.style.background = currentVisualizerColors[index].bar;
+    bar.style.boxShadow = `0 0 4px ${currentVisualizerColors[index].glow}`;
+    bar.style.filter = `drop-shadow(0 0 2px ${currentVisualizerColors[index].glow})`;
   });
   
   bars2.forEach((bar, index) => {
-    bar.style.background = currentVisualizerColors[index];
+    bar.style.background = currentVisualizerColors[index].bar;
+    bar.style.boxShadow = `0 0 4px ${currentVisualizerColors[index].glow}`;
+    bar.style.filter = `drop-shadow(0 0 2px ${currentVisualizerColors[index].glow})`;
   });
   
   visualizerInterval = setInterval(() => {

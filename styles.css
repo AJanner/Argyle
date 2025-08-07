@@ -1093,6 +1093,7 @@ input[type="text"] {
   border-radius: 2px;
   min-height: 2px;
   transition: height 0.1s ease;
+  opacity: 0.8;
 }
 
 #musicVisualizer, #musicVisualizer2 {
