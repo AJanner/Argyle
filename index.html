@@ -253,12 +253,24 @@
 
   <!-- Main Panel -->
   <div class="panel" id="panel">
-    <div style="position: relative; margin-bottom: 10px;">
-      <div class="panel-close-btn" onclick="closePanel()" title="Close Panel">✕</div>
-      <button onclick="minimizePanel()" title="Minimize" style="position: absolute; top: 8px; right: 35px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 10px;">📋</button>
+    <div style="position: relative; margin-bottom: 10px; padding-top: 5px; height: 30px; display: flex; align-items: center; gap: 1px;">
+      <div class="panel-close-btn" onclick="closePanel()" title="Close Panel" style="position: static;">🅇</div>
+      <button onclick="minimizePanel()" title="Minimize" style="background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 10px;">⌑</button>
+      <input type="checkbox" id="disablePanelTimeout" title="Disable Panel Timeout" style="width: 12px; height: 12px; cursor: pointer;">
     </div>
     <input id="title" placeholder="Title"/>
+    <div style="display: flex; gap: 10px; margin: 10px 0;">
+      <input id="dateField" type="date" style="flex: 1; background-color: rgba(0, 0, 0, 0.6); color: gold; border: 2px solid darkgreen; font-family: 'Monaco', serif; padding: 6px; border-radius: 6px;"/>
+      <input id="timeField" type="time" style="flex: 1; background-color: rgba(0, 0, 0, 0.6); color: gold; border: 2px solid darkgreen; font-family: 'Monaco', serif; padding: 6px; border-radius: 6px;"/>
+    </div>
     <textarea id="description" placeholder="Description" rows="5"></textarea>
+    
+    <div style="margin: 10px 0; display: flex; gap: 1px;">
+      <button onclick="savePanel()" title="Save">Save💾</button>
+      <button onclick="changeColor()" title="Bubble Colour">💭️Colour</button>
+      <button onclick="changeTextColor()" title="Text Colour">💬Colour</button>
+    </div>
+    
     <div class="resize-handle">⤡</div>
     
     <div style="margin-top: 1px;">
@@ -269,9 +281,35 @@
       <input id="sizeSlider" title="Bubble Size" max="200" min="10" oninput="selectedIdea.radius = parseInt(this.value)" type="range" value="75"/>
     </label><br>
     
-    <label style="margin-left: 10px;">⬇️ Text Size<br>
-      <input id="fontSizeSlider" title="Text Size" max="48" min="8" oninput="selectedIdea.fontSize = parseInt(this.value)" type="range" value="14"/>
-    </label>
+    <div style="margin-left: 10px; display: flex; gap: 10px; align-items: center;">
+      <label style="flex: 1;">⬇️ Text Size
+        <input id="fontSizeSlider" title="Text Size" max="48" min="8" oninput="selectedIdea.fontSize = parseInt(this.value)" type="range" value="14"/>
+      </label>
+      <label style="flex: 1;">⬇️ Ratio
+        <input id="heightRatioSlider" title="Ratio" max="1.7" min="0.3" step="0.1" oninput="updateBubbleRatio(this.value)" type="range" value="1.0"/>
+      </label>
+    </div>
+    
+    <div style="margin: 10px 0;">
+      <label style="margin-left: 10px;">⬆️ Rotation | ⬇️ Shape
+        <select id="shapeSelector" style="background-color: rgba(0, 0, 0, 0.6); color: gold; border: 2px solid darkgreen; font-family: 'Monaco', serif; padding: 6px; border-radius: 6px; width: 100%; margin-top: 5px;">
+          <option value="circle">Circle</option>
+          <option value="square">Square</option>
+          <option value="triangle">Triangle</option>
+          <option value="pentagon">Pentagon</option>
+          <option value="hexagon">Hexagon</option>
+          <option value="octagon">Octagon</option>
+          <option value="striker">Striker</option>
+        </select>
+      </label>
+    </div>
+    
+    <div id="actionSliderContainer" style="margin: 10px 0; display: none;">
+      <label style="margin-left: 10px;">⚡ Action
+        <input id="actionSlider" title="Action" max="20" min="1" step="1" oninput="updateActionSlider(this.value)" type="range" value="5"/>
+        <span id="actionSliderValue" style="color: gold; font-size: 12px; margin-left: 10px;">5</span>
+      </label>
+    </div>
     
     <input id="rotationSlider" title="Rotate Bubble" max="360" min="0" oninput="selectedIdea.rotation = parseInt(this.value)" type="range" value="0"/>
     
@@ -357,22 +395,16 @@
       <button onclick="toggleGlow()" title="Toggle Glow">Glow🔆</button>
       <button onclick="changeGlowColor()" title="Change Glow Color">Colour🔅</button>
       <button onclick="toggleFlash()" title="Toggle Flash">Flash🎇</button>
-      <button onclick="toggleAnimateColors()" title="Toggle Animate Colors">All🎨</button>
       <button onclick="toggleTransparent()" title="Toggle Transparent">Opaque</button>
       <button onclick="toggleFixed()" title="Toggle Fixed Mode">Solid🗿</button>
       <button onclick="toggleStatic()" title="Toggle Static Mode">Static🧽</button>
       <button onclick="togglePanelSide()" title="Toggle Panel Side">↔️</button>
+      <button onclick="cycleFont()" title="Cycle Fonts">Font</button>
       <button onclick="toggleCheckeredBorder()" title="Toggle Checkered Border">Check🏁</button>
     </div>
     
     <div style="margin-top: 10px;">
-      <button onclick="savePanel()" title="Save">Save💾</button>
-      <button onclick="changeColor()" title="Bubble Colour">💭️Colour</button>
-      <button onclick="changeTextColor()" title="Text Colour">💬Colour</button>
-      <button onclick="cycleFont()" title="Cycle Fonts">Font</button>
       <button onclick="clearUploadedImage()" title="Clear IMG">🗑️Image</button>
-      <button onclick="testImageUpload()" title="AI">🧪Test</button>
-      <button onclick="testEffects()" title="Test Effects">🎭 Effects</button>
       <button onclick="deleteIdea()" title="Delete Bubble">Delete💭️</button>
       <button onclick="closePanel()" title="Close">Close💭️</button>
     </div>

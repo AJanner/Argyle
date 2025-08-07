@@ -25,7 +25,12 @@ const themePresets = {
     "rotation": 0,
     "glow": true,
     "fixed": false,
-    "glowColor": "hsl(64.18492327988956, 100%, 70%)"
+    "glowColor": "hsl(64.18492327988956, 100%, 70%)",
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
@@ -42,7 +47,12 @@ const themePresets = {
     "fontSize": 14,
     "rotation": 0,
     "glow": false,
-    "glowColor": "hsl(111.4080196079906, 100%, 70%)"
+    "glowColor": "hsl(111.4080196079906, 100%, 70%)",
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "     ",
@@ -58,15 +68,20 @@ const themePresets = {
     "image": "images/p29.png",
     "glow": true,
     "fontSize": 8,
-    "rotation": 0
+    "rotation": 0,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "      OwenO",
     "description": "",
     "x": 38,
     "y": 608.0866959104281,
-    "vx": -0.5723384563789395,
-    "vy": 2.7988764134555977,
+    "vx": -1.260720341360491,
+    "vy": 1.203145322799383,
     "color": "hsl(106.0048409709453, 100%, 70%)",
     "textColor": "white",
     "radius": 28,
@@ -76,7 +91,12 @@ const themePresets = {
     "fontSize": 9,
     "fixed": true,
     "static": true,
-    "rotation": 0
+    "rotation": 0,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "      Wiredu",
@@ -94,15 +114,20 @@ const themePresets = {
     "glow": true,
     "fontSize": 10,
     "glowColor": "hsl(23.618056414207555, 100%, 70%)",
-    "rotation": 0
+    "rotation": 0,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "    5.Pleggy",
     "description": "",
     "x": 35,
     "y": 311.8109536700162,
-    "vx": 1.7916159179163342,
-    "vy": 1.814208650607946,
+    "vx": 1.882214795057802,
+    "vy": 2.070210111510945,
     "color": "hsl(146.91765164925442, 100%, 70%)",
     "textColor": "yellow",
     "radius": 25,
@@ -112,7 +137,12 @@ const themePresets = {
     "fontSize": 8,
     "rotation": 0,
     "fixed": true,
-    "static": true
+    "static": true,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "11.Bali     Mumba",
@@ -128,7 +158,12 @@ const themePresets = {
     "image": "images/p2.png",
     "glow": true,
     "fontSize": 9,
-    "rotation": 0
+    "rotation": 0,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "      10.",
@@ -145,7 +180,12 @@ const themePresets = {
     "glow": true,
     "glowColor": "hsl(315.27944478625363, 100%, 70%)",
     "fontSize": 8,
-    "rotation": 0
+    "rotation": 0,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "     ",
@@ -162,7 +202,12 @@ const themePresets = {
     "fontSize": 9,
     "rotation": 0,
     "glow": true,
-    "glowColor": "hsl(61.00950429953993, 100%, 70%)"
+    "glowColor": "hsl(61.00950429953993, 100%, 70%)",
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
@@ -182,7 +227,13 @@ const themePresets = {
     "transparent": false,
     "animateColors": false,
     "fontSize": 12,
-    "rotation": 0
+    "rotation": 0,
+    "shape": "striker",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46",
+    "strikerVelocity": 5
   },
   {
     "title": "",
@@ -199,7 +250,12 @@ const themePresets = {
     "glow": true,
     "rotation": 352,
     "fontSize": 14,
-    "glowColor": "hsl(274.1879244638785, 100%, 70%)"
+    "glowColor": "hsl(274.1879244638785, 100%, 70%)",
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
@@ -215,15 +271,20 @@ const themePresets = {
     "image": "images/a21.png",
     "glow": false,
     "fontSize": 14,
-    "rotation": 0
+    "rotation": 0,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "   Paterson",
     "description": "",
     "x": 39.022367696782766,
     "y": 412.24556533574605,
-    "vx": 1.882214795057802,
-    "vy": 2.070210111510945,
+    "vx": -0.20899197345486709,
+    "vy": -2.6816082723842594,
     "color": "hsl(204.05950274274593, 100%, 70%)",
     "textColor": "white",
     "radius": 26,
@@ -234,7 +295,12 @@ const themePresets = {
     "fontSize": 10,
     "fixed": true,
     "static": true,
-    "rotation": 0
+    "rotation": 0,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
@@ -251,7 +317,12 @@ const themePresets = {
     "glow": true,
     "fontSize": 8,
     "rotation": 0,
-    "glowColor": "hsl(267.94317881653114, 100%, 70%)"
+    "glowColor": "hsl(267.94317881653114, 100%, 70%)",
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
@@ -268,7 +339,12 @@ const themePresets = {
     "glow": true,
     "flash": false,
     "fontSize": 14,
-    "rotation": 0
+    "rotation": 0,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
@@ -284,7 +360,12 @@ const themePresets = {
     "image": "images/p27.png",
     "fontSize": 14,
     "rotation": 0,
-    "glow": true
+    "glow": true,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
@@ -301,7 +382,12 @@ const themePresets = {
     "glow": true,
     "fontSize": 14,
     "rotation": 0,
-    "glowColor": "hsl(108.82161579515511, 100%, 70%)"
+    "glowColor": "hsl(108.82161579515511, 100%, 70%)",
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
@@ -319,15 +405,20 @@ const themePresets = {
     "fixed": true,
     "fontSize": 14,
     "rotation": 0,
-    "static": true
+    "static": true,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
     "description": "",
     "x": 35,
     "y": 513.0866959104281,
-    "vx": -1.260720341360491,
-    "vy": 1.203145322799383,
+    "vx": -2.555616986936294,
+    "vy": 0.2387138134250082,
     "color": "hsl(193.52566759469707, 100%, 70%)",
     "textColor": "white",
     "radius": 25,
@@ -336,15 +427,20 @@ const themePresets = {
     "glow": true,
     "static": true,
     "fontSize": 14,
-    "rotation": 0
+    "rotation": 0,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
     "description": "",
     "x": 35,
     "y": 463.08669591042815,
-    "vx": -1.1525288168916539,
-    "vy": 0.8009637309900604,
+    "vx": -0.5723384563789395,
+    "vy": 2.7988764134555977,
     "color": "hsl(231.7055957100566, 100%, 70%)",
     "textColor": "white",
     "radius": 25,
@@ -354,7 +450,12 @@ const themePresets = {
     "fixed": true,
     "static": true,
     "fontSize": 14,
-    "rotation": 0
+    "rotation": 0,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
@@ -369,7 +470,12 @@ const themePresets = {
     "font": "Arial",
     "image": "images/a22.png",
     "fontSize": 14,
-    "rotation": 0
+    "rotation": 0,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
@@ -386,15 +492,20 @@ const themePresets = {
     "glow": false,
     "fontSize": 14,
     "rotation": 0,
-    "glowColor": "hsl(95.78011305688119, 100%, 70%)"
+    "glowColor": "hsl(95.78011305688119, 100%, 70%)",
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
     "description": "",
-    "x": 22.617099139059114,
-    "y": 559.4619454113,
-    "vx": -2.555616986936294,
-    "vy": 0.2387138134250082,
+    "x": 16.62532744435629,
+    "y": 559.5880013595537,
+    "vx": 1.7916159179163342,
+    "vy": 1.814208650607946,
     "color": "hsl(107.23473760146486, 100%, 70%)",
     "textColor": "white",
     "radius": 25,
@@ -404,15 +515,20 @@ const themePresets = {
     "static": true,
     "fixed": true,
     "fontSize": 14,
-    "rotation": 0
+    "rotation": 0,
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   },
   {
     "title": "",
     "description": "",
-    "x": 30,
-    "y": 362.0499790642017,
-    "vx": -0.20899197345486709,
-    "vy": -2.6816082723842594,
+    "x": 21.82335919836825,
+    "y": 362.1137978956142,
+    "vx": -1.1525288168916539,
+    "vy": 0.8009637309900604,
     "color": "hsl(327.1227236875013, 100%, 70%)",
     "textColor": "white",
     "radius": 27,
@@ -424,7 +540,12 @@ const themePresets = {
     "glowColor": "hsl(125.03993572644762, 100%, 70%)",
     "fixed": true,
     "static": true,
-    "image": "images/p15.png"
+    "image": "images/p15.png",
+    "shape": "circle",
+    "heightRatio": 1,
+    "showPauseBorder": false,
+    "createdDate": "2025-08-07",
+    "createdTime": "23:27:46"
   }
         ],
         bg: "images/argyle6.png"

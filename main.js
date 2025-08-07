@@ -13,6 +13,7 @@ let currentTheme = "default";
 let backgroundIndex = 1;
 let width, height;
 let border = 10;
+let strikerAttacks = []; // Array to track active striker attacks
 
 // Drag and drop variables
 let isDragging = false;
@@ -63,6 +64,86 @@ let previousSpeedForDrawing = 1; // Store speed when entering drawing mode
 
 function randomColor() {
   return `hsl(${Math.random() * 360}, 100%, 70%)`;
+}
+
+// ===== SHAPE DRAWING FUNCTIONS =====
+
+function drawShape(ctx, shape, x, y, radius, heightRatio = 1.0, rotation = 0) {
+  // Calculate width and height based on ratio
+  let width, height;
+  if (heightRatio <= 1.0) {
+    // For ratios <= 1.0, keep width constant, adjust height
+    width = radius;
+    height = radius * heightRatio;
+  } else {
+    // For ratios > 1.0, keep height constant, adjust width
+    width = radius / heightRatio;
+    height = radius;
+  }
+  
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate((rotation * Math.PI) / 180);
+  
+  switch(shape) {
+    case 'circle':
+      ctx.beginPath();
+      ctx.ellipse(0, 0, width, height, 0, 0, Math.PI * 2);
+      break;
+      
+    case 'square':
+      ctx.beginPath();
+      ctx.rect(-width, -height, width * 2, height * 2);
+      break;
+      
+    case 'triangle':
+      ctx.beginPath();
+      ctx.moveTo(0, -height);
+      ctx.lineTo(-width, height);
+      ctx.lineTo(width, height);
+      ctx.closePath();
+      break;
+      
+    case 'pentagon':
+      drawRegularPolygon(ctx, 0, 0, width, 5);
+      break;
+      
+    case 'hexagon':
+      drawRegularPolygon(ctx, 0, 0, width, 6);
+      break;
+      
+    case 'octagon':
+      drawRegularPolygon(ctx, 0, 0, width, 8);
+      break;
+      
+    case 'striker':
+      // Striker is drawn as a circle with a special visual indicator
+      ctx.beginPath();
+      ctx.ellipse(0, 0, width, height, 0, 0, Math.PI * 2);
+      break;
+      
+    default:
+      // Default to circle
+      ctx.beginPath();
+      ctx.ellipse(0, 0, width, height, 0, 0, Math.PI * 2);
+  }
+  
+  ctx.restore();
+}
+
+function drawRegularPolygon(ctx, x, y, radius, sides) {
+  ctx.beginPath();
+  for (let i = 0; i < sides; i++) {
+    const angle = (i * 2 * Math.PI) / sides - Math.PI / 2;
+    const px = x + radius * Math.cos(angle);
+    const py = y + radius * Math.sin(angle);
+    if (i === 0) {
+      ctx.moveTo(px, py);
+    } else {
+      ctx.lineTo(px, py);
+    }
+  }
+  ctx.closePath();
 }
 
 function randomTextColor() {
@@ -789,6 +870,11 @@ function addIdea(x, y, title = "", description = "", color = randomColor(), text
   const maxSpeed = 3;
   const bubbleColor = color || randomColor();
   
+  // Get current date and time
+  const now = new Date();
+  const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+  const timeString = now.toTimeString().split(' ')[0]; // HH:MM:SS format
+  
   ideas.push({ 
     title, 
     description, 
@@ -800,16 +886,22 @@ function addIdea(x, y, title = "", description = "", color = randomColor(), text
     textColor, 
     radius, 
     font: fonts[0],
+    shape: 'circle',
+    heightRatio: 1.0,
     glow: false,
     flash: false,
     animateColors: false,
     transparent: false,
     glowColor: null,
     fixed: false,
-    static: false
+    static: false,
+    showPauseBorder: false,
+    strikerVelocity: 5,
+    createdDate: dateString,
+    createdTime: timeString
   });
   
-  console.log("🆕 New bubble created with color:", bubbleColor);
+  console.log("🆕 New bubble created with color:", bubbleColor, "at", dateString, timeString);
 }
 
 // ===== THEME SYSTEM =====
@@ -842,7 +934,12 @@ function switchTheme(themeName) {
       ideas = theme.ideas.map(idea => ({
         ...idea,
         font: idea.font || fonts[0],
-        radius: idea.radius || 80
+        radius: idea.radius || 80,
+        shape: idea.shape || 'circle',
+        heightRatio: idea.heightRatio || 1.0,
+        showPauseBorder: idea.showPauseBorder || false,
+        createdDate: idea.createdDate || new Date().toISOString().split('T')[0],
+        createdTime: idea.createdTime || new Date().toTimeString().split(' ')[0]
       }));
     }
     
@@ -888,7 +985,12 @@ function switchPreset(presetKey) {
   ideas = preset.ideas.map(idea => ({
     ...idea,
     font: idea.font || fonts[0],
-    radius: idea.radius || 80
+    radius: idea.radius || 80,
+    shape: idea.shape || 'circle',
+    heightRatio: idea.heightRatio || 1.0,
+    showPauseBorder: idea.showPauseBorder || false,
+    createdDate: idea.createdDate || new Date().toISOString().split('T')[0],
+    createdTime: idea.createdTime || new Date().toTimeString().split(' ')[0]
   }));
   
   // Load preset background
@@ -936,7 +1038,28 @@ function showPanel() {
   document.getElementById("description").value = selectedIdea.description;
   document.getElementById("sizeSlider").value = selectedIdea.radius || 80;
   document.getElementById("fontSizeSlider").value = selectedIdea.fontSize || 14;
+  document.getElementById("heightRatioSlider").value = selectedIdea.heightRatio || 1.0;
   document.getElementById("rotationSlider").value = selectedIdea.rotation || 0;
+  document.getElementById("shapeSelector").value = selectedIdea.shape || 'circle';
+  
+  // Update action slider visibility and value
+  updateActionSliderVisibility();
+  
+  // Set date and time fields
+  document.getElementById("dateField").value = selectedIdea.createdDate || new Date().toISOString().split('T')[0];
+  document.getElementById("timeField").value = selectedIdea.createdTime || new Date().toTimeString().split(' ')[0];
+  
+  // Update checkered border button state
+  const checkeredBorderButtons = document.querySelectorAll('button[onclick="toggleCheckeredBorder()"]');
+  checkeredBorderButtons.forEach(button => {
+    if (selectedIdea.showPauseBorder) {
+      button.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
+      button.style.color = "black";
+    } else {
+      button.style.background = "";
+      button.style.color = "";
+    }
+  });
   
   // Update image selector
   if (selectedIdea.image) {
@@ -965,6 +1088,19 @@ function savePanel() {
   
   selectedIdea.title = document.getElementById("title").value;
   selectedIdea.description = document.getElementById("description").value;
+  selectedIdea.createdDate = document.getElementById("dateField").value;
+  selectedIdea.createdTime = document.getElementById("timeField").value;
+  selectedIdea.shape = document.getElementById("shapeSelector").value;
+  selectedIdea.heightRatio = parseFloat(document.getElementById("heightRatioSlider").value);
+  
+  // Save striker velocity if it exists
+  if (selectedIdea.shape === 'striker') {
+    const actionSlider = document.getElementById('actionSlider');
+    if (actionSlider) {
+      selectedIdea.strikerVelocity = parseInt(actionSlider.value);
+    }
+  }
+  
   document.getElementById('panel').style.display = "none";
 }
 
@@ -1027,7 +1163,19 @@ function restorePanel() {
 
 function resetPanelFade() {
   const panel = document.getElementById('panel');
+  const disableTimeoutCheckbox = document.getElementById('disablePanelTimeout');
+  
   if (panel && panel.style.display === 'block') {
+    // Check if timeout is disabled
+    if (disableTimeoutCheckbox && disableTimeoutCheckbox.checked) {
+      // Clear any existing timeout but don't set a new one
+      if (panelFadeTimeout) {
+        clearTimeout(panelFadeTimeout);
+        panelFadeTimeout = null;
+      }
+      return;
+    }
+    
     if (panelFadeTimeout) {
       clearTimeout(panelFadeTimeout);
     }
@@ -1180,13 +1328,18 @@ function toggleStatic() {
 }
 
 function toggleCheckeredBorder() {
-  showPauseBorder = !showPauseBorder;
-  console.log("🏁 Checkered border:", showPauseBorder ? "ON" : "OFF");
+  if (!selectedIdea) {
+    alert("Please select a bubble first");
+    return;
+  }
+  
+  selectedIdea.showPauseBorder = !selectedIdea.showPauseBorder;
+  console.log("🏁 Checkered border:", selectedIdea.showPauseBorder ? "ON" : "OFF");
   
   // Find the button that was clicked
   const buttons = document.querySelectorAll('button[onclick="toggleCheckeredBorder()"]');
   buttons.forEach(button => {
-    if (showPauseBorder) {
+    if (selectedIdea.showPauseBorder) {
       button.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
       button.style.color = "black";
     } else {
@@ -1213,6 +1366,101 @@ function cycleFont() {
   if (!selectedIdea) return;
   fontIndex = (fontIndex + 1) % fonts.length;
   selectedIdea.font = fonts[fontIndex];
+}
+
+function updateBubbleRatio(value) {
+  if (!selectedIdea) return;
+  const sliderValue = parseFloat(value);
+  
+  // Convert slider value to symmetric ratio
+  // 0.3 -> 0.3 (very thin)
+  // 1.0 -> 1.0 (perfect circle/square)
+  // 1.7 -> 3.0 (very tall)
+  let actualRatio;
+  if (sliderValue <= 1.0) {
+    // 0.3 to 1.0 maps to 0.3 to 1.0 (thin to normal)
+    actualRatio = sliderValue;
+  } else {
+    // 1.0 to 1.7 maps to 1.0 to 3.0 (normal to tall)
+    const normalizedValue = (sliderValue - 1.0) / 0.7; // 0 to 1
+    actualRatio = 1.0 + (normalizedValue * 2.0); // 1.0 to 3.0
+  }
+  
+  selectedIdea.heightRatio = actualRatio;
+  console.log('📐 Ratio changed to:', actualRatio, '(slider:', sliderValue, ')');
+}
+
+function updateActionSlider(value) {
+  if (!selectedIdea) return;
+  const sliderValue = parseInt(value);
+  
+  // Update the display value
+  const actionSliderValue = document.getElementById('actionSliderValue');
+  if (actionSliderValue) {
+    actionSliderValue.textContent = sliderValue;
+  }
+  
+  // Store the value based on shape type
+  if (selectedIdea.shape === 'striker') {
+    selectedIdea.strikerVelocity = sliderValue;
+    console.log('⚡ Striker velocity changed to:', sliderValue);
+  }
+  // Add more shape-specific actions here in the future
+}
+
+function updateActionSliderVisibility() {
+  const actionSliderContainer = document.getElementById('actionSliderContainer');
+  const actionSlider = document.getElementById('actionSlider');
+  const actionSliderValue = document.getElementById('actionSliderValue');
+  
+  if (!actionSliderContainer || !actionSlider || !actionSliderValue) return;
+  
+  if (selectedIdea && selectedIdea.shape === 'striker') {
+    actionSliderContainer.style.display = 'block';
+    actionSlider.title = 'Striker Velocity';
+    actionSlider.min = '1';
+    actionSlider.max = '20';
+    actionSlider.value = selectedIdea.strikerVelocity || 5;
+    actionSliderValue.textContent = selectedIdea.strikerVelocity || 5;
+  } else {
+    actionSliderContainer.style.display = 'none';
+  }
+}
+
+function triggerStrikerAttack(bubble) {
+  if (bubble.shape !== 'striker') return;
+  
+  // Check cooldown - prevent continuous attacks
+  const now = Date.now();
+  const cooldownTime = 300; // 0.3 seconds cooldown
+  if (bubble.lastStrikerAttack && (now - bubble.lastStrikerAttack) < cooldownTime) {
+    return; // Still in cooldown
+  }
+  
+  // Set last attack time
+  bubble.lastStrikerAttack = now;
+  
+  // Create striker attack
+  const attack = {
+    x: bubble.x,
+    y: bubble.y,
+    radius: bubble.radius * 1.5, // 50% bigger
+    color: bubble.color,
+    startTime: Date.now(),
+    duration: 200, // 0.2 seconds
+    bubble: bubble
+  };
+  
+  strikerAttacks.push(attack);
+  console.log('⚡ Striker attack triggered!');
+  
+  // Remove attack after duration
+  setTimeout(() => {
+    const index = strikerAttacks.indexOf(attack);
+    if (index > -1) {
+      strikerAttacks.splice(index, 1);
+    }
+  }, attack.duration);
 }
 
 function handleImageUpload(event) {
@@ -1385,8 +1633,11 @@ function draw() {
       if (a.rotation) {
         ctx.rotate((a.rotation * Math.PI) / 180);
       }
-      ctx.beginPath();
-      ctx.arc(0, 0, a.radius, 0, Math.PI * 2);
+      
+      // Draw the shape path
+      const shape = a.shape || 'circle';
+      const heightRatio = a.heightRatio || 1.0;
+      drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
       ctx.clip();
 
     if (a.image) {
@@ -1495,12 +1746,16 @@ function draw() {
     });
     ctx.restore();
     
-    // Visual feedback for dragging and manual control
-    if (speedMultiplier === 0 && showPauseBorder) {
+    // Checkered border for glowing bubbles
+    if (a.glow && a.showPauseBorder) {
       ctx.save();
       ctx.translate(a.x, a.y);
-      ctx.beginPath();
-      ctx.arc(0, 0, a.radius + 3, 0, Math.PI * 2);
+      if (a.rotation) {
+        ctx.rotate((a.rotation * Math.PI) / 180);
+      }
+      const shape = a.shape || 'circle';
+      const heightRatio = a.heightRatio || 1.0;
+      drawShape(ctx, shape, 0, 0, a.radius + 3, heightRatio, 0);
       ctx.strokeStyle = "rgba(255, 255, 0, 0.5)";
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
@@ -1522,6 +1777,82 @@ function draw() {
       ctx.restore();
     }
     } // Close if (!isDrawingMode) block
+  }
+
+  // Draw striker attacks and handle collisions
+  for (let i = 0; i < strikerAttacks.length; i++) {
+    const attack = strikerAttacks[i];
+    const elapsed = Date.now() - attack.startTime;
+    const progress = elapsed / attack.duration;
+    
+    if (progress >= 1) continue; // Skip if attack is finished
+    
+    ctx.save();
+    ctx.translate(attack.x, attack.y);
+    
+    // Draw attack ring with fade effect (outline only)
+    ctx.globalAlpha = 0.7 * (1 - progress);
+    ctx.strokeStyle = attack.color;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(0, 0, attack.radius, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    ctx.restore();
+    
+    // Check for collisions with other bubbles
+    for (let j = 0; j < ideas.length; j++) {
+      const target = ideas[j];
+      if (target === attack.bubble) continue; // Skip the attacking bubble
+      
+      // Check for collisions with other bubbles using expanded radius
+      const expandedRadius = attack.bubble.radius * 2; // Twice the normal size
+      const dx = attack.x - target.x;
+      const dy = attack.y - target.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist < expandedRadius + target.radius) {
+        // Check if this target has already been hit by this attack
+        if (!attack.hitTargets) {
+          attack.hitTargets = new Set();
+        }
+        
+        if (!attack.hitTargets.has(target)) {
+          // Collision detected! Apply strike effect
+          console.log('💥 Striker hit:', target.title);
+          
+          // Mark this target as hit by this attack
+          attack.hitTargets.add(target);
+          
+          // Visual feedback - flash the hit bubble
+          target.flash = true;
+          setTimeout(() => {
+            target.flash = false;
+          }, 500);
+          
+          // Bounce effect - push the target away from the striker
+          if (!target.static) {
+            const pushDistance = 50; // Increased push distance
+            
+            // Calculate direction from striker to target
+            const dirX = target.x - attack.x;
+            const dirY = target.y - attack.y;
+            const distance = Math.sqrt(dirX * dirX + dirY * dirY);
+            
+            if (distance > 0) {
+              // Normalize direction
+              const normalizedDirX = dirX / distance;
+              const normalizedDirY = dirY / distance;
+              
+              // Set velocity based on striker's custom velocity setting
+              const strikerVelocity = attack.bubble.strikerVelocity || 5;
+              target.vx = normalizedDirX * strikerVelocity;
+              target.vy = normalizedDirY * strikerVelocity;
+            }
+          }
+        }
+      }
+    }
   }
 
   // Draw preserved drawings when not in drawing mode
@@ -1581,7 +1912,7 @@ function init() {
 // ===== EVENT LISTENERS =====
 
 function setupEventListeners() {
-  // Canvas click (left click for adding bubbles)
+  // Canvas click (left click for adding bubbles only)
   canvas.addEventListener("click", (e) => {
     if (isDragging) return; // Don't add bubbles while dragging
     if (isDrawingMode) return; // Don't add bubbles while in drawing mode
@@ -1596,8 +1927,17 @@ function setupEventListeners() {
       const dy = y - idea.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < idea.radius) {
+        // Left click on bubble - select it and show panel if it's not already open
         selectedIdea = idea;
-        showPanel();
+        
+        // Check if panel is open
+        const panel = document.getElementById('panel');
+        if (panel.style.display === 'block') {
+          // Panel is open - update it with the new bubble's information
+          showPanel();
+        }
+        // If panel is closed, just select the bubble without showing panel
+        
         clicked = true;
         break;
       }
@@ -1626,9 +1966,24 @@ function setupEventListeners() {
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < idea.radius) {
         selectedIdea = idea;
-        showPanel();
+        
+        // Check if panel is already open for this bubble
+        const panel = document.getElementById('panel');
+        if (panel.style.display === 'block' && selectedIdea === idea) {
+          // Panel is open for this bubble - close it
+          closePanel();
+        } else {
+          // Panel is not open or for different bubble - show panel
+          showPanel();
+        }
         return;
       }
+    }
+    
+    // Right-click on empty space - close panel if open
+    const panel = document.getElementById('panel');
+    if (panel.style.display === 'block') {
+      closePanel();
     }
   });
 
@@ -1650,7 +2005,7 @@ function setupEventListeners() {
         dragOffsetX = dx;
         dragOffsetY = dy;
         selectedIdea = idea;
-        showPanel();
+        // Don't show panel on drag start
         break;
       }
     }
@@ -1710,6 +2065,13 @@ function setupEventListeners() {
         selectedIdea.x += moveAmount;
         moved = true;
         break;
+      case "\\":
+        // Backslash triggers striker attack
+        if (selectedIdea.shape === 'striker') {
+          triggerStrikerAttack(selectedIdea);
+          e.preventDefault();
+        }
+        break;
     }
     
     if (moved) {
@@ -1745,7 +2107,12 @@ function setupEventListeners() {
           font: idea.font || fonts[0],
           radius: idea.radius || 80,
           fontSize: idea.fontSize || 14,
-          rotation: idea.rotation || 0
+          rotation: idea.rotation || 0,
+          shape: idea.shape || 'circle',
+          heightRatio: idea.heightRatio || 1.0,
+          showPauseBorder: idea.showPauseBorder || false,
+          createdDate: idea.createdDate || new Date().toISOString().split('T')[0],
+          createdTime: idea.createdTime || new Date().toTimeString().split(' ')[0]
         }));
 
         movementDelayActive = true;
@@ -1768,6 +2135,25 @@ function setupEventListeners() {
     panel.addEventListener('change', resetPanelTimer);
   }
   
+  // Panel timeout checkbox
+  const disableTimeoutCheckbox = document.getElementById('disablePanelTimeout');
+  if (disableTimeoutCheckbox) {
+    disableTimeoutCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        // Disable timeout - clear any existing timeout
+        if (panelFadeTimeout) {
+          clearTimeout(panelFadeTimeout);
+          panelFadeTimeout = null;
+        }
+        console.log('⏰ Panel timeout disabled');
+      } else {
+        // Re-enable timeout - start the timer again
+        resetPanelFade();
+        console.log('⏰ Panel timeout enabled');
+      }
+    });
+  }
+  
   // Image upload functionality
   const uploadImage = document.getElementById('uploadImage');
   if (uploadImage) {
@@ -1778,6 +2164,19 @@ function setupEventListeners() {
   const imageSelector = document.getElementById('imageSelector');
   if (imageSelector) {
     imageSelector.addEventListener('change', handleImageSelect);
+  }
+  
+  // Shape selector functionality
+  const shapeSelector = document.getElementById('shapeSelector');
+  if (shapeSelector) {
+    shapeSelector.addEventListener('change', function() {
+      if (selectedIdea) {
+        selectedIdea.shape = this.value;
+        console.log('🔷 Shape changed to:', this.value);
+        // Update action slider visibility when shape changes
+        updateActionSliderVisibility();
+      }
+    });
   }
   
   // Media toolbar functionality
