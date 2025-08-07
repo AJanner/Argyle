@@ -11,13 +11,13 @@ Track 5|mp3/track5.mp3
 Track 6|mp3/track6.mp3
 Track 7|mp3/track7.mp3
 Track 8|mp3/track8.mp3
-NGE|mp3/Track1NGE.mp3
-NGEE|mp3/Track2NGE.mp3
+NGE1🪉|mp3/Track1NGE.mp3
+NGE5👾|mp3/Track2NGE.mp3
 House🏘️🎶FM|https://streaming.broadcast.radio/housefm
 BIGfm🎧🎶House|https://stream.bigfm.de/deeptechhouse/mp3-128/
 Reggae🇯🇲Dancehall|https://stream.bigfm.de/dancehall/mp3-128/
 Techno💚Lovers|https://stream.technolovers.fm/vocal-trance
-Techno🪩2|http://mp3.stream.tb-group.fm/tb.mp3
+Techno🪩More|http://mp3.stream.tb-group.fm/tb.mp3
 Electro⚡️FM|https://electro-fm.stream.laut.fm/electro-fm
 KissFM💋Dance|http://stream.kissfm.de/kissfm-dance/mp3-128/
 MyHouse🏡Radio|http://myhouseradiofm.out.airtime.pro:8000/myhouseradiofm_b
