@@ -1423,25 +1423,50 @@ function videoPlayVideo(index) {
   
   const iframe = document.getElementById('videoIframe');
   if (iframe) {
-    if (firstVideoLoad) {
-      // First time: autoplay the video
+    // Check if this is the first video in the current session
+    const isFirstVideoInSession = index === 0 && firstVideoLoad;
+    
+    console.log('🎵 videoPlayVideo debug:', {
+      index: index,
+      firstVideoLoad: firstVideoLoad,
+      isFirstVideoInSession: isFirstVideoInSession,
+      videoId: videoId
+    });
+    
+    if (isFirstVideoInSession) {
+      // First video in session: autoplay
       const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
       iframe.src = embedUrl;
       videoIsPlaying = true; // Start playing
       firstVideoLoad = false; // Mark as no longer first load
-      console.log('🎵 First video autoplay:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+      console.log('🎵 First video autoplay in session:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+      console.log('🎵 Autoplay URL:', embedUrl);
       
       // Update video button to show playing state
       const videoButton = document.querySelector('[data-icon="video"]');
       if (videoButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(videoButton, 'video2.png');
       }
+      
+      // Add event listener to monitor iframe load
+      iframe.onload = function() {
+        console.log('🎥 Iframe loaded for autoplay video');
+        // Check if video is actually playing after load
+        setTimeout(() => {
+          console.log('🎥 Video state after load - videoIsPlaying:', videoIsPlaying);
+        }, 2000);
+      };
     } else {
-      // Subsequent times: don't autoplay
+      // Subsequent videos or non-first session: don't autoplay
       const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
       iframe.src = embedUrl;
       videoIsPlaying = false; // Start in paused state
       console.log('🎵 Video loaded (paused):', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+      
+      // Add event listener to monitor iframe load
+      iframe.onload = function() {
+        console.log('🎥 Iframe loaded for paused video');
+      };
     }
     
     // Update the play button icon after a short delay to allow iframe to load
