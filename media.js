@@ -3,6 +3,7 @@
 // ===== VIDEO PLAYLIST VARIABLES =====
 let uploadedPlaylists = [];
 let currentPlaylistIndex = -1;
+let firstVideoLoad = true; // Track if this is the first video load
 
 // ===== VIDEO CONTROLS AUTO-HIDE VARIABLES =====
 let videoControlsTimeout = null;
@@ -734,61 +735,53 @@ function handleVideoRightClick() {
 }
 
 function showWelcomeMessage() {
-  // Create a welcome message overlay
-  const welcomeOverlay = document.createElement('div');
-  welcomeOverlay.id = 'welcomeOverlay';
-  welcomeOverlay.style.cssText = `
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.9);
-    color: gold;
-    padding: 30px;
-    border-radius: 15px;
-    border: 3px solid darkgreen;
-    z-index: 70000;
-    text-align: center;
-    font-size: 18px;
-    font-weight: bold;
-    max-width: 400px;
-    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-  `;
-  
-  welcomeOverlay.innerHTML = `
-    <div style="margin-bottom: 20px; font-size: 24px;">🎬</div>
-    <div style="margin-bottom: 15px;">Welcome to the Video Player!</div>
-    <div style="font-size: 14px; color: #ccc; margin-bottom: 20px;">
-      • Click the video button to open the player<br>
-      • Right-click when playing to close<br>
-      • Use controls to play/pause videos<br>
-      • Upload your own playlist (.txt file)
-    </div>
-    <button onclick="hideWelcomeMessage()" style="
-      padding: 10px 20px; 
-      background: rgba(0, 0, 0, 0.7); 
-      color: gold; 
-      border: 2px solid darkgreen; 
-      border-radius: 8px; 
-      cursor: pointer;
-      font-size: 14px;
-    ">Got it!</button>
-  `;
-  
-  document.body.appendChild(welcomeOverlay);
-  console.log('🎬 Welcome message shown');
-  
-  // Auto-hide after 10 seconds
-  setTimeout(() => {
-    hideWelcomeMessage();
-  }, 10000);
+  // Use the existing read panel instead of creating a new overlay
+  const readPanel = document.getElementById('readPanel');
+  if (readPanel) {
+    // Update the content to show video player information
+    const contentDiv = readPanel.querySelector('div[style*="color: white"]');
+    if (contentDiv) {
+      contentDiv.innerHTML = `
+        <div style="margin-bottom: 15px; font-weight: bold; color: gold;">🎬 Video Player Guide</div>
+        <div style="color: white; margin-bottom: 20px; line-height: 1.4;">
+          <strong>Video Player Controls:</strong><br>
+          • Click video button to open/close player<br>
+          • Right-click when playing to close completely<br>
+          • Use playlist controls to navigate videos<br>
+          • Upload .txt files with YouTube URLs<br><br>
+          
+          <strong>Keyboard Shortcuts:</strong><br>
+          • <kbd>V</kbd> - Open/close video player<br>
+          • <kbd>M</kbd> - Open/close music panel<br>
+          • <kbd>Space</kbd> - Pause/unpause speed<br>
+          • <kbd>ESC</kbd> - Close all panels<br>
+          • <kbd>D</kbd> - Toggle drawing mode<br>
+          • <kbd>X</kbd> - Clear drawings<br>
+          • <kbd>F</kbd> - Flash drawings<br>
+          • <kbd>S</kbd> - Smooth last line<br><br>
+          
+          <strong>Gamepad Controls (PS5):</strong><br>
+          • <kbd>Triangle</kbd> - Toggle video player<br>
+          • <kbd>Circle</kbd> - Toggle music panel<br>
+          • <kbd>Square</kbd> - Close all panels<br>
+          • <kbd>L1/R1</kbd> - Switch bubbles<br>
+          • <kbd>R2</kbd> - Striker attack<br>
+          • <kbd>L2</kbd> - Striker capture<br>
+          • <kbd>X</kbd> - Select music track
+        </div>
+      `;
+    }
+    
+    readPanel.style.display = 'block';
+    console.log('🎬 Video player welcome message shown');
+  }
 }
 
 function hideWelcomeMessage() {
-  const welcomeOverlay = document.getElementById('welcomeOverlay');
-  if (welcomeOverlay) {
-    welcomeOverlay.remove();
-    console.log('🎬 Welcome message hidden');
+  // Use the existing hideReadPanel function
+  if (typeof hideReadPanel === 'function') {
+    hideReadPanel();
+    console.log('🎬 Video player welcome message hidden');
   }
 }
 
@@ -1430,14 +1423,12 @@ function videoPlayVideo(index) {
   
   const iframe = document.getElementById('videoIframe');
   if (iframe) {
-    // Check if this is the first time opening the video player
-    const isFirstTime = !videoPlayerInitialized;
-    
-    if (isFirstTime) {
+    if (firstVideoLoad) {
       // First time: autoplay the video
       const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
       iframe.src = embedUrl;
       videoIsPlaying = true; // Start playing
+      firstVideoLoad = false; // Mark as no longer first load
       console.log('🎵 First video autoplay:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
       
       // Update video button to show playing state
@@ -1701,6 +1692,7 @@ function videoClose() {
   // Reset video player state
   videoCurrentIndex = 0;
   videoPlayerInitialized = false;
+  firstVideoLoad = true; // Reset for next time
   
   // Hide all video elements
   if (player) {
@@ -2052,11 +2044,6 @@ async function toggleVideoPlayer() {
       if (typeof updateVideoPlaylistDisplay === 'function') {
         updateVideoPlaylistDisplay();
       }
-      
-      // Update video button icon after initialization
-      setTimeout(() => {
-        updateVideoButtonIcon();
-      }, 2000); // Wait for video to load and start playing
     } else {
       // If video player was previously closed, reset video state and load first video
       const iframe = document.getElementById('videoIframe');
@@ -2073,7 +2060,9 @@ async function toggleVideoPlayer() {
       
       // Try to load and play the first video
       if (videoPlaylist.length > 0) {
-        videoPlayVideo(0);
+        setTimeout(() => {
+          videoPlayVideo(0);
+        }, 100);
       } else if (typeof loadVideoPlaylist === 'function') {
         // Load playlist and play first video
         setTimeout(() => {
@@ -2092,6 +2081,10 @@ async function toggleVideoPlayer() {
     const videoIframe = document.getElementById('videoIframe');
     if (videoIframe && videoIframe.src && videoIframe.src !== '' && videoIframe.src !== 'about:blank') {
       console.log('🎥 Video player shown (video loaded but paused)');
+      // Update button icon based on current state
+      setTimeout(() => {
+        updateVideoButtonIcon();
+      }, 500);
     } else if (videoPlaylist.length > 0) {
       // Load the first video (but don't autoplay)
       setTimeout(() => {
