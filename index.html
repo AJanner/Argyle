@@ -320,7 +320,7 @@
 
   <!-- Main Panel -->
   <div class="panel" id="panel">
-    <div style="position: relative; margin-bottom: 10px; padding-top: 5px; height: 30px; display: flex; align-items: center; gap: 1px;">
+    <div style="position: relative; margin-bottom: 10px; padding-top: 5px; height: 30px; display: flex; align-items: center; gap: 0px;">
       <div class="panel-close-btn" onclick="closePanel()" title="Close Panel" style="position: static;">🅇</div>
       <button onclick="minimizePanel()" title="Minimize" style="background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 10px;">⌑</button>
       <input type="checkbox" id="disablePanelTimeout" title="Disable Panel Timeout" style="width: 12px; height: 12px; cursor: pointer;">
@@ -330,12 +330,12 @@
       <input id="dateField" type="date" style="flex: 1; background-color: rgba(0, 0, 0, 0.6); color: gold; border: 2px solid darkgreen; font-family: 'Monaco', serif; padding: 6px; border-radius: 6px;"/>
       <input id="timeField" type="time" style="flex: 1; background-color: rgba(0, 0, 0, 0.6); color: gold; border: 2px solid darkgreen; font-family: 'Monaco', serif; padding: 6px; border-radius: 6px;"/>
     </div>
-    <textarea id="description" placeholder="Description" rows="5"></textarea>
+    <textarea id="description" placeholder="Description" rows="1"></textarea>
     
-    <div style="margin: 10px 0; display: flex; gap: 1px;">
-      <button onclick="savePanel()" title="Save">Save💾</button>
-      <button onclick="changeColor()" title="Bubble Colour">💭️Colour</button>
-      <button onclick="changeTextColor()" title="Text Colour">💬Colour</button>
+    <div style="margin: 10px 0; display: flex; flex-wrap: wrap; gap: 0px;">
+      <button onclick="savePanel()" title="Save" class="bubble-btn" data-png="busave" style="flex: 0 0 33.333%;">Save💾</button>
+      <button onclick="deleteIdea()" title="Delete Bubble" class="bubble-btn" data-png="budelete" style="flex: 0 0 33.333%;">Delete💭️</button>
+      <button onclick="clearUploadedImage()" title="Clear IMG" class="bubble-btn" data-png="buimage" style="flex: 0 0 33.333%;">🗑️Image</button>
     </div>
     
     <div class="resize-handle">⤡</div>
@@ -458,23 +458,22 @@
       </label>
     </div>
     
-    <div style="margin-bottom: 10px;">
-      <button onclick="toggleGlow()" title="Toggle Glow">Glow🔆</button>
-      <button onclick="changeGlowColor()" title="Change Glow Color">Colour🔅</button>
-      <button onclick="toggleFlash()" title="Toggle Flash">Flash🎇</button>
-      <button onclick="toggleTransparent()" title="Toggle Transparent">Opaque</button>
-      <button onclick="toggleFixed()" title="Toggle Fixed Mode">Solid🗿</button>
-      <button onclick="toggleStatic()" title="Toggle Static Mode">Static🧽</button>
-      <button onclick="togglePanelSide()" title="Toggle Panel Side">↔️</button>
-      <button onclick="cycleFont()" title="Cycle Fonts">Font</button>
-      <button onclick="toggleCheckeredBorder()" title="Toggle Checkered Border">Check🏁</button>
+    <div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 0px;">
+      <button onclick="changeColor()" title="Bubble Colour" class="bubble-btn large" data-png="bucolor">💭️Colour</button>
+      <button onclick="changeTextColor()" title="Text Colour" class="bubble-btn large" data-png="butextcolor">💬Colour</button>
+      <button onclick="closePanel()" title="Close" class="bubble-btn large" data-png="buclose">Close💭️</button>
+      <button onclick="toggleGlow()" title="Toggle Glow" class="bubble-btn large" data-png="buglow">Glow🔆</button>
+      <button onclick="changeGlowColor()" title="Change Glow Color" class="bubble-btn large" data-png="buglowcolor">Colour🔅</button>
+      <button onclick="toggleFlash()" title="Toggle Flash" class="bubble-btn large" data-png="buflash">Flash🎇</button>
+      <button onclick="toggleTransparent()" title="Toggle Transparent" class="bubble-btn large" data-png="buopaque">Opaque</button>
+      <button onclick="toggleFixed()" title="Toggle Fixed Mode" class="bubble-btn large" data-png="busolid">Solid🗿</button>
+      <button onclick="toggleStatic()" title="Toggle Static Mode" class="bubble-btn large" data-png="bustatic">Static🧽</button>
+      <button onclick="cycleFont()" title="Cycle Fonts" class="bubble-btn large" data-png="bufont">Font</button>
+      <button onclick="toggleCheckeredBorder()" title="Toggle Checkered Border" class="bubble-btn large" data-png="bucheck">Check🏁</button>
+      <button onclick="togglePanelSide()" title="Toggle Panel Side" class="bubble-btn large" data-png="buside">↔️</button>
     </div>
     
-    <div style="margin-top: 10px;">
-      <button onclick="clearUploadedImage()" title="Clear IMG">🗑️Image</button>
-      <button onclick="deleteIdea()" title="Delete Bubble">Delete💭️</button>
-      <button onclick="closePanel()" title="Close">Close💭️</button>
-    </div>
+
   </div>
 
   <!-- Scripts -->

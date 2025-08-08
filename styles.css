@@ -212,6 +212,78 @@ html, body {
   transform: scale(1.05);
 }
 
+/* Bubble panel buttons with PNG support */
+.bubble-btn {
+  margin: 0 !important;
+  padding: 2px 4px !important;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: gold;
+  border: 2px solid darkgreen;
+  font-family: 'Monaco', serif;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  box-sizing: border-box;
+  height: auto;
+  min-height: 32px;
+}
+
+.bubble-btn:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+  transform: scale(1.05);
+}
+
+.bubble-btn.has-png {
+  color: transparent;
+  font-size: 0;
+  background-color: transparent !important;
+  padding: 4px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  flex: 0 0 auto !important;
+  max-width: 120px !important;
+  background-size: contain !important;
+}
+
+.bubble-btn.large {
+  height: 48px !important;
+  width: 48px !important;
+  min-height: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  font-size: 1.5em !important;
+  padding: 6px !important;
+  flex: 0 0 auto !important;
+  aspect-ratio: 1 !important;
+  box-sizing: border-box !important;
+}
+
+.bubble-btn.large.has-png {
+  height: 48px !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+  max-width: 48px !important;
+  padding: 6px !important;
+  flex: 0 0 auto !important;
+  aspect-ratio: 1 !important;
+  box-sizing: border-box !important;
+}
+
+/* Special fix for bucheck.png */
+button[data-png="bucheck"].has-png {
+  background-image: url(images/bucheck.png) !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-color: transparent !important;
+  color: transparent !important;
+  font-size: 0 !important;
+}
+
 /* ===== ANALYSIS PANEL STYLES ===== */
 .analysis-panel {
   position: fixed;

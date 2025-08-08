@@ -181,7 +181,7 @@ function toggleDrawingMode() {
     canvas.style.cursor = 'url(images/cross.png) 16 16, crosshair';
     canvas.classList.add('drawing-mode');
     console.log('🎨 Drawing mode activated - click and drag to draw');
-    console.log('⌨️ Keyboard shortcuts: C=Clear, D=Color, W=Width');
+    console.log('⌨️ Keyboard shortcuts: D=Toggle Mode, W=Width, C=Color, S=Smooth, X=Clear, F=Flash');
     console.log('💡 Animation paused, bubble creation disabled');
     
     // Hide Analysis button and show drawing dropdowns
@@ -520,6 +520,22 @@ function clearDrawingOnly() {
 }
 
 // ===== DRAWING FLASH AND SMOOTH FUNCTIONS =====
+
+function toggleDrawingSmooth() {
+  // Toggle smooth drawing mode (apply smoothing to existing paths)
+  if (drawingPaths.length > 0) {
+    drawingPaths.forEach(path => {
+      if (path.length > 2) {
+        const smoothedPath = smoothPath(path);
+        // Replace path points with smoothed points
+        path.splice(0, path.length, ...smoothedPath);
+      }
+    });
+    console.log('🔄 Applied smoothing to all drawing paths');
+  } else {
+    console.log('📝 No drawings to smooth');
+  }
+}
 
 function toggleDrawingFlash() {
   drawingFlash = !drawingFlash;
@@ -2233,6 +2249,9 @@ function init() {
     initVideoPlayer();
   }
   
+  // Load bubble button PNGs
+  loadBubbleButtonPNGs();
+  
   // Start rendering
   draw();
   
@@ -2375,6 +2394,12 @@ function setupEventListeners() {
 
   // Keyboard controls
   document.addEventListener("keydown", (e) => {
+    // Check if bubble panel is open - if so, don't intercept keyboard shortcuts
+    const panel = document.getElementById('panel');
+    if (panel && panel.style.display === 'block') {
+      return; // Allow normal text input in panel
+    }
+    
     if (!selectedIdea) return;
     
     const moveAmount = 5;
@@ -2403,6 +2428,27 @@ function setupEventListeners() {
           triggerStrikerAttack(selectedIdea);
           e.preventDefault();
         }
+        break;
+      case " ":
+        // Spacebar toggles speed (pause/unpause)
+        toggleSpeed();
+        e.preventDefault();
+        break;
+      case "v":
+      case "V":
+        // V opens video playlist
+        if (typeof videoTogglePlaylist === 'function') {
+          videoTogglePlaylist();
+        }
+        e.preventDefault();
+        break;
+      case "m":
+      case "M":
+        // M opens music playlist
+        if (typeof toggleMusicPanel === 'function') {
+          toggleMusicPanel();
+        }
+        e.preventDefault();
         break;
     }
     
@@ -2541,21 +2587,48 @@ function setupEventListeners() {
   
   // Keyboard shortcuts for drawing
   document.addEventListener('keydown', (e) => {
-    if (isDrawingMode) {
-      switch(e.key) {
-        case 'c':
-        case 'C':
-          clearDrawing();
-          break;
-        case 'd':
-        case 'D':
-          changeDrawingColor();
-          break;
-        case 'w':
-        case 'W':
+    // Check if bubble panel is open - if so, don't intercept keyboard shortcuts
+    const panel = document.getElementById('panel');
+    if (panel && panel.style.display === 'block') {
+      return; // Allow normal text input in panel
+    }
+    
+    // Drawing shortcuts work regardless of drawing mode state
+    switch(e.key) {
+      case 'd':
+      case 'D':
+        toggleDrawingMode();
+        break;
+      case 'w':
+      case 'W':
+        if (isDrawingMode) {
           changeDrawingWidth();
-          break;
-      }
+        }
+        break;
+      case 'c':
+      case 'C':
+        if (isDrawingMode) {
+          changeDrawingColor();
+        }
+        break;
+      case 's':
+      case 'S':
+        if (isDrawingMode) {
+          toggleDrawingSmooth();
+        }
+        break;
+      case 'x':
+      case 'X':
+        if (isDrawingMode) {
+          clearDrawing();
+        }
+        break;
+      case 'f':
+      case 'F':
+        if (isDrawingMode) {
+          toggleDrawingFlash();
+        }
+        break;
     }
   });
 }
@@ -2642,6 +2715,91 @@ function togglePanelSide() {
     }
   }
 }
+
+// ===== BUBBLE BUTTON PNG LOADER =====
+
+function loadBubbleButtonPNGs() {
+  console.log('🔧 Loading bubble button PNGs...');
+  const bubbleButtons = document.querySelectorAll('.bubble-btn[data-png]');
+  console.log(`🔍 Found ${bubbleButtons.length} bubble buttons with PNG data`);
+  
+  bubbleButtons.forEach(button => {
+    const pngName = button.getAttribute('data-png');
+    if (pngName) {
+      console.log(`🔍 Attempting to load: images/${pngName}.png for button "${button.textContent.trim()}"`);
+      const img = new Image();
+      img.onload = function() {
+        // PNG loaded successfully, apply it
+        button.style.backgroundImage = `url(images/${pngName}.png)`;
+        button.style.setProperty('background-image', `url(images/${pngName}.png)`, 'important');
+        button.classList.add('has-png');
+        console.log(`🖼️ Loaded PNG for button: ${pngName}.png`);
+        console.log(`🔍 Button background set to: ${button.style.backgroundImage}`);
+        
+        // Special handling for bucheck.png
+        if (pngName === 'bucheck') {
+          console.log(`🏁 Special bucheck.png loaded successfully!`);
+          // Force refresh the background style
+          setTimeout(() => {
+            button.style.setProperty('background-image', `url(images/${pngName}.png)`, 'important');
+            button.style.setProperty('background-size', 'contain', 'important');
+            button.style.setProperty('background-repeat', 'no-repeat', 'important');
+            button.style.setProperty('background-position', 'center', 'important');
+            console.log(`🔄 Forced refresh for bucheck.png`);
+          }, 100);
+        }
+      };
+      img.onerror = function() {
+        // PNG not found, keep text
+        console.log(`📝 No PNG found for button: ${pngName}.png, using text`);
+        if (pngName === 'bucheck') {
+          console.log(`❌ ERROR: bucheck.png failed to load despite existing in images/`);
+        }
+      };
+      img.src = `images/${pngName}.png`;
+    }
+  });
+}
+
+// ===== DEBUGGING FUNCTION FOR PNG LOADING =====
+function forceLoadBucheck() {
+  console.log('🔧 Force loading bucheck.png...');
+  const checkButton = document.querySelector('button[data-png="bucheck"]');
+  if (checkButton) {
+    console.log('✅ Found bucheck button:', checkButton);
+    const img = new Image();
+    img.onload = function() {
+      checkButton.style.setProperty('background-image', 'url(images/bucheck.png)', 'important');
+      checkButton.style.setProperty('background-size', 'contain', 'important');
+      checkButton.style.setProperty('background-repeat', 'no-repeat', 'important');
+      checkButton.style.setProperty('background-position', 'center', 'important');
+      checkButton.style.setProperty('background-color', 'transparent', 'important');
+      checkButton.classList.add('has-png');
+      console.log('🏁 Forced bucheck.png to load!');
+    };
+    img.onerror = function() {
+      console.log('❌ Failed to force load bucheck.png');
+    };
+    img.src = 'images/bucheck.png';
+  } else {
+    console.log('❌ Could not find bucheck button');
+  }
+}
+
+// Make forceLoadBucheck available globally for debugging
+window.forceLoadBucheck = forceLoadBucheck;
+
+// Force bucheck button to have PNG immediately on page load
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+    const bucheckButton = document.querySelector('button[data-png="bucheck"]');
+    if (bucheckButton) {
+      console.log('🔧 Force-applying has-png class to bucheck button');
+      bucheckButton.classList.add('has-png');
+      bucheckButton.style.setProperty('background-image', 'url(images/bucheck.png)', 'important');
+    }
+  }, 500);
+});
 
 // ===== MAIN.JS LOADED =====
 console.log('🔧 Main.js loaded successfully'); 
