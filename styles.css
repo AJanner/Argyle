@@ -91,7 +91,11 @@ html, body {
 /* ===== CANVAS STYLES ===== */
 #canvas {
   display: block;
-  z-index: 50000;
+  z-index: 70000;
+}
+
+#drawingSettingsPanel {
+  z-index: 70001;
 }
 
 /* Drawing mode cursor */
