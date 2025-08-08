@@ -98,6 +98,36 @@ async function loadMusicList() {
     musicFiles = getDefaultPlaylist();
   }
   
+  // Add uploaded playlist if available
+  if (window.uploadedMusicPlaylist && window.uploadedMusicPlaylist.length > 0) {
+    console.log('🎵 Adding uploaded playlist to music list');
+    const uploadedTracks = window.uploadedMusicPlaylist.map(track => {
+      if (typeof track === 'string') {
+        // Parse string format (Title|URL or just URL)
+        const parts = track.split('|');
+        if (parts.length === 2) {
+          return {
+            title: parts[0].trim(),
+            url: parts[1].trim()
+          };
+        } else {
+          // Use filename as title
+          const url = track.trim();
+          const filename = url.split('/').pop() || url;
+          return {
+            title: filename,
+            url: url
+          };
+        }
+      }
+      return track;
+    });
+    
+    // Add uploaded tracks to the beginning of the list
+    musicFiles = [...uploadedTracks, ...musicFiles];
+    console.log(`🎵 Combined playlist: ${uploadedTracks.length} uploaded + ${musicFiles.length - uploadedTracks.length} default tracks`);
+  }
+  
   // Parse tracks into the new object format
   const parsedTracks = musicFiles.map(track => {
     if (typeof track === 'object' && track.title && track.url) {
@@ -861,6 +891,68 @@ function loadRadioStation() {
       console.error('❌ Error creating radio audio:', error);
       alert('Failed to load radio station. Please check the URL.');
     }
+  }
+}
+
+// ===== MUSIC PLAYLIST UPLOAD FUNCTIONS =====
+
+async function uploadMusicPlaylist(event) {
+  console.log('🎵 Music playlist upload triggered');
+  
+  const file = event.target.files[0];
+  if (!file) {
+    console.log('⚠️ No file selected');
+    return;
+  }
+
+  console.log('📁 File selected:', file.name, 'Type:', file.type);
+
+  if (file.type !== 'text/plain' && !file.name.endsWith('.txt')) {
+    alert('Please select a .txt file for the playlist.');
+    return;
+  }
+
+  try {
+    console.log('📁 Uploading music playlist:', file.name);
+    
+    // Read the file content
+    const content = await file.text();
+    console.log('📄 File content length:', content.length);
+    console.log('📄 First 200 characters:', content.substring(0, 200));
+    
+    const tracks = content.split('\n').filter(line => line.trim() !== '');
+    console.log('🎵 Parsed tracks:', tracks);
+    
+    if (tracks.length === 0) {
+      alert('The playlist file is empty or contains no valid tracks.');
+      return;
+    }
+
+    console.log(`🎵 Loaded ${tracks.length} tracks from uploaded playlist`);
+    
+    // Store the uploaded playlist globally
+    window.uploadedMusicPlaylist = tracks;
+    window.currentMusicPlaylistIndex = 0;
+    
+    // Stop current music
+    if (window.currentAudio) {
+      window.currentAudio.pause();
+      window.currentAudio = null;
+    }
+    
+    // Reload the music list to include the uploaded playlist
+    console.log('🔄 Reloading music list...');
+    await loadMusicList();
+    
+    // Show success message
+    alert(`Successfully uploaded playlist with ${tracks.length} tracks! You can now play through them using the Previous/Next buttons.`);
+    
+    // Clear the file input
+    event.target.value = '';
+    
+  } catch (error) {
+    console.error('❌ Error uploading music playlist:', error);
+    alert('Failed to upload playlist. Please check the file format.');
   }
 }
 

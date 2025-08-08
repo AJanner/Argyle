@@ -317,6 +317,10 @@
       <button onclick="stopMusic()" style="background: linear-gradient(45deg, #f44336, #da190b); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;">⏯️Play🎚️</button>
       <button onclick="loadRadioStation()" style="background: linear-gradient(45deg, #9C27B0, #7B1FA2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;">📻 Radio</button>
     </div>
+    <div style="margin-top: 10px;">
+      <input type="file" id="musicPlaylistUpload" accept=".txt" style="display: none;" onchange="uploadMusicPlaylist(event)"/>
+      <button onclick="document.getElementById('musicPlaylistUpload').click()" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">📁 Upload Playlist</button>
+    </div>
   </div>
 
   <!-- Main Panel -->
@@ -507,6 +511,7 @@
         window.nextMusicTrack = nextMusicTrack;
         window.previousMusicTrack = previousMusicTrack;
         window.loadRadioStation = loadRadioStation;
+window.uploadMusicPlaylist = uploadMusicPlaylist;
         window.handleMusicRightClick = handleMusicRightClick;
         window.loadMusicPlaylist = loadMusicPlaylist;
         window.getDefaultPlaylist = getDefaultPlaylist;
