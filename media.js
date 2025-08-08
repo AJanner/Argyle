@@ -724,22 +724,77 @@ function handleVideoRightClick() {
       videoClose();
       console.log('🎥 Video player closed via right-click');
     } else {
-      // If video player is closed, show read panel
-      showReadPanel();
+      // If video player is closed, show Welcome message
+      showWelcomeMessage();
     }
   } else {
-    // Fallback to read panel if player element not found
-    showReadPanel();
+    // Fallback to Welcome message if player element not found
+    showWelcomeMessage();
   }
 }
 
-function showReadPanel() {
-  const readPanel = document.getElementById('readPanel');
-  if (readPanel) {
-    readPanel.style.display = 'block';
-    console.log('📖 Read panel shown');
+function showWelcomeMessage() {
+  // Create a welcome message overlay
+  const welcomeOverlay = document.createElement('div');
+  welcomeOverlay.id = 'welcomeOverlay';
+  welcomeOverlay.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: gold;
+    padding: 30px;
+    border-radius: 15px;
+    border: 3px solid darkgreen;
+    z-index: 70000;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    max-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+  `;
+  
+  welcomeOverlay.innerHTML = `
+    <div style="margin-bottom: 20px; font-size: 24px;">🎬</div>
+    <div style="margin-bottom: 15px;">Welcome to the Video Player!</div>
+    <div style="font-size: 14px; color: #ccc; margin-bottom: 20px;">
+      • Click the video button to open the player<br>
+      • Right-click when playing to close<br>
+      • Use controls to play/pause videos<br>
+      • Upload your own playlist (.txt file)
+    </div>
+    <button onclick="hideWelcomeMessage()" style="
+      padding: 10px 20px; 
+      background: rgba(0, 0, 0, 0.7); 
+      color: gold; 
+      border: 2px solid darkgreen; 
+      border-radius: 8px; 
+      cursor: pointer;
+      font-size: 14px;
+    ">Got it!</button>
+  `;
+  
+  document.body.appendChild(welcomeOverlay);
+  console.log('🎬 Welcome message shown');
+  
+  // Auto-hide after 10 seconds
+  setTimeout(() => {
+    hideWelcomeMessage();
+  }, 10000);
+}
+
+function hideWelcomeMessage() {
+  const welcomeOverlay = document.getElementById('welcomeOverlay');
+  if (welcomeOverlay) {
+    welcomeOverlay.remove();
+    console.log('🎬 Welcome message hidden');
   }
 }
+
+// Make functions available globally
+window.hideWelcomeMessage = hideWelcomeMessage;
+window.showWelcomeMessage = showWelcomeMessage;
 
 function hideReadPanel() {
   const readPanel = document.getElementById('readPanel');
@@ -1375,11 +1430,28 @@ function videoPlayVideo(index) {
   
   const iframe = document.getElementById('videoIframe');
   if (iframe) {
-    // Don't autoplay by default - let user control playback
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
-    iframe.src = embedUrl;
-    videoIsPlaying = false; // Start in paused state
-    console.log('🎵 Video loaded (paused):', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+    // Check if this is the first time opening the video player
+    const isFirstTime = !videoPlayerInitialized;
+    
+    if (isFirstTime) {
+      // First time: autoplay the video
+      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
+      iframe.src = embedUrl;
+      videoIsPlaying = true; // Start playing
+      console.log('🎵 First video autoplay:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+      
+      // Update video button to show playing state
+      const videoButton = document.querySelector('[data-icon="video"]');
+      if (videoButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(videoButton, 'video2.png');
+      }
+    } else {
+      // Subsequent times: don't autoplay
+      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
+      iframe.src = embedUrl;
+      videoIsPlaying = false; // Start in paused state
+      console.log('🎵 Video loaded (paused):', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+    }
     
     // Update the play button icon after a short delay to allow iframe to load
     setTimeout(() => {
@@ -1418,6 +1490,9 @@ function videoTogglePlay() {
       
       // Update the play button icon
       updateVideoPlayButtonIcon();
+      
+      // Update the main video button icon
+      updateVideoButtonIcon();
       
       // Also try to reload the iframe if postMessage fails
       setTimeout(() => {
@@ -1921,10 +1996,12 @@ async function toggleVideoPlayer() {
     videoPlaylistVisible = false;
     console.log('🎥 Video player hidden (playback continues)');
     
-    // Update video button to show inactive state
-    const videoButton = document.querySelector('[data-icon="video"]');
-    if (videoButton && typeof PNGLoader !== 'undefined') {
-      PNGLoader.applyPNG(videoButton, 'video.png');
+    // Update video button to show inactive state (only if not playing)
+    if (!videoIsPlaying) {
+      const videoButton = document.querySelector('[data-icon="video"]');
+      if (videoButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(videoButton, 'video.png');
+      }
     }
   } else {
     // Show video player with proper z-index and current opacity
@@ -1975,6 +2052,11 @@ async function toggleVideoPlayer() {
       if (typeof updateVideoPlaylistDisplay === 'function') {
         updateVideoPlaylistDisplay();
       }
+      
+      // Update video button icon after initialization
+      setTimeout(() => {
+        updateVideoButtonIcon();
+      }, 2000); // Wait for video to load and start playing
     } else {
       // If video player was previously closed, reset video state and load first video
       const iframe = document.getElementById('videoIframe');
@@ -2037,10 +2119,12 @@ async function toggleVideoPlayer() {
     // Reset playlist visibility state
     videoPlaylistVisible = false;
     
-    // Update video button to show active state
-    const videoButton = document.querySelector('[data-icon="video"]');
-    if (videoButton && typeof PNGLoader !== 'undefined') {
-      PNGLoader.applyPNG(videoButton, 'video2.png');
+    // Update video button to show active state (only if playing)
+    if (videoIsPlaying) {
+      const videoButton = document.querySelector('[data-icon="video"]');
+      if (videoButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(videoButton, 'video2.png');
+      }
     }
   }
   
@@ -2932,6 +3016,15 @@ function updateVideoPlayButtonIcon() {
     const filename = videoIsPlaying ? 'pause.png' : 'play.png';
     PNGLoader.applyPNG(playButton, filename);
     console.log(`🎥 Updated video play button to ${filename} (playing: ${videoIsPlaying})`);
+  }
+}
+
+function updateVideoButtonIcon() {
+  const videoButton = document.querySelector('[data-icon="video"]');
+  if (videoButton && typeof PNGLoader !== 'undefined') {
+    const filename = videoIsPlaying ? 'video2.png' : 'video.png';
+    PNGLoader.applyPNG(videoButton, filename);
+    console.log(`🎥 Updated video button to ${filename} (playing: ${videoIsPlaying})`);
   }
 }
 
