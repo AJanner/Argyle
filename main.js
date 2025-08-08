@@ -991,6 +991,10 @@ function fadeOutDrawingSettingsPanel() {
 
 let analysisPanelFadeTimeout = null;
 
+// Suggestions button cooldown
+let suggestionsCooldownActive = false;
+let suggestionsCooldownTimer = null;
+
 function toggleAnalysisPanel() {
   const panel = document.getElementById('analysisPanel');
   const analysisButton = document.querySelector('[data-icon="analysis"]');
@@ -1076,6 +1080,12 @@ function closeAnalysisPanel() {
 }
 
 function openAnalysisIframe(type) {
+  // Check for suggestions cooldown
+  if (type === 'suggestions' && suggestionsCooldownActive) {
+    console.log('💡 Suggestions button is on cooldown');
+    return;
+  }
+  
   const container = document.getElementById('analysisIframeContainer');
   const iframe = document.getElementById('analysisIframe');
   
@@ -1083,6 +1093,9 @@ function openAnalysisIframe(type) {
     // Set the iframe source based on type
     if (type === 'suggestions') {
       iframe.src = 'https://stonehousess.github.io/Sifi/';
+      
+      // Start cooldown for suggestions
+      startSuggestionsCooldown();
     } else {
       iframe.src = 'https://ajanner.com';
     }
@@ -1106,6 +1119,72 @@ function closeAnalysisIframe() {
     container.style.display = 'none';
     
     console.log('📊 Analysis iframe closed');
+  }
+}
+
+// Suggestions button cooldown functions
+function startSuggestionsCooldown() {
+  if (suggestionsCooldownActive) return;
+  
+  suggestionsCooldownActive = true;
+  const suggestionsButton = document.querySelector('button[onclick*="suggestions"]');
+  
+  if (suggestionsButton) {
+    // Visual feedback: disabled state
+    suggestionsButton.style.opacity = '0.5';
+    suggestionsButton.style.cursor = 'not-allowed';
+    suggestionsButton.style.background = 'linear-gradient(45deg, #666, #444)';
+    suggestionsButton.style.color = '#999';
+    suggestionsButton.disabled = true;
+    
+    let timeLeft = 20;
+    const originalText = suggestionsButton.textContent;
+    
+    // Update button text with countdown
+    const countdownInterval = setInterval(() => {
+      suggestionsButton.textContent = `Suggestions (${timeLeft}s)`;
+      timeLeft--;
+      
+      if (timeLeft < 0) {
+        clearInterval(countdownInterval);
+      }
+    }, 1000);
+    
+    // Set cooldown timer
+    suggestionsCooldownTimer = setTimeout(() => {
+      endSuggestionsCooldown();
+      clearInterval(countdownInterval);
+    }, 20000);
+    
+    console.log('💡 Suggestions cooldown started (20 seconds)');
+  }
+}
+
+function endSuggestionsCooldown() {
+  suggestionsCooldownActive = false;
+  const suggestionsButton = document.querySelector('button[onclick*="suggestions"]');
+  
+  if (suggestionsButton) {
+    // Visual feedback: enabled state
+    suggestionsButton.style.opacity = '1';
+    suggestionsButton.style.cursor = 'pointer';
+    suggestionsButton.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+    suggestionsButton.style.color = 'white';
+    suggestionsButton.disabled = false;
+    suggestionsButton.textContent = 'Suggestions';
+    
+    // Add brief visual indication that cooldown ended
+    suggestionsButton.style.boxShadow = '0 0 10px #4CAF50';
+    setTimeout(() => {
+      suggestionsButton.style.boxShadow = '';
+    }, 2000);
+    
+    console.log('✅ Suggestions cooldown ended');
+  }
+  
+  if (suggestionsCooldownTimer) {
+    clearTimeout(suggestionsCooldownTimer);
+    suggestionsCooldownTimer = null;
   }
 }
 
