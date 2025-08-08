@@ -1434,9 +1434,10 @@ function videoPlayVideo(index) {
     });
     
     if (isFirstVideoInSession) {
-      // First video in session: autoplay
-      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
+      // First video in session: autoplay (muted to bypass browser restrictions)
+      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&muted=1&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
       iframe.src = embedUrl;
+      iframe.setAttribute('allow', 'autoplay');
       videoIsPlaying = true; // Start playing
       firstVideoLoad = false; // Mark as no longer first load
       console.log('🎵 First video autoplay in session:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
@@ -1451,6 +1452,15 @@ function videoPlayVideo(index) {
       // Add event listener to monitor iframe load
       iframe.onload = function() {
         console.log('🎥 Iframe loaded for autoplay video');
+        // Try to unmute after load
+        setTimeout(() => {
+          try {
+            iframe.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
+            console.log('🎵 Attempting to unmute video');
+          } catch (error) {
+            console.log('⚠️ Could not unmute video (CORS restriction)');
+          }
+        }, 1000);
         // Check if video is actually playing after load
         setTimeout(() => {
           console.log('🎥 Video state after load - videoIsPlaying:', videoIsPlaying);
@@ -1458,8 +1468,9 @@ function videoPlayVideo(index) {
       };
     } else {
       // Subsequent videos or non-first session: don't autoplay
-      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
+      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&muted=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
       iframe.src = embedUrl;
+      iframe.setAttribute('allow', 'autoplay');
       videoIsPlaying = false; // Start in paused state
       console.log('🎵 Video loaded (paused):', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
       

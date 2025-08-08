@@ -20,7 +20,7 @@ function videoPlayVideo(index) {
   
   if (videoId) {
     // Don't autoplay by default - let user control playback
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=0&controls=1&loop=0&enablejsapi=1&origin=${window.location.origin}`;
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&muted=0&controls=1&loop=0&enablejsapi=1&origin=${window.location.origin}`;
     const videoIframe = document.getElementById('videoIframe');
     if (videoIframe) {
       videoIframe.src = embedUrl;
