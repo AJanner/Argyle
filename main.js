@@ -182,12 +182,16 @@ function toggleDrawingMode() {
   // Update cursor and CSS class
   if (isDrawingMode) {
     // Store current speed and pause animation
-    // If speed is already 0, use originalSpeed to avoid losing the real speed
-    if (speedMultiplier === 0) {
-      previousSpeed = originalSpeed;
-    } else {
+    // Ensure we always store a valid speed for restoration
+    if (speedMultiplier > 0) {
       previousSpeed = speedMultiplier;
       originalSpeed = speedMultiplier; // Update original speed
+    } else if (originalSpeed > 0) {
+      previousSpeed = originalSpeed;
+    } else {
+      // Fallback to default speed if no valid speed is available
+      previousSpeed = 1;
+      originalSpeed = 1;
     }
     speedMultiplier = 0;
     
@@ -203,6 +207,7 @@ function toggleDrawingMode() {
     console.log('🎨 Drawing mode activated - click and drag to draw');
     console.log('⌨️ Keyboard shortcuts: D=Toggle Mode, W=Width, C=Color, S=Smooth Last Line, X=Clear (works in any mode), F=Flash Existing Drawings');
     console.log('💡 Animation paused, bubble creation disabled');
+    console.log('⚡ Speed stored as:', previousSpeed, '(current was:', speedMultiplier, ')');
     
     // Hide Analysis button and show drawing dropdowns
     if (analysisButton) {
@@ -224,13 +229,19 @@ function toggleDrawingMode() {
       PNGLoader.applyPNG(drawButton, 'draw2.png');
     }
   } else {
-    // Restore previous speed
-    speedMultiplier = previousSpeed;
+    // Restore previous speed with fallback to ensure smooth performance
+    if (previousSpeed && previousSpeed > 0) {
+      speedMultiplier = previousSpeed;
+    } else {
+      // Fallback to a reasonable default speed if previousSpeed is invalid
+      speedMultiplier = 1;
+      previousSpeed = 1;
+    }
     
     // Update the speed slider to reflect restored state
     const speedSlider = document.querySelector('input[type="range"]');
     if (speedSlider) {
-      speedSlider.value = previousSpeed;
+      speedSlider.value = speedMultiplier;
       speedSlider.classList.remove('paused');
     }
     
@@ -238,6 +249,7 @@ function toggleDrawingMode() {
     canvas.classList.remove('drawing-mode');
     console.log('🎨 Drawing mode deactivated');
     console.log('💡 Animation resumed, bubble creation re-enabled');
+    console.log('⚡ Speed restored to:', speedMultiplier, '(previousSpeed was:', previousSpeed, ')');
     
     // Show Analysis button and hide drawing dropdowns
     if (analysisButton) {
@@ -361,25 +373,133 @@ function clearDrawingVisually() {
   // Clear only the visual canvas without touching drawingPaths array
   // This is for functions that need to redraw with effects
   
-  // Debug: Log speed state before clearDrawingVisually
-  console.log('🔍 Before clearDrawingVisually - speedMultiplier:', speedMultiplier, 'previousSpeed:', previousSpeed);
+  // Simply clear the canvas and redraw background and bubbles without movement
+  ctx.clearRect(0, 0, width, height);
   
-  // Store current speed state
-  const currentSpeed = speedMultiplier;
-  const currentPreviousSpeed = previousSpeed;
+  // Draw background
+  if (backgroundImage) {
+    if (backgroundRotation !== 0) {
+      ctx.save();
+      ctx.translate(width / 2, height / 2);
+      ctx.rotate((backgroundRotation * Math.PI) / 180);
+      const maxDimension = Math.max(width, height);
+      const scaleX = width / backgroundImage.width;
+      const scaleY = height / backgroundImage.height;
+      const scale = Math.max(scaleX, scaleY) * 1.2;
+      
+      const scaledWidth = backgroundImage.width * scale;
+      const scaledHeight = backgroundImage.height * scale;
+      
+      ctx.drawImage(backgroundImage, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+      ctx.restore();
+    } else {
+      ctx.drawImage(backgroundImage, 0, 0, width, height);
+    }
+  }
   
-  // Use the normal draw function but preserve speed state
-  const wasDrawingMode = isDrawingMode;
-  isDrawingMode = false;
-  draw(); // This draws background and bubbles with all effects
-  isDrawingMode = wasDrawingMode;
-  
-  // Restore speed state to prevent interference
-  speedMultiplier = currentSpeed;
-  previousSpeed = currentPreviousSpeed;
-  
-  // Debug: Log speed state after clearDrawingVisually
-  console.log('🔍 After clearDrawingVisually - speedMultiplier:', speedMultiplier, 'previousSpeed:', previousSpeed);
+  // Draw bubbles without movement calculations
+  for (let i = 0; i < ideas.length; i++) {
+    const a = ideas[i];
+    
+    // Draw bubble (no movement calculations)
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    if (a.rotation) {
+      ctx.rotate((a.rotation * Math.PI) / 180);
+    }
+    
+    // Draw the shape path
+    const shape = a.shape || 'circle';
+    const heightRatio = a.heightRatio || 1.0;
+    drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
+    ctx.clip();
+
+    if (a.image) {
+      const src = a.image;
+      
+      if (loadedImages[src] && loadedImages[src].complete) {
+        try {
+          ctx.drawImage(loadedImages[src], -a.radius, -a.radius, a.radius * 2, a.radius * 2);
+        } catch (error) {
+          console.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
+          a.image = null;
+        }
+      } else {
+        if (!loadedImages[src]) {
+          const img = new Image();
+          img.onload = () => {
+            loadedImages[src] = img;
+          };
+          img.onerror = () => {
+            console.error("❌ Failed to load image:", src);
+            a.image = null;
+          };
+          img.src = src;
+        }
+        
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.fill();
+      }
+    } else {
+      if (a.transparent) {
+        ctx.fillStyle = "rgba(255,255,255,0.1)";
+      } else if (a.animateColors) {
+        ctx.fillStyle = `hsl(${(Date.now() * 0.08) % 360}, 100%, 70%)`;
+      } else {
+        ctx.fillStyle = a.color || "white";
+      }
+
+      // Basic glow border (always present)
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = a.color || "white";
+      ctx.fill();
+    }
+
+    ctx.restore();
+
+    // Enhanced glow effect (for bubbles with glow enabled)
+    if (a.glow) {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      if (a.rotation) {
+        ctx.rotate((a.rotation * Math.PI) / 180);
+      }
+      
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = a.color || "white";
+      ctx.fillStyle = a.color || "white";
+      drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
+      ctx.fill();
+      
+      ctx.restore();
+    }
+
+    // Draw text
+    if (a.title && a.title.trim() !== "") {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      if (a.rotation) {
+        ctx.rotate((a.rotation * Math.PI) / 180);
+      }
+      
+      ctx.font = `${a.fontSize || 14}px ${a.font || fonts[0]}`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = a.textColor || "white";
+      
+      // Word wrap
+      const words = a.title.split(" ");
+      const lineHeight = a.fontSize || 14;
+      let y = -lineHeight * (words.length - 1) / 2;
+      
+      for (let word of words) {
+        ctx.fillText(word, 0, y);
+        y += lineHeight;
+      }
+      
+      ctx.restore();
+    }
+  }
 }
 
 function redrawBackgroundAndBubbles() {
@@ -734,11 +854,125 @@ function startExistingDrawingsFlash() {
     // Clear the entire canvas first
     ctx.clearRect(0, 0, width, height);
     
-    // Redraw background and bubbles normally (without any flash effect)
-    const wasDrawingMode = isDrawingMode;
-    isDrawingMode = false;
-    draw(); // This draws background and bubbles normally
-    isDrawingMode = wasDrawingMode;
+    // Redraw background and bubbles without movement calculations
+    // Draw background
+    if (backgroundImage) {
+      if (backgroundRotation !== 0) {
+        ctx.save();
+        ctx.translate(width / 2, height / 2);
+        ctx.rotate((backgroundRotation * Math.PI) / 180);
+        const maxDimension = Math.max(width, height);
+        const scaleX = width / backgroundImage.width;
+        const scaleY = height / backgroundImage.height;
+        const scale = Math.max(scaleX, scaleY) * 1.2;
+        
+        const scaledWidth = backgroundImage.width * scale;
+        const scaledHeight = backgroundImage.height * scale;
+        
+        ctx.drawImage(backgroundImage, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+        ctx.restore();
+      } else {
+        ctx.drawImage(backgroundImage, 0, 0, width, height);
+      }
+    }
+    
+    // Draw bubbles without movement
+    for (let i = 0; i < ideas.length; i++) {
+      const a = ideas[i];
+      
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      if (a.rotation) {
+        ctx.rotate((a.rotation * Math.PI) / 180);
+      }
+      
+      const shape = a.shape || 'circle';
+      const heightRatio = a.heightRatio || 1.0;
+      drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
+      ctx.clip();
+
+      if (a.image) {
+        const src = a.image;
+        
+        if (loadedImages[src] && loadedImages[src].complete) {
+          try {
+            ctx.drawImage(loadedImages[src], -a.radius, -a.radius, a.radius * 2, a.radius * 2);
+          } catch (error) {
+            console.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
+            a.image = null;
+          }
+        } else {
+          if (!loadedImages[src]) {
+            const img = new Image();
+            img.onload = () => {
+              loadedImages[src] = img;
+            };
+            img.onerror = () => {
+              console.error("❌ Failed to load image:", src);
+              a.image = null;
+            };
+            img.src = src;
+          }
+          
+          ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+          ctx.fill();
+        }
+      } else {
+        if (a.transparent) {
+          ctx.fillStyle = "rgba(255,255,255,0.1)";
+        } else if (a.animateColors) {
+          ctx.fillStyle = `hsl(${(Date.now() * 0.08) % 360}, 100%, 70%)`;
+        } else {
+          ctx.fillStyle = a.color || "white";
+        }
+
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = a.color || "white";
+        ctx.fill();
+      }
+
+      ctx.restore();
+
+      if (a.glow) {
+        ctx.save();
+        ctx.translate(a.x, a.y);
+        if (a.rotation) {
+          ctx.rotate((a.rotation * Math.PI) / 180);
+        }
+        
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = a.color || "white";
+        ctx.fillStyle = a.color || "white";
+        drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
+        ctx.fill();
+        
+        ctx.restore();
+      }
+
+      if (a.title && a.title.trim() !== "") {
+        ctx.save();
+        ctx.translate(a.x, a.y);
+        if (a.rotation) {
+          ctx.rotate((a.rotation * Math.PI) / 180);
+        }
+        
+        ctx.font = `${a.fontSize || 14}px ${a.font || fonts[0]}`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = a.textColor || "white";
+        
+        const words = a.title.split(" ");
+        const lineHeight = a.fontSize || 14;
+        let y = -lineHeight * (words.length - 1) / 2;
+        
+        for (let word of words) {
+          ctx.fillText(word, 0, y);
+          y += lineHeight;
+        }
+        
+        ctx.restore();
+      }
+    }
     
     // Flash effect: smooth fade from 0 to 100% and back repeatedly
     const cycleTime = 600; // Complete cycle every 600ms (0->100->0)
@@ -877,11 +1111,125 @@ function startDrawingGlow() {
     // Clear the entire canvas first
     ctx.clearRect(0, 0, width, height);
     
-    // Redraw background and bubbles normally
-    const wasDrawingMode = isDrawingMode;
-    isDrawingMode = false;
-    draw(); // This draws background and bubbles normally
-    isDrawingMode = wasDrawingMode;
+    // Redraw background and bubbles without movement calculations
+    // Draw background
+    if (backgroundImage) {
+      if (backgroundRotation !== 0) {
+        ctx.save();
+        ctx.translate(width / 2, height / 2);
+        ctx.rotate((backgroundRotation * Math.PI) / 180);
+        const maxDimension = Math.max(width, height);
+        const scaleX = width / backgroundImage.width;
+        const scaleY = height / backgroundImage.height;
+        const scale = Math.max(scaleX, scaleY) * 1.2;
+        
+        const scaledWidth = backgroundImage.width * scale;
+        const scaledHeight = backgroundImage.height * scale;
+        
+        ctx.drawImage(backgroundImage, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+        ctx.restore();
+      } else {
+        ctx.drawImage(backgroundImage, 0, 0, width, height);
+      }
+    }
+    
+    // Draw bubbles without movement
+    for (let i = 0; i < ideas.length; i++) {
+      const a = ideas[i];
+      
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      if (a.rotation) {
+        ctx.rotate((a.rotation * Math.PI) / 180);
+      }
+      
+      const shape = a.shape || 'circle';
+      const heightRatio = a.heightRatio || 1.0;
+      drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
+      ctx.clip();
+
+      if (a.image) {
+        const src = a.image;
+        
+        if (loadedImages[src] && loadedImages[src].complete) {
+          try {
+            ctx.drawImage(loadedImages[src], -a.radius, -a.radius, a.radius * 2, a.radius * 2);
+          } catch (error) {
+            console.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
+            a.image = null;
+          }
+        } else {
+          if (!loadedImages[src]) {
+            const img = new Image();
+            img.onload = () => {
+              loadedImages[src] = img;
+            };
+            img.onerror = () => {
+              console.error("❌ Failed to load image:", src);
+              a.image = null;
+            };
+            img.src = src;
+          }
+          
+          ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+          ctx.fill();
+        }
+      } else {
+        if (a.transparent) {
+          ctx.fillStyle = "rgba(255,255,255,0.1)";
+        } else if (a.animateColors) {
+          ctx.fillStyle = `hsl(${(Date.now() * 0.08) % 360}, 100%, 70%)`;
+        } else {
+          ctx.fillStyle = a.color || "white";
+        }
+
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = a.color || "white";
+        ctx.fill();
+      }
+
+      ctx.restore();
+
+      if (a.glow) {
+        ctx.save();
+        ctx.translate(a.x, a.y);
+        if (a.rotation) {
+          ctx.rotate((a.rotation * Math.PI) / 180);
+        }
+        
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = a.color || "white";
+        ctx.fillStyle = a.color || "white";
+        drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
+        ctx.fill();
+        
+        ctx.restore();
+      }
+
+      if (a.title && a.title.trim() !== "") {
+        ctx.save();
+        ctx.translate(a.x, a.y);
+        if (a.rotation) {
+          ctx.rotate((a.rotation * Math.PI) / 180);
+        }
+        
+        ctx.font = `${a.fontSize || 14}px ${a.font || fonts[0]}`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = a.textColor || "white";
+        
+        const words = a.title.split(" ");
+        const lineHeight = a.fontSize || 14;
+        let y = -lineHeight * (words.length - 1) / 2;
+        
+        for (let word of words) {
+          ctx.fillText(word, 0, y);
+          y += lineHeight;
+        }
+        
+        ctx.restore();
+      }
+    }
     
     // Draw all existing drawings with glow effect
     for (let i = 0; i < drawingPaths.length; i++) {
@@ -967,29 +1315,159 @@ function smoothLastLine() {
     return;
   }
   
-  // Store original color and width
-  const originalColor = drawingColor;
-  const originalWidth = drawingWidth;
+  // Store original color and width from the last path
+  const originalColor = lastPath.color || drawingColor;
+  const originalWidth = lastPath.width || drawingWidth;
   
-  // Debug: Log speed state before smoothing
-  console.log('🔍 Before smoothing - speedMultiplier:', speedMultiplier, 'previousSpeed:', previousSpeed);
+  console.log('🔄 Smoothing last line with', lastPath.length, 'points');
+  console.log('🎨 Original color:', originalColor, 'width:', originalWidth);
   
-  // Clear the visual canvas without destroying the data
+  // Create smoothed version of the last path
+  const smoothedPath = smoothPath(lastPath);
+  
+  // Replace the last path with smoothed version, preserving color and width
+  smoothedPath.color = originalColor;
+  smoothedPath.width = originalWidth;
+  drawingPaths[drawingPaths.length - 1] = smoothedPath;
+  
+  // Force a complete redraw to show the smoothed line properly
+  // Clear the canvas and redraw everything
   ctx.clearRect(0, 0, width, height);
   
-  // Redraw background and bubbles normally
-  const wasDrawingMode = isDrawingMode;
-  isDrawingMode = false;
-  draw(); // This draws background and bubbles normally
-  isDrawingMode = wasDrawingMode;
+  // Redraw background
+  if (backgroundImage) {
+    if (backgroundRotation !== 0) {
+      ctx.save();
+      ctx.translate(width / 2, height / 2);
+      ctx.rotate((backgroundRotation * Math.PI) / 180);
+      const scaleX = width / backgroundImage.width;
+      const scaleY = height / backgroundImage.height;
+      const scale = Math.max(scaleX, scaleY) * 1.2;
+      
+      const scaledWidth = backgroundImage.width * scale;
+      const scaledHeight = backgroundImage.height * scale;
+      
+      ctx.drawImage(backgroundImage, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+      ctx.restore();
+    } else {
+      ctx.drawImage(backgroundImage, 0, 0, width, height);
+    }
+  }
   
-  // Redraw all paths except the last one with their original colors
-  for (let i = 0; i < drawingPaths.length - 1; i++) {
-    const path = drawingPaths[i];
-    const pathColor = path.color || originalColor;
-    const pathWidth = path.width || originalWidth;
+  // Redraw all bubbles exactly as they should be
+  for (let i = 0; i < ideas.length; i++) {
+    const a = ideas[i];
     
-    // Draw path with its original color/width without changing global variables
+    // Draw glow effects exactly like the main draw loop
+    if (a.glow === true) {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      if (a.rotation) {
+        ctx.rotate((a.rotation * Math.PI) / 180);
+      }
+      
+      const glowColor = a.glowColor || a.color || "white";
+      
+      ctx.globalAlpha = 0.8;
+      ctx.shadowColor = glowColor;
+      ctx.shadowBlur = 25;
+      ctx.beginPath();
+      ctx.arc(0, 0, a.radius + 3, 0, Math.PI * 2);
+      ctx.strokeStyle = glowColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      ctx.globalAlpha = 0.4;
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(0, 0, a.radius + 5, 0, Math.PI * 2);
+      ctx.strokeStyle = glowColor;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      
+      ctx.restore();
+    }
+    
+    // Draw the main bubble
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    if (a.rotation) {
+      ctx.rotate((a.rotation * Math.PI) / 180);
+    }
+    
+    const shape = a.shape || 'circle';
+    const heightRatio = a.heightRatio || 1.0;
+    drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
+    ctx.clip();
+
+    if (a.image) {
+      const src = a.image;
+      if (loadedImages[src] && loadedImages[src].complete) {
+        try {
+          ctx.drawImage(loadedImages[src], -a.radius, -a.radius, a.radius * 2, a.radius * 2);
+        } catch (error) {
+          console.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
+          a.image = null;
+        }
+      } else {
+        // If image is loading, show placeholder
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.fill();
+      }
+    } else {
+      if (a.transparent) {
+        ctx.fillStyle = "rgba(255,255,255,0.1)";
+      } else if (a.animateColors) {
+        ctx.fillStyle = `hsl(${(Date.now() * 0.08) % 360}, 100%, 70%)`;
+      } else {
+        ctx.fillStyle = a.color || "white";
+      }
+      
+      // Apply shadow for non-glow bubbles
+      if (a.glow !== true) {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = a.color || "white";
+      }
+      
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // Draw text on top
+    if (a.title && a.title.trim() !== "") {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      if (a.rotation) {
+        ctx.rotate((a.rotation * Math.PI) / 180);
+      }
+      
+      // Use the exact same font handling as the main draw loop
+      const fontSize = a.fontSize || 14;
+      const fontFamily = a.font || fonts[0];
+      ctx.font = `${fontSize}px ${fontFamily}`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = a.textColor || "white";
+      
+      // Handle multi-line text properly
+      const words = a.title.split(" ");
+      const lineHeight = fontSize;
+      let y = -lineHeight * (words.length - 1) / 2;
+      
+      for (let word of words) {
+        ctx.fillText(word, 0, y);
+        y += lineHeight;
+      }
+      ctx.restore();
+    }
+  }
+  
+  // Redraw all drawing paths including the smoothed one
+  for (let i = 0; i < drawingPaths.length; i++) {
+    const path = drawingPaths[i];
+    const pathColor = path.color || drawingColor;
+    const pathWidth = path.width || drawingWidth;
+    
     ctx.beginPath();
     ctx.moveTo(path[0].x, path[0].y);
     
@@ -1004,39 +1482,17 @@ function smoothLastLine() {
     ctx.stroke();
   }
   
-  // Create smoothed version of the last path
-  const smoothedPath = smoothPath(lastPath);
-  
-  // Replace the last path with smoothed version
-  drawingPaths[drawingPaths.length - 1] = smoothedPath;
-  
-  // Draw the smoothed path with original color/width
-  ctx.beginPath();
-  ctx.moveTo(smoothedPath[0].x, smoothedPath[0].y);
-  
-  for (let i = 1; i < smoothedPath.length; i++) {
-    ctx.lineTo(smoothedPath[i].x, smoothedPath[i].y);
-  }
-  
-  ctx.strokeStyle = originalColor;
-  ctx.lineWidth = originalWidth;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.stroke();
-  
-  // Debug: Log speed state after smoothing
-  console.log('🔍 After smoothing - speedMultiplier:', speedMultiplier, 'previousSpeed:', previousSpeed);
-  console.log('🔄 Last line smoothed');
+  console.log('✅ Last line smoothed and immediately visible');
 }
 
 function smoothPath(path) {
   if (path.length < 3) return path;
   
   const smoothed = [];
-  const tension = 0.3; // Reduced smoothing factor for less strict smoothing
+  const tension = 0.3; // Smoothing factor
   
   // Add first point
-  smoothed.push(path[0]);
+  smoothed.push({ x: path[0].x, y: path[0].y });
   
   // Smooth intermediate points
   for (let i = 1; i < path.length - 1; i++) {
@@ -1044,7 +1500,7 @@ function smoothPath(path) {
     const curr = path[i];
     const next = path[i + 1];
     
-    // Calculate smoothed point with gentler smoothing
+    // Calculate smoothed point
     const smoothedX = curr.x + (prev.x + next.x - 2 * curr.x) * tension * 0.3;
     const smoothedY = curr.y + (prev.y + next.y - 2 * curr.y) * tension * 0.3;
     
@@ -1052,7 +1508,7 @@ function smoothPath(path) {
   }
   
   // Add last point
-  smoothed.push(path[path.length - 1]);
+  smoothed.push({ x: path[path.length - 1].x, y: path[path.length - 1].y });
   
   return smoothed;
 }
@@ -2880,8 +3336,8 @@ function draw() {
     }
   }
 
-  // Draw preserved drawings when not in drawing mode
-  if (!isDrawingMode && drawingPaths.length > 0) {
+  // Draw preserved drawings (works in both drawing mode and bubble mode)
+  if (drawingPaths.length > 0) {
     for (let i = 0; i < drawingPaths.length; i++) {
       const path = drawingPaths[i];
       const pathColor = path.color || drawingColor;
@@ -3368,6 +3824,14 @@ function setupEventListeners() {
           e.preventDefault();
         }
         break;
+      case "s":
+      case "S":
+        // S key smooths the last drawn line (works in drawing mode)
+        if (isDrawingMode && drawingPaths.length > 0) {
+          smoothLastLine();
+          e.preventDefault();
+        }
+        break;
     }
     
     if (moved) {
@@ -3532,8 +3996,7 @@ function setupEventListeners() {
       case 's':
       case 'S':
         if (isDrawingMode) {
-          // DISABLED: smoothLastLine();
-          console.log('⚠️ Smooth function temporarily disabled to prevent animation interference');
+          smoothLastLine();
           e.preventDefault(); // Prevent browser default behavior
         }
         break;
@@ -3546,7 +4009,7 @@ function setupEventListeners() {
       case 'F':
         if (isDrawingMode) {
           // DISABLED: toggleExistingDrawingsFlash();
-          console.log('⚠️ Flash function temporarily disabled to prevent animation interference');
+          console.log('⚠️ Flash function temporarily disabled to prevent bubble interference');
           e.preventDefault(); // Prevent browser default behavior
         }
         break;
@@ -3554,7 +4017,7 @@ function setupEventListeners() {
       case 'G':
         if (isDrawingMode) {
           // DISABLED: toggleDrawingGlow();
-          console.log('⚠️ Glow function temporarily disabled to prevent animation interference');
+          console.log('⚠️ Glow function temporarily disabled to prevent bubble interference');
           e.preventDefault(); // Prevent browser default behavior
         }
         break;
