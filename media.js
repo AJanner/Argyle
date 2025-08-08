@@ -1424,55 +1424,24 @@ function videoPlayVideo(index) {
   const iframe = document.getElementById('videoIframe');
   if (iframe) {
     if (firstVideoLoad) {
-      // First time: autoplay the video (muted to bypass browser restrictions)
-      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}&rel=0&modestbranding=1`;
+      // First time: autoplay the video
+      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
       iframe.src = embedUrl;
       videoIsPlaying = true; // Start playing
       firstVideoLoad = false; // Mark as no longer first load
-      console.log('🎵 First video autoplay (muted):', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+      console.log('🎵 First video autoplay:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
       
       // Update video button to show playing state
       const videoButton = document.querySelector('[data-icon="video"]');
       if (videoButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(videoButton, 'video2.png');
       }
-      
-      // Add event listener for iframe load
-      iframe.onload = function() {
-        console.log('🎥 Video iframe loaded for first time');
-        
-        // Try to unmute and play after iframe loads
-        setTimeout(() => {
-          try {
-            // Try to unmute first
-            iframe.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
-            console.log('🎵 Attempting to unmute video');
-            
-            // Then try to play
-            setTimeout(() => {
-              try {
-                iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-                console.log('🎵 Attempting to play video');
-              } catch (error) {
-                console.log('⚠️ Could not play video (CORS restriction)');
-              }
-            }, 1000);
-          } catch (error) {
-            console.log('⚠️ Could not unmute video (CORS restriction)');
-          }
-        }, 1000);
-      };
     } else {
       // Subsequent times: don't autoplay
-      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}&rel=0&modestbranding=1`;
+      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
       iframe.src = embedUrl;
       videoIsPlaying = false; // Start in paused state
       console.log('🎵 Video loaded (paused):', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
-      
-      // Add event listener for iframe load
-      iframe.onload = function() {
-        console.log('🎥 Video iframe loaded (subsequent time)');
-      };
     }
     
     // Update the play button icon after a short delay to allow iframe to load
@@ -1723,7 +1692,7 @@ function videoClose() {
   // Reset video player state
   videoCurrentIndex = 0;
   videoPlayerInitialized = false;
-  firstVideoLoad = true; // Reset for next time
+  firstVideoLoad = true; // Reset for fresh start when closed completely
   
   // Hide all video elements
   if (player) {
