@@ -2779,7 +2779,8 @@ const PNG_CONFIG = {
     { dataIcon: 'snapshot', file: 'snapshot.png' },
     { dataIcon: 'save', file: 'save.png' },
     { dataIcon: 'load', file: 'load.png' },
-    { dataIcon: 'draw', file: 'draw.png' }
+    { dataIcon: 'draw', file: 'draw.png' },
+    { dataIcon: 'analysis', file: 'analysis.png' }
   ],
   // Video control buttons
   videoControls: [

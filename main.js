@@ -159,6 +159,12 @@ function toggleDrawingMode() {
   isDrawingMode = !isDrawingMode;
   console.log('✏️ Drawing mode:', isDrawingMode ? 'ON' : 'OFF');
   
+  // Get references to elements
+  const analysisButton = document.querySelector('[data-icon="analysis"]');
+  const drawingDropdowns = document.getElementById('drawingDropdowns');
+  const colorDropdown = document.getElementById('drawingColorDropdown');
+  const widthDropdown = document.getElementById('drawingWidthDropdown');
+  
   // Update cursor and CSS class
   if (isDrawingMode) {
     // Store current speed and pause animation
@@ -177,6 +183,21 @@ function toggleDrawingMode() {
     console.log('🎨 Drawing mode activated - click and drag to draw');
     console.log('⌨️ Keyboard shortcuts: C=Clear, D=Color, W=Width');
     console.log('💡 Animation paused, bubble creation disabled');
+    
+    // Hide Analysis button and show drawing dropdowns
+    if (analysisButton) {
+      analysisButton.style.display = 'none';
+    }
+    if (drawingDropdowns) {
+      drawingDropdowns.style.display = 'flex';
+      // Set current values in dropdowns
+      if (colorDropdown) {
+        colorDropdown.value = drawingColor;
+      }
+      if (widthDropdown) {
+        widthDropdown.value = drawingWidth;
+      }
+    }
     
     // Drawings will be automatically redrawn by the draw loop
     console.log('🎨 Drawing mode activated - drawings will be preserved');
@@ -201,6 +222,14 @@ function toggleDrawingMode() {
     canvas.classList.remove('drawing-mode');
     console.log('🎨 Drawing mode deactivated');
     console.log('💡 Animation resumed, bubble creation re-enabled');
+    
+    // Show Analysis button and hide drawing dropdowns
+    if (analysisButton) {
+      analysisButton.style.display = 'block';
+    }
+    if (drawingDropdowns) {
+      drawingDropdowns.style.display = 'none';
+    }
     
     // Update draw button to show inactive state
     const drawButton = document.querySelector('[data-icon="draw"]');
@@ -312,6 +341,9 @@ function clearDrawing() {
 }
 
 function clearDrawingOnly() {
+  // Clear the drawingPaths array
+  drawingPaths = [];
+  
   // Only clear drawings, preserve bubbles and background
   if (backgroundImage) {
     // Redraw background to clear drawings
@@ -484,6 +516,7 @@ function clearDrawingOnly() {
   }
   
   console.log('🧹 Only drawings cleared, bubbles and background preserved');
+  console.log('🎨 Drawings cleared - drawingPaths array reset');
 }
 
 // ===== DRAWING FLASH AND SMOOTH FUNCTIONS =====
@@ -859,6 +892,22 @@ function clearDrawingsOnRightClick(event) {
 
 let drawingSettingsFadeTimeout = null;
 
+function handleDrawButtonRightClick(event) {
+  event.preventDefault(); // Prevent default context menu
+  event.stopPropagation();
+  
+  if (isDrawingMode) {
+    // If drawing mode is active, show drawing settings
+    showDrawingSettingsOnRightClick(event);
+  } else {
+    // If drawing mode is not active, clear drawings
+    clearDrawingOnly();
+    console.log('🎨 Drawings cleared via right-click on draw button');
+  }
+  
+  return false; // Ensure context menu doesn't show
+}
+
 function showDrawingSettingsOnRightClick(event) {
   event.preventDefault(); // Prevent default context menu
   event.stopPropagation();
@@ -940,6 +989,68 @@ function fadeOutDrawingSettingsPanel() {
   }
 }
 
+function toggleAnalysisPanel() {
+  const panel = document.getElementById('analysisPanel');
+  const analysisButton = document.querySelector('[data-icon="analysis"]');
+  
+  if (panel) {
+    if (panel.style.display === 'block') {
+      panel.style.display = 'none';
+      console.log('📊 Analysis panel closed');
+      
+      // Reset button to default state
+      if (analysisButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(analysisButton, 'analysis.png');
+      }
+    } else {
+      panel.style.display = 'block';
+      console.log('📊 Analysis panel opened');
+      
+      // Apply analysis.png to button
+      if (analysisButton && typeof PNGLoader !== 'undefined') {
+        PNGLoader.applyPNG(analysisButton, 'analysis.png');
+      }
+    }
+  }
+}
+
+function closeAnalysisPanel() {
+  const panel = document.getElementById('analysisPanel');
+  if (panel) {
+    panel.style.display = 'none';
+    console.log('📊 Analysis panel closed');
+  }
+}
+
+function openAnalysisIframe(type) {
+  const container = document.getElementById('analysisIframeContainer');
+  const iframe = document.getElementById('analysisIframe');
+  
+  if (container && iframe) {
+    // Set the iframe source to ajanner.com
+    iframe.src = 'https://ajanner.com';
+    
+    // Show the container
+    container.style.display = 'block';
+    
+    console.log('📊 Analysis iframe opened for:', type);
+  }
+}
+
+function closeAnalysisIframe() {
+  const container = document.getElementById('analysisIframeContainer');
+  const iframe = document.getElementById('analysisIframe');
+  
+  if (container && iframe) {
+    // Clear the iframe source
+    iframe.src = '';
+    
+    // Hide the container
+    container.style.display = 'none';
+    
+    console.log('📊 Analysis iframe closed');
+  }
+}
 
 
 function resize() {

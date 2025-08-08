@@ -66,8 +66,54 @@
       </label>
     </div>
     
-    <button onclick="toggleDrawingMode()" oncontextmenu="showDrawingSettingsOnRightClick(event)" title="Toggle Drawing Mode (Right-click for settings)" class="toolbar-btn" data-icon="draw">✏️</button>
-    <button onclick="captureCanvasOnly()" title="Snapshot" class="toolbar-btn" data-icon="snapshot">📷</button>
+    <button onclick="toggleDrawingMode()" oncontextmenu="handleDrawButtonRightClick(event)" title="Toggle Drawing Mode (Right-click for settings when active, clear drawings when inactive)" class="toolbar-btn" data-icon="draw">✏️</button>
+    <button onclick="toggleAnalysisPanel()" title="Analysis" class="toolbar-btn" data-icon="analysis">📊</button>
+    
+    <!-- Drawing Dropdowns (hidden by default) -->
+    <div id="drawingDropdowns" class="drawing-dropdowns" style="display: none;">
+      <select id="drawingColorDropdown" class="drawing-dropdown" onchange="setDrawingColor(this.value)" title="Drawing Color">
+        <option value="#FF3131">🔴 Neon</option>
+        <option value="#FF0000">🔴 Red</option>
+        <option value="#00FF00">🟢 Green</option>
+        <option value="#0000FF">🔵 Blue</option>
+        <option value="#FFFF00">🟡 Yellow</option>
+        <option value="#FF00FF">🟣 Magenta</option>
+        <option value="#00FFFF">🔵 Cyan</option>
+        <option value="#FFA500">🟠 Orange</option>
+        <option value="#800080">🟣 Purple</option>
+        <option value="#008000">🟢 Dark Green</option>
+        <option value="#000080">🔵 Navy</option>
+        <option value="#FFD700">🟡 Gold</option>
+        <option value="#FF69B4">🩷 Hot Pink</option>
+        <option value="#32CD32">🟢 Lime Green</option>
+        <option value="#FF4500">🟠 Orange Red</option>
+        <option value="#8A2BE2">🟣 Blue Violet</option>
+        <option value="#00CED1">🔵 Dark Turquoise</option>
+        <option value="#FF1493">🩷 Deep Pink</option>
+        <option value="#FF6347">🟠 Tomato</option>
+        <option value="#9370DB">🟣 Medium Purple</option>
+        <option value="#20B2AA">🔵 Light Sea Green</option>
+        <option value="#FFB6C1">🩷 Light Pink</option>
+        <option value="#DDA0DD">🟣 Plum</option>
+        <option value="#98FB98">🟢 Pale Green</option>
+        <option value="#F0E68C">🟡 Khaki</option>
+        <option value="#FFA07A">🟠 Light Salmon</option>
+        <option value="#87CEEB">🔵 Sky Blue</option>
+        <option value="#90EE90">🟢 Light Green</option>
+      </select>
+      <select id="drawingWidthDropdown" class="drawing-dropdown" onchange="setDrawingWidth(parseInt(this.value))" title="Drawing Width">
+        <option value="1">1px</option>
+        <option value="2">2px</option>
+        <option value="3">3px</option>
+        <option value="4">4px</option>
+        <option value="5">5px</option>
+        <option value="8">8px</option>
+        <option value="12">12px</option>
+        <option value="16">16px</option>
+        <option value="20">20px</option>
+      </select>
+    </div>
+    
     <button onclick="saveIdeas()" title="Save .json File" class="toolbar-btn" data-icon="save">💾Save.json</button>
     <input accept=".json" id="fileLoader" style="display:none" type="file"/>
     <button onclick="document.getElementById('fileLoader').click()" title="Load .json File" class="toolbar-btn" data-icon="load">🆙 Load.json</button>
@@ -216,6 +262,27 @@
       <button onclick="smoothLastLine()" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">🔄 Smooth Last Line</button>
     </div>
     <button onclick="closeDrawingSettings()" class="panel-close-btn">✖️</button>
+  </div>
+
+  <!-- Analysis Panel -->
+  <div id="analysisPanel" class="analysis-panel" style="display: none;">
+    <h3 style="margin: 5px 0; color: gold;">📊 Analysis</h3>
+    <div style="display: flex; flex-direction: column; gap: 8px; margin: 15px 0;">
+      <button onclick="openAnalysisIframe('suggestions')" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: none; color: white; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: left;">💡 Suggestions</button>
+      <button onclick="openAnalysisIframe('ideas')" style="background: linear-gradient(45deg, #2196F3, #1976D2); border: none; color: white; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: left;">🧠 Ideas</button>
+      <button onclick="openAnalysisIframe('coming-soon')" style="background: linear-gradient(45deg, #FF9800, #F57C00); border: none; color: white; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: left;">🚀 Coming Soon</button>
+      <button onclick="openAnalysisIframe('v6')" style="background: linear-gradient(45deg, #9C27B0, #7B1FA2); border: none; color: white; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: left;">🎯 V6</button>
+      <button onclick="openAnalysisIframe('credits')" style="background: linear-gradient(45deg, #607D8B, #455A64); border: none; color: white; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: left;">👥 Credits</button>
+    </div>
+    <button onclick="closeAnalysisPanel()" class="panel-close-btn">✖️</button>
+  </div>
+
+  <!-- Analysis Iframe Container -->
+  <div id="analysisIframeContainer" class="analysis-iframe-container" style="display: none;">
+    <div style="position: relative; height: 100%;">
+      <button onclick="closeAnalysisIframe()" class="panel-close-btn" style="position: absolute; top: 5px; right: 5px; z-index: 1;">✖️</button>
+      <iframe id="analysisIframe" style="width: 100%; height: 100%; border: none; border-radius: 6px;"></iframe>
+    </div>
   </div>
 
   <!-- Dice Overlay -->
