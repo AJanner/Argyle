@@ -62,7 +62,7 @@
         </select>
       </div>
       <label title="Motion (Right-click to pause/unpause)" style="width: 100%; display: block; margin: 0; padding: 0;"> 
-        <input max="3" min="0.0" onchange="const slider = this; if(parseFloat(slider.value) !== 0) { previousSpeed = parseFloat(slider.value); slider.classList.remove('paused'); } else { slider.classList.add('paused'); } speedMultiplier = parseFloat(slider.value)" oncontextmenu="toggleSpeed(); return false;" step="0.1" type="range" value="1" style="width: 100%; margin: 0; padding: 0;"/>
+        <input max="3" min="0.0" onchange="const slider = this; const value = parseFloat(slider.value); if(value !== 0) { previousSpeed = value; originalSpeed = value; slider.classList.remove('paused'); } else { slider.classList.add('paused'); } speedMultiplier = value" oncontextmenu="toggleSpeed(); return false;" step="0.1" type="range" value="1" style="width: 100%; margin: 0; padding: 0;"/>
       </label>
     </div>
     

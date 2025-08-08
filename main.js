@@ -5,6 +5,7 @@ let movementDelayActive = true;
 let backgroundRotation = 0;
 let speedMultiplier = 1;
 let previousSpeed = 1; // Store the previous speed for toggling
+let originalSpeed = 1; // Store the original speed before any pauses
 let showPauseBorder = false; // Track pause border state (renamed from showCheckeredBorder)
 let ideas = [];
 let selectedIdea = null;
@@ -58,7 +59,7 @@ let drawingColor = '#FF3131';
 let drawingWidth = 5;
 let existingDrawingsFlash = false; // For flashing existing drawings
 let drawingPaths = []; // Store all drawing paths for smoothing
-let previousSpeedForDrawing = 1; // Store speed when entering drawing mode
+// Removed previousSpeedForDrawing - using single previousSpeed variable
 
 // ===== UTILITY FUNCTIONS =====
 
@@ -168,7 +169,13 @@ function toggleDrawingMode() {
   // Update cursor and CSS class
   if (isDrawingMode) {
     // Store current speed and pause animation
-    previousSpeedForDrawing = speedMultiplier;
+    // If speed is already 0, use originalSpeed to avoid losing the real speed
+    if (speedMultiplier === 0) {
+      previousSpeed = originalSpeed;
+    } else {
+      previousSpeed = speedMultiplier;
+      originalSpeed = speedMultiplier; // Update original speed
+    }
     speedMultiplier = 0;
     
     // Update the speed slider to reflect paused state
@@ -205,12 +212,12 @@ function toggleDrawingMode() {
     }
   } else {
     // Restore previous speed
-    speedMultiplier = previousSpeedForDrawing;
+    speedMultiplier = previousSpeed;
     
     // Update the speed slider to reflect restored state
     const speedSlider = document.querySelector('input[type="range"]');
     if (speedSlider) {
-      speedSlider.value = previousSpeedForDrawing;
+      speedSlider.value = previousSpeed;
       speedSlider.classList.remove('paused');
     }
     
@@ -341,15 +348,169 @@ function clearDrawingVisually() {
   // Clear only the visual canvas without touching drawingPaths array
   // This is for functions that need to redraw with effects
   
-  // Temporarily disable drawing mode to allow full redraw
-  const wasDrawingMode = isDrawingMode;
-  isDrawingMode = false;
+  // Debug: Log speed state before clearDrawingVisually
+  console.log('🔍 Before clearDrawingVisually - speedMultiplier:', speedMultiplier, 'previousSpeed:', previousSpeed);
   
-  // Use the main draw function to redraw background and bubbles
-  draw();
+  // Store current speed state
+  const currentSpeed = speedMultiplier;
+  const currentPreviousSpeed = previousSpeed;
   
-  // Restore drawing mode state
-  isDrawingMode = wasDrawingMode;
+  // Use a static redraw function that doesn't affect movement
+  redrawBackgroundAndBubbles();
+  
+  // Restore speed state to prevent interference
+  speedMultiplier = currentSpeed;
+  previousSpeed = currentPreviousSpeed;
+  
+  // Debug: Log speed state after clearDrawingVisually
+  console.log('🔍 After clearDrawingVisually - speedMultiplier:', speedMultiplier, 'previousSpeed:', previousSpeed);
+}
+
+function redrawBackgroundAndBubbles() {
+  // Redraw background and bubbles without movement calculations
+  // This is used for visual clearing without affecting speed state
+  
+  // Draw background
+  if (backgroundImage) {
+    if (backgroundRotation !== 0) {
+      ctx.save();
+      ctx.translate(width / 2, height / 2);
+      ctx.rotate((backgroundRotation * Math.PI) / 180);
+      const maxDimension = Math.max(width, height);
+      const scaleX = width / backgroundImage.width;
+      const scaleY = height / backgroundImage.height;
+      const scale = Math.max(scaleX, scaleY) * 1.2;
+      
+      const scaledWidth = backgroundImage.width * scale;
+      const scaledHeight = backgroundImage.height * scale;
+      
+      ctx.drawImage(backgroundImage, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+      ctx.restore();
+    } else {
+      ctx.drawImage(backgroundImage, 0, 0, width, height);
+    }
+  } else {
+    ctx.clearRect(0, 0, width, height);
+  }
+  
+  // Draw bubbles without movement
+  for (let i = 0; i < ideas.length; i++) {
+    const a = ideas[i];
+    
+    // Draw bubble (no movement calculations)
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    if (a.rotation) {
+      ctx.rotate((a.rotation * Math.PI) / 180);
+    }
+    
+    // Draw the shape path
+    const shape = a.shape || 'circle';
+    const heightRatio = a.heightRatio || 1.0;
+    drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
+    ctx.clip();
+
+    if (a.image) {
+      const src = a.image;
+      
+      if (loadedImages[src] && loadedImages[src].complete) {
+        try {
+          ctx.drawImage(loadedImages[src], -a.radius, -a.radius, a.radius * 2, a.radius * 2);
+        } catch (error) {
+          console.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
+          a.image = null;
+        }
+      } else {
+        if (!loadedImages[src]) {
+          const img = new Image();
+          img.onload = () => {
+            loadedImages[src] = img;
+          };
+          img.onerror = () => {
+            console.error("❌ Failed to load image:", src);
+            a.image = null;
+          };
+          img.src = src;
+        }
+        
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.fill();
+      }
+    } else {
+      if (a.transparent) {
+        ctx.fillStyle = "rgba(255,255,255,0.1)";
+      } else if (a.animateColors) {
+        ctx.fillStyle = `hsl(${(Date.now() * 0.08) % 360}, 100%, 70%)`;
+      } else {
+        ctx.fillStyle = a.color || "white";
+      }
+
+      if (a.glow) {
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = a.color || "white";
+      } else {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = a.color || "white";
+      }
+      
+      ctx.fill();
+    }
+
+    ctx.restore();
+
+    // Effects
+    if (a.glow || a.flash) {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      if (a.rotation) {
+        ctx.rotate((a.rotation * Math.PI) / 180);
+      }
+      
+      if (a.flash) {
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = a.color || "white";
+        ctx.fillStyle = `hsl(${(Date.now() * 0.1) % 360}, 100%, 70%)`;
+        drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
+        ctx.fill();
+      }
+      
+      if (a.glow) {
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = a.color || "white";
+        ctx.fillStyle = a.color || "white";
+        drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
+        ctx.fill();
+      }
+      
+      ctx.restore();
+    }
+
+    // Draw text
+    if (a.title && a.title.trim() !== "") {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      if (a.rotation) {
+        ctx.rotate((a.rotation * Math.PI) / 180);
+      }
+      
+      ctx.font = `${a.fontSize || 14}px ${a.font || fonts[0]}`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = a.textColor || "white";
+      
+      // Word wrap
+      const words = a.title.split(" ");
+      const lineHeight = a.fontSize || 14;
+      let y = -lineHeight * (words.length - 1) / 2;
+      
+      for (let word of words) {
+        ctx.fillText(word, 0, y);
+        y += lineHeight;
+      }
+      
+      ctx.restore();
+    }
+  }
 }
 
 function clearDrawingOnly() {
@@ -682,6 +843,9 @@ function smoothLastLine() {
   const originalColor = drawingColor;
   const originalWidth = drawingWidth;
   
+  // Debug: Log speed state before smoothing
+  console.log('🔍 Before smoothing - speedMultiplier:', speedMultiplier, 'previousSpeed:', previousSpeed);
+  
   // Clear the visual canvas without destroying the data
   clearDrawingVisually();
   
@@ -726,6 +890,8 @@ function smoothLastLine() {
   ctx.lineJoin = 'round';
   ctx.stroke();
   
+  // Debug: Log speed state after smoothing
+  console.log('🔍 After smoothing - speedMultiplier:', speedMultiplier, 'previousSpeed:', previousSpeed);
   console.log('🔄 Last line smoothed');
 }
 
@@ -943,7 +1109,7 @@ function switchToBubbleMode() {
   isDrawingMode = false;
   
   // Restore animation speed
-  speedMultiplier = previousSpeedForDrawing;
+  speedMultiplier = previousSpeed;
   
   // Update UI
   canvas.classList.remove('drawing-mode');
@@ -1976,6 +2142,11 @@ function deleteAllIdeas() {
 // ===== CANVAS RENDERING =====
 
 function draw() {
+  // Debug: Log when draw() is called and speed state
+  if (arguments.callee.caller && arguments.callee.caller.name === 'clearDrawingVisually') {
+    console.log('🔍 draw() called from clearDrawingVisually - speedMultiplier:', speedMultiplier, 'previousSpeed:', previousSpeed);
+  }
+  
   // Only clear canvas if not in drawing mode
   if (!isDrawingMode) {
     // Draw background
@@ -2521,21 +2692,26 @@ function setupEventListeners() {
   // Keyboard controls
   document.addEventListener("keydown", (e) => {
     // Check if bubble panel is open - if so, don't intercept keyboard shortcuts
+    // EXCEPT for ESC key which should always work to close panels
     const panel = document.getElementById('panel');
-    if (panel && panel.style.display === 'block') {
-      return; // Allow normal text input in panel
+    if (panel && panel.style.display === 'block' && e.key !== 'Escape') {
+      return; // Allow normal text input in panel, but let ESC through
     }
     
     // Handle general shortcuts that work without selected bubble
     switch(e.key) {
+      case "Escape":
+        console.log('🔍 ESC key detected!');
+        // ESC closes any open panels
+        closeAllPanels();
+        e.preventDefault();
+        return;
       case " ":
         // Spacebar behavior depends on drawing mode
         if (isDrawingMode) {
           // If in drawing mode, exit drawing mode and restart speed
           toggleDrawingMode();
-          if (speedMultiplier === 0) {
-            toggleSpeed(); // Restart speed if paused
-          }
+          // Speed is already restored by toggleDrawingMode(), no need to call toggleSpeed()
         } else {
           // Normal spacebar behavior: toggle speed (pause/unpause)
           toggleSpeed();
@@ -2783,6 +2959,7 @@ function toggleSpeed() {
   } else {
     // If currently running, pause and remember current speed
     previousSpeed = speedMultiplier;
+    originalSpeed = speedMultiplier; // Update original speed
     speedMultiplier = 0;
     speedSlider.value = 0;
     speedSlider.classList.add('paused');
@@ -2838,6 +3015,75 @@ function testImageUpload() {
 function testEffects() {
   console.log('🎭 Testing effects functionality...');
   alert('🎭 Effects test - functionality working!');
+}
+
+function closeAllPanels() {
+  console.log('🔍 ESC pressed - checking panels...');
+  
+  // Close bubble panel
+  const panel = document.getElementById('panel');
+  if (panel) {
+    const computedStyle = window.getComputedStyle(panel);
+    console.log('🔍 Panel display style:', computedStyle.display);
+    if (computedStyle.display !== 'none') {
+      closePanel();
+      console.log('🚪 Bubble panel closed via ESC');
+    } else {
+      console.log('🔍 Panel already hidden');
+    }
+  } else {
+    console.log('🔍 Panel element not found');
+  }
+  
+  // Close drawing settings panel
+  const drawingSettingsPanel = document.getElementById('drawingSettingsPanel');
+  if (drawingSettingsPanel && drawingSettingsPanel.style.display === 'block') {
+    hideDrawingSettingsPanel();
+    console.log('🚪 Drawing settings panel closed via ESC');
+  }
+  
+  // Close analysis panel
+  const analysisPanel = document.getElementById('analysisPanel');
+  if (analysisPanel && analysisPanel.style.display === 'block') {
+    hideAnalysisPanel();
+    console.log('🚪 Analysis panel closed via ESC');
+  }
+  
+  // Close analysis iframe container
+  const analysisIframeContainer = document.getElementById('analysisIframeContainer');
+  if (analysisIframeContainer && analysisIframeContainer.style.display === 'block') {
+    closeAnalysisIframe();
+    console.log('🚪 Analysis iframe closed via ESC');
+  }
+  
+  // Close music panel
+  const musicPanel = document.getElementById('musicPanel');
+  if (musicPanel && musicPanel.style.display === 'block') {
+    if (typeof toggleMusicPanel === 'function') {
+      toggleMusicPanel();
+      console.log('🚪 Music panel closed via ESC');
+    }
+  }
+  
+  // Close video playlist
+  const videoPlaylist = document.getElementById('videoPlaylist');
+  if (videoPlaylist && videoPlaylist.style.display === 'block') {
+    if (typeof videoTogglePlaylist === 'function') {
+      videoTogglePlaylist();
+      console.log('🚪 Video playlist closed via ESC');
+    }
+  }
+  
+  // Close read panel
+  const readPanel = document.getElementById('readPanel');
+  if (readPanel && readPanel.style.display === 'block') {
+    if (typeof hideReadPanel === 'function') {
+      hideReadPanel();
+      console.log('🚪 Read panel closed via ESC');
+    }
+  }
+  
+  console.log('🔒 All panels closed via ESC key');
 }
 
 function togglePanelSide() {
