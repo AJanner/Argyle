@@ -2709,6 +2709,7 @@ function setupEventListeners() {
     
     // PS5 Controller button mapping
     const buttons = gamepad.buttons;
+    const axes = gamepad.axes;
     const currentState = {};
     
     // Check button states
@@ -2762,6 +2763,50 @@ function setupEventListeners() {
       closeAllPanels();
     }
     
+    // Handle analog stick movement for bubble control
+    if (selectedIdea) {
+      const moveAmount = 3; // Slightly slower than keyboard for precision
+      let moved = false;
+      
+      // Left stick (axes 0 and 1) for movement
+      const leftStickX = axes[0]; // Left/Right
+      const leftStickY = axes[1]; // Up/Down
+      
+      // Apply deadzone to prevent drift
+      const deadzone = 0.1;
+      
+      if (Math.abs(leftStickX) > deadzone) {
+        selectedIdea.x += leftStickX * moveAmount;
+        moved = true;
+      }
+      
+      if (Math.abs(leftStickY) > deadzone) {
+        selectedIdea.y += leftStickY * moveAmount;
+        moved = true;
+      }
+      
+      if (moved) {
+        // Keep bubble within bounds (same as keyboard movement)
+        if (selectedIdea.x - selectedIdea.radius < border) {
+          selectedIdea.x = border + selectedIdea.radius;
+        }
+        if (selectedIdea.x + selectedIdea.radius > width - border) {
+          selectedIdea.x = width - border - selectedIdea.radius;
+        }
+        if (selectedIdea.y - selectedIdea.radius < border + 50) {
+          selectedIdea.y = border + 50 + selectedIdea.radius;
+        }
+        if (selectedIdea.y + selectedIdea.radius > height - border) {
+          selectedIdea.y = height - border - selectedIdea.radius;
+        }
+      }
+      
+      // Debug analog stick values (only log occasionally to avoid spam)
+      if (Math.abs(leftStickX) > 0.05 || Math.abs(leftStickY) > 0.05) {
+        console.log(`🎮 Analog stick: X=${leftStickX.toFixed(2)}, Y=${leftStickY.toFixed(2)}`);
+      }
+    }
+    
     // Update last state
     lastGamepadState = currentState;
   }
@@ -2772,13 +2817,34 @@ function setupEventListeners() {
   // Gamepad connection events
   window.addEventListener("gamepadconnected", (e) => {
     console.log('🎮 Gamepad connected:', e.gamepad.id);
+    console.log('🎮 Gamepad axes count:', e.gamepad.axes.length);
+    console.log('🎮 Gamepad buttons count:', e.gamepad.buttons.length);
     gamepadConnected = true;
+    
+    // Debug gamepad info
+    setTimeout(() => {
+      debugGamepadInfo();
+    }, 1000);
   });
   
   window.addEventListener("gamepaddisconnected", (e) => {
     console.log('🎮 Gamepad disconnected:', e.gamepad.id);
     gamepadConnected = false;
   });
+  
+  function debugGamepadInfo() {
+    const gamepads = navigator.getGamepads();
+    const gamepad = gamepads[0];
+    
+    if (gamepad) {
+      console.log('🎮 Gamepad debug info:');
+      console.log('  ID:', gamepad.id);
+      console.log('  Axes:', gamepad.axes.length);
+      console.log('  Buttons:', gamepad.buttons.length);
+      console.log('  Axes values:', gamepad.axes.map((val, i) => `Axis ${i}: ${val.toFixed(3)}`));
+      console.log('  Button states:', gamepad.buttons.map((btn, i) => `Button ${i}: ${btn.pressed ? 'pressed' : 'released'}`));
+    }
+  }
   
   // Keyboard controls
   document.addEventListener("keydown", (e) => {
