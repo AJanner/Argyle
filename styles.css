@@ -221,7 +221,7 @@ html, body {
   padding: 15px;
   border-radius: 16px;
   border: 2px solid darkgreen;
-  z-index: 29999;
+  z-index: 29995;
   display: none;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   transition: opacity 1s ease-out;
@@ -283,15 +283,29 @@ html, body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80vw;
+  width: 40vw;
   height: 80vh;
   background: rgba(34, 34, 34, 0.95);
   border-radius: 16px;
   border: 2px solid darkgreen;
-  z-index: 29998;
+  z-index: 29996;
   display: none;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   padding: 20px;
+  pointer-events: auto;
+}
+
+.analysis-iframe-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.analysis-iframe-container .panel-close-btn {
+  pointer-events: auto;
+  z-index: 1;
 }
 
 /* ===== DRAWING DROPDOWNS STYLES ===== */

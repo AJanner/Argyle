@@ -1080,8 +1080,12 @@ function openAnalysisIframe(type) {
   const iframe = document.getElementById('analysisIframe');
   
   if (container && iframe) {
-    // Set the iframe source to ajanner.com
-    iframe.src = 'https://ajanner.com';
+    // Set the iframe source based on type
+    if (type === 'suggestions') {
+      iframe.src = 'https://stonehousess.github.io/Sifi/';
+    } else {
+      iframe.src = 'https://ajanner.com';
+    }
     
     // Show the container
     container.style.display = 'block';
