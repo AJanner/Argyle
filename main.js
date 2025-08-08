@@ -16,6 +16,17 @@ let width, height;
 let border = 10;
 let strikerAttacks = []; // Array to track active striker attacks
 
+// Striker capture system
+let strikerCaptureMode = false;
+let capturedBubble = null;
+let lastStrikerCapture = 0;
+let strikerCaptureCooldown = 3000; // 3 seconds cooldown (only applies to previously captured bubbles)
+let strikerLastDirection = { x: 0, y: 0 }; // Track striker movement direction
+let collisionDetected = false; // Flag to prevent position override after collision
+let captureFrame = 0; // Track which frame the capture happened
+let captureModeStartTime = 0; // Track when capture mode was activated
+let captureModeDuration = 1000; // 1 second duration for capture mode
+
 // Drag and drop variables
 let isDragging = false;
 let draggedIdea = null;
@@ -1803,15 +1814,6 @@ function toggleGlow() {
   }
   selectedIdea.glow = !selectedIdea.glow;
   console.log("✨ Glow:", selectedIdea.glow ? "ON" : "OFF");
-  
-  const button = event.target;
-  if (selectedIdea.glow) {
-    button.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
-    button.style.color = "black";
-  } else {
-    button.style.background = "";
-    button.style.color = "";
-  }
 }
 
 function toggleFlash() {
@@ -1821,15 +1823,6 @@ function toggleFlash() {
   }
   selectedIdea.flash = !selectedIdea.flash;
   console.log("⚡ Flash:", selectedIdea.flash ? "ON" : "OFF");
-  
-  const button = event.target;
-  if (selectedIdea.flash) {
-    button.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
-    button.style.color = "black";
-  } else {
-    button.style.background = "";
-    button.style.color = "";
-  }
 }
 
 function toggleAnimateColors() {
@@ -1839,15 +1832,6 @@ function toggleAnimateColors() {
   }
   selectedIdea.animateColors = !selectedIdea.animateColors;
   console.log("🎨 Animate:", selectedIdea.animateColors ? "ON" : "OFF");
-  
-  const button = event.target;
-  if (selectedIdea.animateColors) {
-    button.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
-    button.style.color = "black";
-  } else {
-    button.style.background = "";
-    button.style.color = "";
-  }
 }
 
 function toggleTransparent() {
@@ -1857,15 +1841,6 @@ function toggleTransparent() {
   }
   selectedIdea.transparent = !selectedIdea.transparent;
   console.log("👻 Transparent:", selectedIdea.transparent ? "ON" : "OFF");
-  
-  const button = event.target;
-  if (selectedIdea.transparent) {
-    button.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
-    button.style.color = "black";
-  } else {
-    button.style.background = "";
-    button.style.color = "";
-  }
 }
 
 function changeGlowColor() {
@@ -1895,15 +1870,6 @@ function toggleFixed() {
   }
   selectedIdea.fixed = !selectedIdea.fixed;
   console.log("🛑 Fixed:", selectedIdea.fixed ? "ON" : "OFF");
-  
-  const button = event.target;
-  if (selectedIdea.fixed) {
-    button.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
-    button.style.color = "black";
-  } else {
-    button.style.background = "";
-    button.style.color = "";
-  }
 }
 
 function toggleStatic() {
@@ -1913,15 +1879,6 @@ function toggleStatic() {
   }
   selectedIdea.static = !selectedIdea.static;
   console.log("🛑 Static:", selectedIdea.static ? "ON" : "OFF");
-  
-  const button = event.target;
-  if (selectedIdea.static) {
-    button.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
-    button.style.color = "black";
-  } else {
-    button.style.background = "";
-    button.style.color = "";
-  }
 }
 
 function toggleCheckeredBorder() {
@@ -1932,18 +1889,6 @@ function toggleCheckeredBorder() {
   
   selectedIdea.showPauseBorder = !selectedIdea.showPauseBorder;
   console.log("🏁 Checkered border:", selectedIdea.showPauseBorder ? "ON" : "OFF");
-  
-  // Find the button that was clicked
-  const buttons = document.querySelectorAll('button[onclick="toggleCheckeredBorder()"]');
-  buttons.forEach(button => {
-    if (selectedIdea.showPauseBorder) {
-      button.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
-      button.style.color = "black";
-    } else {
-      button.style.background = "";
-      button.style.color = "";
-    }
-  });
 }
 
 // ===== BUBBLE PROPERTIES =====
@@ -2034,6 +1979,11 @@ function triggerStrikerAttack(bubble) {
     return; // Still in cooldown
   }
   
+  // Release captured bubble if any (collision release)
+  if (capturedBubble) {
+    endStrikerCapture(); // Uses current position, not capture point
+  }
+  
   // Set last attack time
   bubble.lastStrikerAttack = now;
   
@@ -2048,6 +1998,8 @@ function triggerStrikerAttack(bubble) {
     bubble: bubble
   };
   
+  console.log('⚡ Striker attack created with radius:', attack.radius);
+  
   strikerAttacks.push(attack);
   console.log('⚡ Striker attack triggered!');
   
@@ -2059,6 +2011,138 @@ function triggerStrikerAttack(bubble) {
     }
   }, attack.duration);
 }
+
+function triggerStrikerCapture(bubble) {
+  if (!bubble || bubble.shape !== 'striker') return;
+  
+  // No cooldown check for capture activation - can be pressed repeatedly
+  const now = Date.now();
+  
+  // Start capture mode for 1 second
+  strikerCaptureMode = true;
+  capturedBubble = null;
+  collisionDetected = false; // Reset collision flag
+  captureModeStartTime = now;
+  
+  console.log('🎣 Striker capture mode activated by:', bubble.title || 'Unknown bubble');
+  console.log('🎣 Capture range:', bubble.radius * 1.5, 'pixels');
+  console.log('🎣 Striker position:', bubble.x, bubble.y);
+  console.log('🎣 Capture mode will auto-deactivate in 1 second');
+  
+  // Auto-deactivate capture mode after 1 second
+  setTimeout(() => {
+    if (strikerCaptureMode && !capturedBubble) {
+      strikerCaptureMode = false;
+      console.log('🎣 Capture mode auto-deactivated (no capture made)');
+    }
+  }, captureModeDuration);
+}
+
+function endStrikerCapture() {
+  if (!strikerCaptureMode) return;
+  
+  // Don't deactivate capture mode if a bubble is captured - let it stay active
+  if (!capturedBubble) {
+    strikerCaptureMode = false;
+    console.log('🎣 Capture mode deactivated (no bubble captured)');
+    return;
+  }
+  
+  if (capturedBubble) {
+    // Release captured bubble at current position (not capture point)
+    // The bubble stays where it currently is, not where it was captured
+    
+    // Calculate release velocity based on striker direction
+    let releaseVX = capturedBubble.originalVX || 0;
+    let releaseVY = capturedBubble.originalVY || 0;
+    
+    // If striker was moving, add some of that momentum to the release
+    if (strikerLastDirection.x !== 0 || strikerLastDirection.y !== 0) {
+      const strikerSpeed = Math.sqrt(strikerLastDirection.x * strikerLastDirection.x + strikerLastDirection.y * strikerLastDirection.y);
+      if (strikerSpeed > 0) {
+        // Add 50% of striker's momentum to the release
+        releaseVX += strikerLastDirection.x * 0.5;
+        releaseVY += strikerLastDirection.y * 0.5;
+      }
+    }
+    
+    capturedBubble.vx = releaseVX;
+    capturedBubble.vy = releaseVY;
+    
+    capturedBubble.attachedTo = null;
+    delete capturedBubble.captureX;
+    delete capturedBubble.captureY;
+    delete capturedBubble.originalVX;
+    delete capturedBubble.originalVY;
+    
+    // Set cooldown on the released bubble (only for collision releases, not normal releases)
+    if (collisionDetected) {
+      const now = Date.now();
+      capturedBubble.lastCaptureTime = now;
+      console.log('🎣 Set cooldown on released bubble (collision):', capturedBubble.title || 'Unknown bubble');
+    } else {
+      console.log('🎣 No cooldown set (normal release):', capturedBubble.title || 'Unknown bubble');
+    }
+    
+    console.log('🎣 Released captured bubble (collision):', capturedBubble.title || 'Unknown bubble');
+    console.log('🎣 Release position:', capturedBubble.x, capturedBubble.y);
+    console.log('🎣 Release velocity:', capturedBubble.vx, capturedBubble.vy);
+    console.log('🎣 Striker direction:', strikerLastDirection.x, strikerLastDirection.y);
+    console.log('🎣 Collision flag was:', collisionDetected);
+  }
+  
+  capturedBubble = null;
+  collisionDetected = false; // Reset collision flag
+  console.log('🎣 Striker capture mode deactivated');
+}
+
+function endStrikerCaptureAtCapturePoint() {
+  if (!strikerCaptureMode) return;
+  
+  strikerCaptureMode = false;
+  
+  if (capturedBubble) {
+    // Release captured bubble at the capture point (for normal button release)
+    capturedBubble.x = capturedBubble.captureX || capturedBubble.x;
+    capturedBubble.y = capturedBubble.captureY || capturedBubble.y;
+    
+    // Calculate release velocity based on striker direction
+    let releaseVX = capturedBubble.originalVX || 0;
+    let releaseVY = capturedBubble.originalVY || 0;
+    
+    // If striker was moving, add some of that momentum to the release
+    if (strikerLastDirection.x !== 0 || strikerLastDirection.y !== 0) {
+      const strikerSpeed = Math.sqrt(strikerLastDirection.x * strikerLastDirection.x + strikerLastDirection.y * strikerLastDirection.y);
+      if (strikerSpeed > 0) {
+        // Add 50% of striker's momentum to the release
+        releaseVX += strikerLastDirection.x * 0.5;
+        releaseVY += strikerLastDirection.y * 0.5;
+      }
+    }
+    
+    capturedBubble.vx = releaseVX;
+    capturedBubble.vy = releaseVY;
+    
+    capturedBubble.attachedTo = null;
+    delete capturedBubble.captureX;
+    delete capturedBubble.captureY;
+    delete capturedBubble.originalVX;
+    delete capturedBubble.originalVY;
+    
+    // No cooldown for normal button release
+    console.log('🎣 No cooldown set (normal button release):', capturedBubble.title || 'Unknown bubble');
+    
+    console.log('🎣 Released captured bubble at capture point:', capturedBubble.title || 'Unknown bubble');
+    console.log('🎣 Release position:', capturedBubble.x, capturedBubble.y);
+    console.log('🎣 Release velocity:', capturedBubble.vx, capturedBubble.vy);
+  }
+  
+  capturedBubble = null;
+  collisionDetected = false; // Reset collision flag
+  console.log('🎣 Striker capture mode deactivated');
+}
+
+
 
 function handleImageUpload(event) {
   if (!selectedIdea) return;
@@ -2179,55 +2263,251 @@ function draw() {
     const a = ideas[i];
     const actualSpeed = movementDelayActive ? 0 : speedMultiplier;
 
-    // Movement
-    if (!a.fixed && !a.static) {
+    // Movement (skip if captured)
+    if (!a.fixed && !a.static && !a.attachedTo) {
       a.x += a.vx * actualSpeed;
       a.y += a.vy * actualSpeed;
     }
 
-    // Boundary bounce
-    if (!a.static) {
+    // Boundary bounce (skip if captured)
+    if (!a.static && !a.attachedTo) {
       if (a.x - a.radius < border) { a.x = border + a.radius; a.vx *= -1; }
       if (a.x + a.radius > width - border) { a.x = width - border - a.radius; a.vx *= -1; }
       if (a.y - a.radius < border + 50) { a.y = border + 50 + a.radius; a.vy *= -1; }
       if (a.y + a.radius > height - border) { a.y = height - border - a.radius; a.vy *= -1; }
     }
 
-    // Collision detection
-    for (let j = i + 1; j < ideas.length; j++) {
-      const b = ideas[j];
-      const dx = a.x - b.x;
-      const dy = a.y - b.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < a.radius + b.radius) {
-        const angle = Math.atan2(dy, dx);
-        
-        if (a.static && !b.static) {
-          const tx = a.x - Math.cos(angle) * (a.radius + b.radius);
-          const ty = a.y - Math.sin(angle) * (a.radius + b.radius);
-          b.x = tx;
-          b.y = ty;
-          b.vx *= -1;
-          b.vy *= -1;
-        } else if (!a.static && b.static) {
-          const tx = b.x + Math.cos(angle) * (a.radius + b.radius);
-          const ty = b.y + Math.sin(angle) * (a.radius + b.radius);
-          a.x = tx;
-          a.y = ty;
-          a.vx *= -1;
-          a.vy *= -1;
+    // Striker capture proximity check (separate from collision detection)
+    if (strikerCaptureMode && !capturedBubble) {
+      // Check if capture mode should auto-deactivate (1 second timeout)
+      const now = Date.now();
+      if (now - captureModeStartTime > captureModeDuration) {
+        strikerCaptureMode = false;
+        console.log('🎣 Capture mode auto-deactivated (1 second timeout)');
+        continue;
+      }
+      
+      const striker = ideas.find(idea => idea.shape === 'striker' && idea === selectedIdea);
+      if (striker && a !== striker) {
+        // Only check cooldown if this bubble was previously captured and released
+        if (a.lastCaptureTime && (now - a.lastCaptureTime) < strikerCaptureCooldown) {
+          const remainingCooldown = strikerCaptureCooldown - (now - a.lastCaptureTime);
+          console.log('🎣 Bubble on cooldown (previously captured):', a.title || 'Unknown bubble', 'Remaining:', Math.ceil(remainingCooldown / 1000), 'seconds');
+          continue; // Skip this bubble due to cooldown
         } else {
-          const tx = a.x - Math.cos(angle) * (a.radius + b.radius);
-          const ty = a.y - Math.sin(angle) * (a.radius + b.radius);
-          b.x = tx;
-          b.y = ty;
-          [a.vx, b.vx] = [b.vx, a.vx];
-          [a.vy, b.vy] = [b.vy, a.vy];
+          console.log('🎣 Bubble available for capture:', a.title || 'Unknown bubble');
+        }
+        
+        console.log('🎣 Checking capture for bubble:', a.title || 'Unknown', 'Striker:', striker.title || 'Unknown');
+        const dx = striker.x - a.x;
+        const dy = striker.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        // Debug: Log proximity check
+        if (dist < striker.radius * 2) { // Log if within 2x radius for debugging
+          console.log('🎣 Proximity check - Distance:', dist, 'Capture range:', striker.radius * 1.5, 'Bubble:', a.title || 'Unknown');
+        }
+        
+        // Log when bubble is very close to capture range
+        if (dist <= striker.radius * 1.6 && dist > striker.radius * 1.5) {
+          console.log('🎣 Bubble approaching capture range - Distance:', dist, 'Bubble:', a.title || 'Unknown');
+        }
+        
+        // Check if bubble touches the capture range (1.5x striker radius)
+        if (dist <= striker.radius * 1.5) {
+          // Calculate capture point on striker circumference
+          const angle = Math.atan2(a.y - striker.y, a.x - striker.x);
+          const capturePointX = striker.x + Math.cos(angle) * (striker.radius * 1.5);
+          const capturePointY = striker.y + Math.sin(angle) * (striker.radius * 1.5);
+          
+          // Capture the bubble at the capture point
+          capturedBubble = a;
+          a.captureX = capturePointX; // Store capture point position
+          a.captureY = capturePointY; // Store capture point position
+          a.originalVX = a.vx; // Store original velocity
+          a.originalVY = a.vy; // Store original velocity
+          a.attachedTo = striker;
+          
+          // Position the bubble at the capture point immediately
+          a.x = capturePointX;
+          a.y = capturePointY;
+          
+          // Set velocity to null while captured
+          a.vx = 0;
+          a.vy = 0;
+          
+          // Track capture frame to prevent immediate collision release
+          captureFrame = Date.now();
+          
+          console.log('🎣 Captured bubble:', a.title || 'Unknown bubble');
+          console.log('🎣 Distance was:', dist, 'pixels');
+          console.log('🎣 Capture point:', capturePointX, capturePointY);
+          console.log('🎣 Original velocity stored:', a.originalVX, a.originalVY);
+          console.log('🎣 Capture successful - bubble should now be attached');
+          console.log('🎣 Captured bubble position:', a.x, a.y);
+          console.log('🎣 Striker position:', striker.x, striker.y);
+        }
+      }
+    }
+    
+    // Release captured bubble on any collision with other bubbles (prevent immediate release)
+    if (capturedBubble && a === capturedBubble) {
+      // Prevent immediate collision release (wait at least 100ms after capture)
+      const now = Date.now();
+      if (now - captureFrame < 100) {
+        console.log('🎣 Preventing immediate collision release (capture too recent)');
+      } else {
+        // Check collision with any other bubble (but not with the striker)
+        const striker = a.attachedTo;
+        for (let j = 0; j < ideas.length; j++) {
+          const otherBubble = ideas[j];
+          if (otherBubble !== a && otherBubble !== a.attachedTo && otherBubble !== striker) {
+            const dx = a.x - otherBubble.x;
+            const dy = a.y - otherBubble.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < a.radius + otherBubble.radius) {
+              console.log('🎣 Captured bubble collided with:', otherBubble.title || 'Unknown bubble');
+              console.log('🎣 Collision distance:', dist, 'Sum of radii:', a.radius + otherBubble.radius);
+              console.log('🎣 IMMEDIATE RELEASE DUE TO COLLISION');
+              collisionDetected = true; // Set collision flag
+              endStrikerCapture();
+              break;
+            }
+          }
+        }
+      }
+    }
+    
+    // Also check if any bubble collides with the captured bubble (prevent immediate release)
+    if (capturedBubble && a !== capturedBubble && a !== capturedBubble.attachedTo) {
+      // Prevent immediate collision release (wait at least 100ms after capture)
+      const now = Date.now();
+      if (now - captureFrame < 100) {
+        console.log('🎣 Preventing immediate collision release (capture too recent)');
+      } else {
+        const dx = a.x - capturedBubble.x;
+        const dy = a.y - capturedBubble.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (dist < a.radius + capturedBubble.radius) {
+          console.log('🎣 Bubble collided with captured bubble:', a.title || 'Unknown bubble');
+          console.log('🎣 Collision distance:', dist, 'Sum of radii:', a.radius + capturedBubble.radius);
+          collisionDetected = true; // Set collision flag
+          endStrikerCapture();
+        }
+      }
+    }
+    
+    // Check if any bubble collides with the striker (which would release the captured bubble)
+    if (capturedBubble && a !== capturedBubble.attachedTo) {
+      // Prevent immediate collision release (wait at least 100ms after capture)
+      const now = Date.now();
+      if (now - captureFrame < 100) {
+        console.log('🎣 Preventing immediate striker collision release (capture too recent)');
+      } else {
+        const striker = capturedBubble.attachedTo;
+        if (striker && a !== striker) {
+          const dx = a.x - striker.x;
+          const dy = a.y - striker.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
+          if (dist < a.radius + striker.radius) {
+            console.log('🎣 Bubble collided with striker:', a.title || 'Unknown bubble');
+            console.log('🎣 Striker collision distance:', dist, 'Sum of radii:', a.radius + striker.radius);
+            collisionDetected = true; // Set collision flag
+            endStrikerCapture();
+          }
+        }
+      }
+    }
+    
+    // Collision detection (skip if captured)
+    if (!a.attachedTo) {
+      for (let j = i + 1; j < ideas.length; j++) {
+        const b = ideas[j];
+        if (b.attachedTo) continue; // Skip captured bubbles
+        
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < a.radius + b.radius) {
+          const angle = Math.atan2(dy, dx);
+          
+          // Release captured bubble on any collision (but not with the striker)
+          if (capturedBubble && (a === capturedBubble || b === capturedBubble)) {
+            // Don't release if the collision is with the striker
+            const striker = capturedBubble.attachedTo;
+            if (a !== striker && b !== striker) {
+              console.log('🎣 Captured bubble released due to collision');
+              collisionDetected = true; // Set collision flag
+              endStrikerCapture();
+            }
+          }
+          
+          if (a.static && !b.static) {
+            const tx = a.x - Math.cos(angle) * (a.radius + b.radius);
+            const ty = a.y - Math.sin(angle) * (a.radius + b.radius);
+            b.x = tx;
+            b.y = ty;
+            b.vx *= -1;
+            b.vy *= -1;
+          } else if (!a.static && b.static) {
+            const tx = b.x + Math.cos(angle) * (a.radius + b.radius);
+            const ty = b.y + Math.sin(angle) * (a.radius + b.radius);
+            a.x = tx;
+            a.y = ty;
+            a.vx *= -1;
+            a.vy *= -1;
+          } else {
+            const tx = a.x - Math.cos(angle) * (a.radius + b.radius);
+            const ty = a.y - Math.sin(angle) * (a.radius + b.radius);
+            b.x = tx;
+            b.y = ty;
+            [a.vx, b.vx] = [b.vx, a.vx];
+            [a.vy, b.vy] = [b.vy, a.vy];
+          }
         }
       }
     }
 
+    // Update captured bubble position to follow striker (skip if collision detected)
+    if (a.attachedTo && strikerCaptureMode && !collisionDetected) {
+      const striker = a.attachedTo;
+      
+      // Position the captured bubble at the capture point on the circumference
+      if (a.captureX !== undefined && a.captureY !== undefined) {
+        // Calculate the angle from striker to the original capture point
+        const captureAngle = Math.atan2(a.captureY - striker.y, a.captureX - striker.x);
+        
+        // Update the capture point position to follow the striker
+        a.captureX = striker.x + Math.cos(captureAngle) * (striker.radius * 1.5);
+        a.captureY = striker.y + Math.sin(captureAngle) * (striker.radius * 1.5);
+        
+        // Position the bubble at the updated capture point
+        a.x = a.captureX;
+        a.y = a.captureY;
+      } else {
+        // Fallback: position at striker center if capture point not available
+        a.x = striker.x;
+        a.y = striker.y;
+      }
+      
+      a.vx = 0;
+      a.vy = 0;
+      
+      // Track striker movement direction
+      if (striker.vx !== 0 || striker.vy !== 0) {
+        strikerLastDirection.x = striker.vx;
+        strikerLastDirection.y = striker.vy;
+      }
+      
+      console.log('🎣 Updated captured bubble position:', a.x, a.y, 'Striker:', striker.x, striker.y);
+    } else if (a.attachedTo && strikerCaptureMode && collisionDetected) {
+      console.log('🎣 Skipping position update due to collision flag');
+    }
+    
     // Draw bubble (skip if in drawing mode)
     if (!isDrawingMode) {
       ctx.save();
@@ -2240,6 +2520,26 @@ function draw() {
       const shape = a.shape || 'circle';
       const heightRatio = a.heightRatio || 1.0;
       drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
+      
+      // Draw capture border for striker in capture mode
+      if (a.shape === 'striker' && strikerCaptureMode && a === selectedIdea) {
+        ctx.save();
+        ctx.globalAlpha = 0.3;
+        ctx.strokeStyle = '#00FF00'; // Green border for capture mode
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, a.radius * 1.5, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Draw a dashed line to show the capture boundary more clearly
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = '#00FF00';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, a.radius * 1.5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
       ctx.clip();
 
     if (a.image) {
@@ -2715,6 +3015,7 @@ function setupEventListeners() {
     // Check button states
     currentState.L1 = buttons[4].pressed; // L1
     currentState.R1 = buttons[5].pressed; // R1
+    currentState.L2 = buttons[6].pressed; // L2
     currentState.R2 = buttons[7].pressed; // R2
     currentState.Triangle = buttons[3].pressed; // Triangle
     currentState.Circle = buttons[1].pressed; // Circle
@@ -2736,6 +3037,21 @@ function setupEventListeners() {
       console.log('🎮 R2 pressed - Striker attack');
       if (selectedIdea && selectedIdea.shape === 'striker') {
         triggerStrikerAttack(selectedIdea);
+      }
+    }
+    
+    if (currentState.L2 && !lastGamepadState.L2) {
+      console.log('🎮 L2 pressed - Striker capture start');
+      if (selectedIdea && selectedIdea.shape === 'striker') {
+        triggerStrikerCapture(selectedIdea);
+      }
+    }
+    
+    // Handle L2 release for striker capture
+    if (!currentState.L2 && lastGamepadState.L2) {
+      console.log('🎮 L2 released - Striker capture end');
+      if (strikerCaptureMode && capturedBubble) {
+        endStrikerCapture(); // Only release if a bubble is captured
       }
     }
     
@@ -2919,6 +3235,13 @@ function setupEventListeners() {
         // Backslash triggers striker attack
         if (selectedIdea.shape === 'striker') {
           triggerStrikerAttack(selectedIdea);
+          e.preventDefault();
+        }
+        break;
+      case "]":
+        // Right bracket triggers striker capture
+        if (selectedIdea.shape === 'striker') {
+          triggerStrikerCapture(selectedIdea);
           e.preventDefault();
         }
         break;
