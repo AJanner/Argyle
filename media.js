@@ -1375,10 +1375,11 @@ function videoPlayVideo(index) {
   
   const iframe = document.getElementById('videoIframe');
   if (iframe) {
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
+    // Don't autoplay by default - let user control playback
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
     iframe.src = embedUrl;
-    videoIsPlaying = true;
-    console.log('🎵 Video Playing video:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+    videoIsPlaying = false; // Start in paused state
+    console.log('🎵 Video loaded (paused):', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
     
     // Update the play button icon after a short delay to allow iframe to load
     setTimeout(() => {
@@ -1621,6 +1622,10 @@ function videoClose() {
     videoIsPlaying = false;
     console.log('🎥 Video stopped');
   }
+  
+  // Reset video player state
+  videoCurrentIndex = 0;
+  videoPlayerInitialized = false;
   
   // Hide all video elements
   if (player) {
@@ -1971,38 +1976,45 @@ async function toggleVideoPlayer() {
         updateVideoPlaylistDisplay();
       }
     } else {
-      // If video player was previously closed, ensure a video is playing
+      // If video player was previously closed, reset video state and load first video
       const iframe = document.getElementById('videoIframe');
-      if (iframe && (!iframe.src || iframe.src === '')) {
-        console.log('🎥 Video player reopened - ensuring video is playing');
-        
-        // Try to load and play a video if none is currently playing
-        if (videoPlaylist.length > 0) {
-          videoPlayVideo(videoCurrentIndex);
-        } else if (typeof loadVideoPlaylist === 'function') {
-          // Load playlist and play first video
-          setTimeout(() => {
-            loadVideoPlaylist().then(() => {
-              if (videoPlaylist.length > 0) {
-                videoPlayVideo(0);
-              }
-            }).catch(error => {
-              console.log('🎥 Playlist loading failed on reopen');
-            });
-          }, 100);
-        }
+      console.log('🎥 Video player reopened - resetting video state');
+      
+      // Clear the iframe src to force a fresh load
+      if (iframe) {
+        iframe.src = '';
+      }
+      
+      // Reset video state
+      videoIsPlaying = false;
+      videoCurrentIndex = 0;
+      
+      // Try to load and play the first video
+      if (videoPlaylist.length > 0) {
+        videoPlayVideo(0);
+      } else if (typeof loadVideoPlaylist === 'function') {
+        // Load playlist and play first video
+        setTimeout(() => {
+          loadVideoPlaylist().then(() => {
+            if (videoPlaylist.length > 0) {
+              videoPlayVideo(0);
+            }
+          }).catch(error => {
+            console.log('🎥 Playlist loading failed on reopen');
+          });
+        }, 100);
       }
     }
     
-    // Video player already initialized, just play first video if needed
+    // Video player already initialized, ensure first video is loaded if needed
     const videoIframe = document.getElementById('videoIframe');
     if (videoIframe && videoIframe.src && videoIframe.src !== '' && videoIframe.src !== 'about:blank') {
-      console.log('🎥 Video player shown (playback continues)');
+      console.log('🎥 Video player shown (video loaded but paused)');
     } else if (videoPlaylist.length > 0) {
-      // Start playing the first video immediately
+      // Load the first video (but don't autoplay)
       setTimeout(() => {
         videoPlayVideo(0);
-        console.log('🎥 Video player opened and started playing first video');
+        console.log('🎥 Video player opened and loaded first video (paused)');
       }, 100);
     }
     

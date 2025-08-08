@@ -3,7 +3,6 @@
 // Video Player Variables
 // Note: These variables are defined in main.js to avoid conflicts
 let videoIsPlaying = false;
-let videoControlsTimeout = null;
 let videoPlayerMode = 'centered';
 
 // ===== VIDEO PLAYLIST FUNCTIONS =====
@@ -20,29 +19,20 @@ function videoPlayVideo(index) {
   const videoId = extractYouTubeId(url);
   
   if (videoId) {
-    // Try different autoplay settings to work around restrictions
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=0&enablejsapi=1&origin=${window.location.origin}`;
+    // Don't autoplay by default - let user control playback
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=0&controls=1&loop=0&enablejsapi=1&origin=${window.location.origin}`;
     const videoIframe = document.getElementById('videoIframe');
     if (videoIframe) {
       videoIframe.src = embedUrl;
       videoIframe.style.display = 'block';
       videoIframe.style.zIndex = '1';
-      videoIsPlaying = true;
+      videoIsPlaying = false; // Start in paused state
       updateVideoPlaylistDisplay();
-      console.log('🎵 Video Playing video:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+      console.log('🎵 Video loaded (paused):', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
       
-      // Add event listener for iframe load to handle autoplay restrictions
+      // Add event listener for iframe load
       videoIframe.onload = function() {
         console.log('🎥 Video iframe loaded');
-        // Try to force play after load
-        setTimeout(() => {
-          try {
-            videoIframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-            console.log('🎥 Attempted to force play video');
-          } catch (error) {
-            console.log('⚠️ Could not force play video (autoplay restriction)');
-          }
-        }, 1000);
       };
     }
   } else {
