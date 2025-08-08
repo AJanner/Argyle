@@ -56,7 +56,7 @@ let isDrawing = false;
 let drawingPath = [];
 let drawingColor = '#FF3131';
 let drawingWidth = 5;
-let drawingFlash = false;
+let existingDrawingsFlash = false; // For flashing existing drawings
 let drawingPaths = []; // Store all drawing paths for smoothing
 let previousSpeedForDrawing = 1; // Store speed when entering drawing mode
 
@@ -181,7 +181,7 @@ function toggleDrawingMode() {
     canvas.style.cursor = 'url(images/cross.png) 16 16, crosshair';
     canvas.classList.add('drawing-mode');
     console.log('🎨 Drawing mode activated - click and drag to draw');
-    console.log('⌨️ Keyboard shortcuts: D=Toggle Mode, W=Width, C=Color, S=Smooth, X=Clear, F=Flash');
+    console.log('⌨️ Keyboard shortcuts: D=Toggle Mode, W=Width, C=Color, S=Smooth Last Line, X=Clear (works in any mode), F=Flash Existing Drawings');
     console.log('💡 Animation paused, bubble creation disabled');
     
     // Hide Analysis button and show drawing dropdowns
@@ -190,13 +190,9 @@ function toggleDrawingMode() {
     }
     if (drawingDropdowns) {
       drawingDropdowns.style.display = 'flex';
-      // Set current values in dropdowns
-      if (colorDropdown) {
-        colorDropdown.value = drawingColor;
-      }
-      if (widthDropdown) {
-        widthDropdown.value = drawingWidth;
-      }
+      // Update all UI elements to ensure synchronization
+      updateDrawingColorUI();
+      updateDrawingWidthUI();
     }
     
     // Drawings will be automatically redrawn by the draw loop
@@ -278,6 +274,9 @@ function drawLine(e) {
     const prev = drawingPath[drawingPath.length - 2];
     const curr = drawingPath[drawingPath.length - 1];
     
+    // Save context state to prevent interference from flash animations
+    ctx.save();
+    
     ctx.beginPath();
     ctx.moveTo(prev.x, prev.y);
     ctx.lineTo(curr.x, curr.y);
@@ -285,14 +284,12 @@ function drawLine(e) {
     ctx.lineWidth = drawingWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    
-    // Apply flash effect if active
-    if (drawingFlash) {
-      ctx.globalAlpha = 0.3 + 0.7 * Math.sin(Date.now() / 200);
-    }
+    ctx.globalAlpha = 1; // Force solid opacity for current drawing
     
     ctx.stroke();
-    ctx.globalAlpha = 1;
+    
+    // Restore context state
+    ctx.restore();
     
     console.log('✏️ Drawing line from', prev.x, prev.y, 'to', curr.x, curr.y, 'color:', drawingColor, 'width:', drawingWidth);
   }
@@ -333,11 +330,26 @@ function clearDrawing() {
   drawingPaths = [];
   
   // Stop flash animation if it's running
-  if (drawingFlash) {
-    stopFlashAnimation();
+  if (existingDrawingsFlash) {
+    stopExistingDrawingsFlash();
   }
   
   console.log('🧹 Drawing cleared and paths array emptied');
+}
+
+function clearDrawingVisually() {
+  // Clear only the visual canvas without touching drawingPaths array
+  // This is for functions that need to redraw with effects
+  
+  // Temporarily disable drawing mode to allow full redraw
+  const wasDrawingMode = isDrawingMode;
+  isDrawingMode = false;
+  
+  // Use the main draw function to redraw background and bubbles
+  draw();
+  
+  // Restore drawing mode state
+  isDrawingMode = wasDrawingMode;
 }
 
 function clearDrawingOnly() {
@@ -521,91 +533,127 @@ function clearDrawingOnly() {
 
 // ===== DRAWING FLASH AND SMOOTH FUNCTIONS =====
 
-function toggleDrawingSmooth() {
-  // Toggle smooth drawing mode (apply smoothing to existing paths)
-  if (drawingPaths.length > 0) {
-    drawingPaths.forEach(path => {
-      if (path.length > 2) {
-        const smoothedPath = smoothPath(path);
-        // Replace path points with smoothed points
-        path.splice(0, path.length, ...smoothedPath);
-      }
-    });
-    console.log('🔄 Applied smoothing to all drawing paths');
-  } else {
-    console.log('📝 No drawings to smooth');
-  }
-}
 
 function toggleDrawingFlash() {
-  drawingFlash = !drawingFlash;
+  existingDrawingsFlash = !existingDrawingsFlash;
   const flashBtn = document.getElementById('flashDrawingBtn');
   
-  if (drawingFlash) {
+  if (existingDrawingsFlash) {
     flashBtn.style.background = 'linear-gradient(45deg, #FF1493, #FF69B4)';
     flashBtn.textContent = '✨ Flash ON';
     console.log('✨ Drawing flash activated');
     
     // Start flash animation for existing drawings
-    startFlashAnimation();
+    startExistingDrawingsFlash();
   } else {
     flashBtn.style.background = 'linear-gradient(45deg, #FFD700, #FFA500)';
     flashBtn.textContent = '✨ Flash Drawing';
     console.log('✨ Drawing flash deactivated');
     
     // Stop flash animation
-    stopFlashAnimation();
+    stopExistingDrawingsFlash();
   }
 }
 
 let flashAnimationId = null;
 
-function startFlashAnimation() {
+function startExistingDrawingsFlash() {
   if (flashAnimationId) return;
   
   function flashLoop() {
-    if (!drawingFlash) return;
+    if (!existingDrawingsFlash) return;
     
-    // Redraw all paths with flash effect
-    clearDrawingOnly();
+    // Clear the entire canvas first
+    ctx.clearRect(0, 0, width, height);
     
-    for (let i = 0; i < drawingPaths.length; i++) {
-      const path = drawingPaths[i];
-      const pathColor = path.color || drawingColor;
-      const pathWidth = path.width || drawingWidth;
-      
-      // Debug: Log what color is being used for each path
-      console.log(`🎨 Flash drawing path ${i}: stored color=${path.color}, using color=${pathColor}`);
-      
-      // Draw path with its original color/width without changing global variables
-      ctx.beginPath();
-      ctx.moveTo(path[0].x, path[0].y);
-      
-      for (let j = 1; j < path.length; j++) {
-        ctx.lineTo(path[j].x, path[j].y);
+    // Redraw background and bubbles normally (without any flash effect)
+    const wasDrawingMode = isDrawingMode;
+    isDrawingMode = false;
+    draw(); // This draws background and bubbles normally
+    isDrawingMode = wasDrawingMode;
+    
+    // Flash effect: smooth fade from 0 to 100% opacity rapidly
+    const cycleTime = 300; // Complete cycle every 300ms
+    const timeInCycle = Date.now() % cycleTime; // Position in current cycle (0-299)
+    const flashOpacity = timeInCycle / cycleTime; // 0.0 to 1.0 smooth progression
+    
+    // Only draw drawings if they should be visible (flash on)
+    if (flashOpacity > 0) {
+      for (let i = 0; i < drawingPaths.length; i++) {
+        const path = drawingPaths[i];
+        const pathColor = path.color || drawingColor;
+        const pathWidth = path.width || drawingWidth;
+        
+        // Save context state to isolate opacity effect
+        ctx.save();
+        
+        ctx.beginPath();
+        ctx.moveTo(path[0].x, path[0].y);
+        
+        for (let j = 1; j < path.length; j++) {
+          ctx.lineTo(path[j].x, path[j].y);
+        }
+        
+        ctx.strokeStyle = pathColor;
+        ctx.lineWidth = pathWidth;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.globalAlpha = flashOpacity; // Apply opacity only to this stroke
+        ctx.stroke();
+        
+        // Restore context state (removes opacity effect)
+        ctx.restore();
       }
-      
-      ctx.strokeStyle = pathColor;
-      ctx.lineWidth = pathWidth;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      
-      // Apply flash effect
-      ctx.globalAlpha = 0.3 + 0.7 * Math.sin(Date.now() / 200);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
     }
     
-    flashAnimationId = setTimeout(flashLoop, 100); // Slower flash animation
+    flashAnimationId = setTimeout(flashLoop, 100);
   }
   
   flashLoop();
 }
 
-function stopFlashAnimation() {
+function stopExistingDrawingsFlash() {
   if (flashAnimationId) {
     clearTimeout(flashAnimationId);
     flashAnimationId = null;
+    console.log('⚡ Existing drawings flash animation stopped');
+  }
+}
+
+function redrawAllDrawings() {
+  // Redraw all drawing paths with their original colors
+  for (let i = 0; i < drawingPaths.length; i++) {
+    const path = drawingPaths[i];
+    const pathColor = path.color || drawingColor;
+    const pathWidth = path.width || drawingWidth;
+    
+    ctx.beginPath();
+    ctx.moveTo(path[0].x, path[0].y);
+    
+    for (let j = 1; j < path.length; j++) {
+      ctx.lineTo(path[j].x, path[j].y);
+    }
+    
+    ctx.strokeStyle = pathColor;
+    ctx.lineWidth = pathWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+}
+
+function toggleExistingDrawingsFlash() {
+  existingDrawingsFlash = !existingDrawingsFlash;
+  
+  if (existingDrawingsFlash) {
+    console.log('✨ Existing drawings flash activated');
+    startExistingDrawingsFlash();
+  } else {
+    console.log('✨ Existing drawings flash deactivated');
+    stopExistingDrawingsFlash();
+    // Redraw without flash effect
+    clearDrawingVisually();
+    redrawAllDrawings();
   }
 }
 
@@ -634,8 +682,8 @@ function smoothLastLine() {
   const originalColor = drawingColor;
   const originalWidth = drawingWidth;
   
-  // Clear the last line
-  clearDrawingOnly();
+  // Clear the visual canvas without destroying the data
+  clearDrawingVisually();
   
   // Redraw all paths except the last one with their original colors
   for (let i = 0; i < drawingPaths.length - 1; i++) {
@@ -728,9 +776,7 @@ function drawPath(path) {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   
-  if (drawingFlash) {
-    ctx.globalAlpha = 0.5 + 0.5 * Math.sin(Date.now() / 100);
-  }
+  // No flash effect applied to current drawing line
   
   ctx.stroke();
   ctx.globalAlpha = 1;
@@ -738,7 +784,7 @@ function drawPath(path) {
 
 function changeDrawingColor() {
   const colors = [
-    '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', 
+    '#FF3131', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', 
     '#FFA500', '#800080', '#008000', '#000080', '#FFD700', '#FF69B4',
     '#32CD32', '#FF4500', '#8A2BE2', '#00CED1', '#FF1493', '#32CD32',
     '#FF6347', '#9370DB', '#20B2AA', '#FFB6C1', '#DDA0DD', '#98FB98',
@@ -747,6 +793,10 @@ function changeDrawingColor() {
   const currentIndex = colors.indexOf(drawingColor);
   const nextIndex = (currentIndex + 1) % colors.length;
   drawingColor = colors[nextIndex];
+  
+  // Update all UI elements
+  updateDrawingColorUI();
+  
   console.log('🎨 Drawing color changed to:', drawingColor);
 }
 
@@ -755,6 +805,10 @@ function changeDrawingWidth() {
   const currentIndex = widths.indexOf(drawingWidth);
   const nextIndex = (currentIndex + 1) % widths.length;
   drawingWidth = widths[nextIndex];
+  
+  // Update all UI elements
+  updateDrawingWidthUI();
+  
   console.log('📏 Drawing width changed to:', drawingWidth);
 }
 
@@ -824,12 +878,48 @@ function closeDrawingSettings() {
 
 function setDrawingColor(color) {
   drawingColor = color;
+  
+  // Update all UI elements
+  updateDrawingColorUI();
+  
   console.log('🎨 Drawing color set to:', color);
 }
 
 function setDrawingWidth(width) {
   drawingWidth = width;
+  
+  // Update all UI elements
+  updateDrawingWidthUI();
+  
   console.log('📏 Drawing width set to:', width);
+}
+
+function updateDrawingColorUI() {
+  // Update toolbar dropdown
+  const colorDropdown = document.getElementById('drawingColorDropdown');
+  if (colorDropdown) {
+    colorDropdown.value = drawingColor;
+  }
+  
+  // Update drawing settings panel dropdown
+  const colorSelect = document.getElementById('drawingColorSelect');
+  if (colorSelect) {
+    colorSelect.value = drawingColor;
+  }
+}
+
+function updateDrawingWidthUI() {
+  // Update toolbar dropdown
+  const widthDropdown = document.getElementById('drawingWidthDropdown');
+  if (widthDropdown) {
+    widthDropdown.value = drawingWidth;
+  }
+  
+  // Update drawing settings panel dropdown
+  const widthSelect = document.getElementById('drawingWidthSelect');
+  if (widthSelect) {
+    widthSelect.value = drawingWidth;
+  }
 }
 
 function clearDrawingFromPanel() {
@@ -840,8 +930,8 @@ function clearDrawingFromPanel() {
   drawingPaths = [];
   
   // Stop flash animation if it's running
-  if (drawingFlash) {
-    stopFlashAnimation();
+  if (existingDrawingsFlash) {
+    stopExistingDrawingsFlash();
   }
   
   closeDrawingSettings();
@@ -860,9 +950,9 @@ function switchToBubbleMode() {
   canvas.style.cursor = 'default';
   
   // Stop flash animation if running
-  if (drawingFlash) {
-    stopFlashAnimation();
-    drawingFlash = false;
+  if (existingDrawingsFlash) {
+    stopExistingDrawingsFlash();
+    existingDrawingsFlash = false;
   }
   
   // Close drawing settings panel
@@ -887,9 +977,9 @@ function clearDrawingsOnRightClick(event) {
   drawingPaths = [];
   
   // Stop flash animation if running
-  if (drawingFlash) {
-    stopFlashAnimation();
-    drawingFlash = false;
+  if (existingDrawingsFlash) {
+    stopExistingDrawingsFlash();
+    existingDrawingsFlash = false;
   }
   
   console.log('🧹 All drawings cleared via right-click on toggle button');
@@ -938,14 +1028,9 @@ function showDrawingSettingsOnRightClick(event) {
     return false;
   }
   
-  // Set current values
-  if (colorSelect) {
-    colorSelect.value = drawingColor;
-  }
-  
-  if (widthSelect) {
-    widthSelect.value = drawingWidth;
-  }
+  // Update all UI elements to ensure synchronization
+  updateDrawingColorUI();
+  updateDrawingWidthUI();
   
   // Position panel at the x-coordinate of the draw button
   if (panel) {
@@ -2252,6 +2337,10 @@ function init() {
   // Load bubble button PNGs
   loadBubbleButtonPNGs();
   
+  // Initialize drawing UI elements
+  updateDrawingColorUI();
+  updateDrawingWidthUI();
+  
   // Start rendering
   draw();
   
@@ -2295,46 +2384,83 @@ function setupEventListeners() {
     if (!clicked) addIdea(x, y);
   });
 
-  // Right-click for panel
+  // Right-click behavior
   canvas.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     
-    // If in drawing mode, clear drawings
-    if (isDrawingMode) {
-      clearDrawingOnly();
-      drawingPaths = [];
-      console.log('🧽 Drawings cleared');
-      return;
-    }
-    
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    for (let idea of ideas) {
-      const dx = x - idea.x;
-      const dy = y - idea.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < idea.radius) {
-        selectedIdea = idea;
-        
-        // Check if panel is already open for this bubble
-        const panel = document.getElementById('panel');
-        if (panel.style.display === 'block' && selectedIdea === idea) {
-          // Panel is open for this bubble - close it
-          closePanel();
-        } else {
-          // Panel is not open or for different bubble - show panel
-          showPanel();
+    // In bubble mode, check if right-clicking on a bubble first
+    if (!isDrawingMode) {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      for (let idea of ideas) {
+        const dx = x - idea.x;
+        const dy = y - idea.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < idea.radius) {
+          selectedIdea = idea;
+          
+          // Check if panel is already open for this bubble
+          const panel = document.getElementById('panel');
+          if (panel.style.display === 'block' && selectedIdea === idea) {
+            // Panel is open for this bubble - close it
+            closePanel();
+          } else {
+            // Panel is not open or for different bubble - show panel
+            showPanel();
+          }
+          console.log('💭 Bubble panel toggled via right-click on bubble');
+          return;
         }
-        return;
       }
     }
     
-    // Right-click on empty space - close panel if open
-    const panel = document.getElementById('panel');
-    if (panel.style.display === 'block') {
-      closePanel();
+    // If not clicking on a bubble (or in drawing mode), toggle drawing mode
+    toggleDrawingMode();
+    console.log('🎨 Drawing mode toggled via right-click on canvas');
+  });
+
+  // Double-click behavior depends on mode
+  canvas.addEventListener("dblclick", (e) => {
+    if (isDrawingMode) {
+      // In drawing mode: clear drawings
+      clearDrawingOnly();
+      drawingPaths = [];
+      console.log('🧽 Drawings cleared via double-click');
+    } else {
+      // In bubble mode: open bubble panel
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      for (let idea of ideas) {
+        const dx = x - idea.x;
+        const dy = y - idea.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < idea.radius) {
+          selectedIdea = idea;
+          
+          // Check if panel is already open for this bubble
+          const panel = document.getElementById('panel');
+          if (panel.style.display === 'block' && selectedIdea === idea) {
+            // Panel is open for this bubble - close it
+            closePanel();
+          } else {
+            // Panel is not open or for different bubble - show panel
+            showPanel();
+          }
+          console.log('💭 Bubble panel toggled via double-click');
+          return;
+        }
+      }
+      
+      // Double-click on empty space - close panel if open
+      const panel = document.getElementById('panel');
+      if (panel.style.display === 'block') {
+        closePanel();
+        console.log('💭 Bubble panel closed via double-click on empty space');
+      }
     }
   });
 
@@ -2400,6 +2526,40 @@ function setupEventListeners() {
       return; // Allow normal text input in panel
     }
     
+    // Handle general shortcuts that work without selected bubble
+    switch(e.key) {
+      case " ":
+        // Spacebar behavior depends on drawing mode
+        if (isDrawingMode) {
+          // If in drawing mode, exit drawing mode and restart speed
+          toggleDrawingMode();
+          if (speedMultiplier === 0) {
+            toggleSpeed(); // Restart speed if paused
+          }
+        } else {
+          // Normal spacebar behavior: toggle speed (pause/unpause)
+          toggleSpeed();
+        }
+        e.preventDefault();
+        return;
+      case "v":
+      case "V":
+        // V opens video playlist
+        if (typeof videoTogglePlaylist === 'function') {
+          videoTogglePlaylist();
+        }
+        e.preventDefault();
+        return;
+      case "m":
+      case "M":
+        // M opens music playlist
+        if (typeof toggleMusicPanel === 'function') {
+          toggleMusicPanel();
+        }
+        e.preventDefault();
+        return;
+    }
+    
     if (!selectedIdea) return;
     
     const moveAmount = 5;
@@ -2428,27 +2588,6 @@ function setupEventListeners() {
           triggerStrikerAttack(selectedIdea);
           e.preventDefault();
         }
-        break;
-      case " ":
-        // Spacebar toggles speed (pause/unpause)
-        toggleSpeed();
-        e.preventDefault();
-        break;
-      case "v":
-      case "V":
-        // V opens video playlist
-        if (typeof videoTogglePlaylist === 'function') {
-          videoTogglePlaylist();
-        }
-        e.preventDefault();
-        break;
-      case "m":
-      case "M":
-        // M opens music playlist
-        if (typeof toggleMusicPanel === 'function') {
-          toggleMusicPanel();
-        }
-        e.preventDefault();
         break;
     }
     
@@ -2614,19 +2753,20 @@ function setupEventListeners() {
       case 's':
       case 'S':
         if (isDrawingMode) {
-          toggleDrawingSmooth();
+          smoothLastLine();
+          e.preventDefault(); // Prevent browser default behavior
         }
         break;
       case 'x':
       case 'X':
-        if (isDrawingMode) {
-          clearDrawing();
-        }
+        // X clears drawings in both drawing mode and bubble mode
+        clearDrawingOnly();
         break;
       case 'f':
       case 'F':
         if (isDrawingMode) {
-          toggleDrawingFlash();
+          toggleExistingDrawingsFlash();
+          e.preventDefault(); // Prevent browser default behavior
         }
         break;
     }
