@@ -595,6 +595,10 @@ function playRadioStream(radioUrl) {
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music2.png');
       }
+      
+      // Start music visualizer when radio begins playing
+      isMusicPlaying = true;
+      startMusicVisualizer();
     });
     
     window.currentAudio = audio;
@@ -604,6 +608,10 @@ function playRadioStream(radioUrl) {
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music2.png');
       }
+      
+      // Start music visualizer when radio begins playing
+      isMusicPlaying = true;
+      startMusicVisualizer();
     }).catch(err => {
       console.error('❌ Error loading radio station:', err);
       alert('Failed to load radio station. Please check the URL.');
@@ -652,6 +660,10 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music.png');
       }
+      
+      // Stop music visualizer when radio ends
+      isMusicPlaying = false;
+      stopMusicVisualizer();
     });
 
     audio.addEventListener('pause', () => {
@@ -660,6 +672,10 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music.png');
       }
+      
+      // Stop music visualizer when radio is paused
+      isMusicPlaying = false;
+      stopMusicVisualizer();
     });
 
     audio.addEventListener('play', () => {
@@ -668,6 +684,10 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music2.png');
       }
+      
+      // Start music visualizer when radio begins playing
+      isMusicPlaying = true;
+      startMusicVisualizer();
     });
     
     window.currentAudio = audio;
@@ -677,6 +697,10 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music2.png');
       }
+      
+      // Start music visualizer when radio begins playing
+      isMusicPlaying = true;
+      startMusicVisualizer();
     }).catch(err => {
       console.error('❌ Error loading radio station:', err);
       alert('Failed to load radio station. Please check the URL.');
