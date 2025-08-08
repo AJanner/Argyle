@@ -69,6 +69,8 @@ let drawingPath = [];
 let drawingColor = '#FF3131';
 let drawingWidth = 5;
 let existingDrawingsFlash = false; // For flashing existing drawings
+let drawingGlow = false; // For glowing existing drawings
+let drawingGlowAnimationId = null;
 let drawingPaths = []; // Store all drawing paths for smoothing
 // Removed previousSpeedForDrawing - using single previousSpeed variable
 
@@ -366,8 +368,11 @@ function clearDrawingVisually() {
   const currentSpeed = speedMultiplier;
   const currentPreviousSpeed = previousSpeed;
   
-  // Use a static redraw function that doesn't affect movement
-  redrawBackgroundAndBubbles();
+  // Use the normal draw function but preserve speed state
+  const wasDrawingMode = isDrawingMode;
+  isDrawingMode = false;
+  draw(); // This draws background and bubbles with all effects
+  isDrawingMode = wasDrawingMode;
   
   // Restore speed state to prevent interference
   speedMultiplier = currentSpeed;
@@ -380,6 +385,12 @@ function clearDrawingVisually() {
 function redrawBackgroundAndBubbles() {
   // Redraw background and bubbles without movement calculations
   // This is used for visual clearing without affecting speed state
+  redrawBackgroundAndBubblesNoEffects();
+}
+
+function redrawBackgroundAndBubblesNoEffects() {
+  // Redraw background and bubbles with basic effects but no animated effects
+  // This is used for drawing operations to avoid cross-contamination
   
   // Draw background
   if (backgroundImage) {
@@ -456,42 +467,27 @@ function redrawBackgroundAndBubbles() {
         ctx.fillStyle = a.color || "white";
       }
 
-      if (a.glow) {
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = a.color || "white";
-      } else {
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = a.color || "white";
-      }
-      
+      // Basic glow border (always present)
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = a.color || "white";
       ctx.fill();
     }
 
     ctx.restore();
 
-    // Effects
-    if (a.glow || a.flash) {
+    // Enhanced glow effect (for bubbles with glow enabled)
+    if (a.glow) {
       ctx.save();
       ctx.translate(a.x, a.y);
       if (a.rotation) {
         ctx.rotate((a.rotation * Math.PI) / 180);
       }
       
-      if (a.flash) {
-        ctx.shadowBlur = 30;
-        ctx.shadowColor = a.color || "white";
-        ctx.fillStyle = `hsl(${(Date.now() * 0.1) % 360}, 100%, 70%)`;
-        drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
-        ctx.fill();
-      }
-      
-      if (a.glow) {
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = a.color || "white";
-        ctx.fillStyle = a.color || "white";
-        drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
-        ctx.fill();
-      }
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = a.color || "white";
+      ctx.fillStyle = a.color || "white";
+      drawShape(ctx, shape, 0, 0, a.radius, heightRatio, 0);
+      ctx.fill();
       
       ctx.restore();
     }
@@ -744,13 +740,14 @@ function startExistingDrawingsFlash() {
     draw(); // This draws background and bubbles normally
     isDrawingMode = wasDrawingMode;
     
-    // Flash effect: smooth fade from 0 to 100% opacity rapidly
-    const cycleTime = 300; // Complete cycle every 300ms
-    const timeInCycle = Date.now() % cycleTime; // Position in current cycle (0-299)
-    const flashOpacity = timeInCycle / cycleTime; // 0.0 to 1.0 smooth progression
+    // Flash effect: smooth fade from 0 to 100% and back repeatedly
+    const cycleTime = 600; // Complete cycle every 600ms (0->100->0)
+    const timeInCycle = Date.now() % cycleTime; // Position in current cycle (0-599)
+    const flashOpacity = Math.abs(Math.sin((timeInCycle / cycleTime) * Math.PI)); // 0.0 to 1.0 to 0.0 using absolute value
     
-    // Only draw drawings if they should be visible (flash on)
-    if (flashOpacity > 0) {
+    // Only draw existing drawings (not the current drawing action)
+    if (flashOpacity > 0.01) { // Small threshold to avoid drawing when opacity is very low
+      // Draw all completed paths from drawingPaths array
       for (let i = 0; i < drawingPaths.length; i++) {
         const path = drawingPaths[i];
         const pathColor = path.color || drawingColor;
@@ -776,6 +773,26 @@ function startExistingDrawingsFlash() {
         // Restore context state (removes opacity effect)
         ctx.restore();
       }
+    }
+    
+    // Redraw the current drawing line on top (if actively drawing)
+    if (isDrawing && drawingPath.length > 1) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(drawingPath[0].x, drawingPath[0].y);
+      
+      for (let i = 1; i < drawingPath.length; i++) {
+        ctx.lineTo(drawingPath[i].x, drawingPath[i].y);
+      }
+      
+      ctx.strokeStyle = drawingColor;
+      ctx.lineWidth = drawingWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.globalAlpha = 1; // Current drawing should always be solid
+      ctx.stroke();
+      
+      ctx.restore();
     }
     
     flashAnimationId = setTimeout(flashLoop, 100);
@@ -824,8 +841,108 @@ function toggleExistingDrawingsFlash() {
     console.log('✨ Existing drawings flash deactivated');
     stopExistingDrawingsFlash();
     // Redraw without flash effect
+    ctx.clearRect(0, 0, width, height);
+    
+    // Redraw background and bubbles normally
+    const wasDrawingMode = isDrawingMode;
+    isDrawingMode = false;
+    draw(); // This draws background and bubbles normally
+    isDrawingMode = wasDrawingMode;
+    
+    redrawAllDrawings();
+  }
+}
+
+function toggleDrawingGlow() {
+  drawingGlow = !drawingGlow;
+  
+  if (drawingGlow) {
+    console.log('✨ Drawing glow activated');
+    startDrawingGlow();
+  } else {
+    console.log('✨ Drawing glow deactivated');
+    stopDrawingGlow();
+    // Redraw without glow effect
     clearDrawingVisually();
     redrawAllDrawings();
+  }
+}
+
+function startDrawingGlow() {
+  if (drawingGlowAnimationId) return;
+  
+  function glowLoop() {
+    if (!drawingGlow) return;
+    
+    // Clear the entire canvas first
+    ctx.clearRect(0, 0, width, height);
+    
+    // Redraw background and bubbles normally
+    const wasDrawingMode = isDrawingMode;
+    isDrawingMode = false;
+    draw(); // This draws background and bubbles normally
+    isDrawingMode = wasDrawingMode;
+    
+    // Draw all existing drawings with glow effect
+    for (let i = 0; i < drawingPaths.length; i++) {
+      const path = drawingPaths[i];
+      const pathColor = path.color || drawingColor;
+      const pathWidth = path.width || drawingWidth;
+      
+      // Save context state
+      ctx.save();
+      
+      // Apply glow effect (similar to bubble glow)
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = pathColor;
+      
+      ctx.beginPath();
+      ctx.moveTo(path[0].x, path[0].y);
+      
+      for (let j = 1; j < path.length; j++) {
+        ctx.lineTo(path[j].x, path[j].y);
+      }
+      
+      ctx.strokeStyle = pathColor;
+      ctx.lineWidth = pathWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      
+      // Restore context state
+      ctx.restore();
+    }
+    
+    // Redraw the current drawing line on top (if actively drawing)
+    if (isDrawing && drawingPath.length > 1) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(drawingPath[0].x, drawingPath[0].y);
+      
+      for (let i = 1; i < drawingPath.length; i++) {
+        ctx.lineTo(drawingPath[i].x, drawingPath[i].y);
+      }
+      
+      ctx.strokeStyle = drawingColor;
+      ctx.lineWidth = drawingWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      
+      ctx.restore();
+    }
+    
+    drawingGlowAnimationId = setTimeout(glowLoop, 50);
+  }
+  
+  glowLoop();
+}
+
+function stopDrawingGlow() {
+  if (drawingGlowAnimationId) {
+    clearTimeout(drawingGlowAnimationId);
+    drawingGlowAnimationId = null;
+    console.log('✨ Drawing glow animation stopped');
   }
 }
 
@@ -858,7 +975,13 @@ function smoothLastLine() {
   console.log('🔍 Before smoothing - speedMultiplier:', speedMultiplier, 'previousSpeed:', previousSpeed);
   
   // Clear the visual canvas without destroying the data
-  clearDrawingVisually();
+  ctx.clearRect(0, 0, width, height);
+  
+  // Redraw background and bubbles normally
+  const wasDrawingMode = isDrawingMode;
+  isDrawingMode = false;
+  draw(); // This draws background and bubbles normally
+  isDrawingMode = wasDrawingMode;
   
   // Redraw all paths except the last one with their original colors
   for (let i = 0; i < drawingPaths.length - 1; i++) {
@@ -3409,7 +3532,8 @@ function setupEventListeners() {
       case 's':
       case 'S':
         if (isDrawingMode) {
-          smoothLastLine();
+          // DISABLED: smoothLastLine();
+          console.log('⚠️ Smooth function temporarily disabled to prevent animation interference');
           e.preventDefault(); // Prevent browser default behavior
         }
         break;
@@ -3421,7 +3545,16 @@ function setupEventListeners() {
       case 'f':
       case 'F':
         if (isDrawingMode) {
-          toggleExistingDrawingsFlash();
+          // DISABLED: toggleExistingDrawingsFlash();
+          console.log('⚠️ Flash function temporarily disabled to prevent animation interference');
+          e.preventDefault(); // Prevent browser default behavior
+        }
+        break;
+      case 'g':
+      case 'G':
+        if (isDrawingMode) {
+          // DISABLED: toggleDrawingGlow();
+          console.log('⚠️ Glow function temporarily disabled to prevent animation interference');
           e.preventDefault(); // Prevent browser default behavior
         }
         break;
