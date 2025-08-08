@@ -785,9 +785,13 @@ function hideWelcomeMessage() {
   }
 }
 
-// Make functions available globally
-window.hideWelcomeMessage = hideWelcomeMessage;
-window.showWelcomeMessage = showWelcomeMessage;
+function showReadPanel() {
+  const readPanel = document.getElementById('readPanel');
+  if (readPanel) {
+    readPanel.style.display = 'block';
+    console.log('📖 Read panel shown');
+  }
+}
 
 function hideReadPanel() {
   const readPanel = document.getElementById('readPanel');
@@ -796,6 +800,12 @@ function hideReadPanel() {
     console.log('📖 Read panel hidden');
   }
 }
+
+// Make functions available globally
+window.hideWelcomeMessage = hideWelcomeMessage;
+window.showWelcomeMessage = showWelcomeMessage;
+window.showReadPanel = showReadPanel;
+window.hideReadPanel = hideReadPanel;
 
 function loadRadioStation() {
   const radioUrl = prompt('Enter radio station URL (stream URL):');
