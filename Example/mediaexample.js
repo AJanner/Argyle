@@ -3,7 +3,6 @@
 // ===== VIDEO PLAYLIST VARIABLES =====
 let uploadedPlaylists = [];
 let currentPlaylistIndex = -1;
-let firstVideoLoad = true; // Track if this is the first video load
 
 // ===== VIDEO CONTROLS AUTO-HIDE VARIABLES =====
 let videoControlsTimeout = null;
@@ -725,63 +724,12 @@ function handleVideoRightClick() {
       videoClose();
       console.log('🎥 Video player closed via right-click');
     } else {
-      // If video player is closed, show Welcome message
-      showWelcomeMessage();
+      // If video player is closed, show read panel
+      showReadPanel();
     }
   } else {
-    // Fallback to Welcome message if player element not found
-    showWelcomeMessage();
-  }
-}
-
-function showWelcomeMessage() {
-  // Use the existing read panel instead of creating a new overlay
-  const readPanel = document.getElementById('readPanel');
-  if (readPanel) {
-    // Update the content to show video player information
-    const contentDiv = readPanel.querySelector('div[style*="color: white"]');
-    if (contentDiv) {
-      contentDiv.innerHTML = `
-        <div style="margin-bottom: 15px; font-weight: bold; color: gold;">🎬 Video Player Guide</div>
-        <div style="color: white; margin-bottom: 20px; line-height: 1.4;">
-          <strong>Video Player Controls:</strong><br>
-          • Click video button to open/close player<br>
-          • Right-click when playing to close completely<br>
-          • Use playlist controls to navigate videos<br>
-          • Upload .txt files with YouTube URLs<br><br>
-          
-          <strong>Keyboard Shortcuts:</strong><br>
-          • <kbd>V</kbd> - Open/close video player<br>
-          • <kbd>M</kbd> - Open/close music panel<br>
-          • <kbd>Space</kbd> - Pause/unpause speed<br>
-          • <kbd>ESC</kbd> - Close all panels<br>
-          • <kbd>D</kbd> - Toggle drawing mode<br>
-          • <kbd>X</kbd> - Clear drawings<br>
-          • <kbd>F</kbd> - Flash drawings<br>
-          • <kbd>S</kbd> - Smooth last line<br><br>
-          
-          <strong>Gamepad Controls (PS5):</strong><br>
-          • <kbd>Triangle</kbd> - Toggle video player<br>
-          • <kbd>Circle</kbd> - Toggle music panel<br>
-          • <kbd>Square</kbd> - Close all panels<br>
-          • <kbd>L1/R1</kbd> - Switch bubbles<br>
-          • <kbd>R2</kbd> - Striker attack<br>
-          • <kbd>L2</kbd> - Striker capture<br>
-          • <kbd>X</kbd> - Select music track
-        </div>
-      `;
-    }
-    
-    readPanel.style.display = 'block';
-    console.log('🎬 Video player welcome message shown');
-  }
-}
-
-function hideWelcomeMessage() {
-  // Use the existing hideReadPanel function
-  if (typeof hideReadPanel === 'function') {
-    hideReadPanel();
-    console.log('🎬 Video player welcome message hidden');
+    // Fallback to read panel if player element not found
+    showReadPanel();
   }
 }
 
@@ -800,12 +748,6 @@ function hideReadPanel() {
     console.log('📖 Read panel hidden');
   }
 }
-
-// Make functions available globally
-window.hideWelcomeMessage = hideWelcomeMessage;
-window.showWelcomeMessage = showWelcomeMessage;
-window.showReadPanel = showReadPanel;
-window.hideReadPanel = hideReadPanel;
 
 function loadRadioStation() {
   const radioUrl = prompt('Enter radio station URL (stream URL):');
@@ -1408,25 +1350,13 @@ function extractYouTubeId(url) {
 async function fetchVideoTitle(videoId) {
   try {
     // Use YouTube oEmbed API to get video title
-    const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      mode: 'cors' // Explicitly set CORS mode
-    });
-    
+    const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Successfully fetched video title for', videoId, ':', data.title);
       return data.title;
-    } else {
-      console.warn('⚠️ YouTube API returned status:', response.status, 'for video', videoId);
     }
   } catch (error) {
-    console.warn('⚠️ Network error fetching video title for', videoId, ':', error.message);
-    // Don't log the full error to avoid console spam
+    console.error('❌ Error fetching video title for', videoId, ':', error);
   }
   return null;
 }
@@ -1445,62 +1375,10 @@ function videoPlayVideo(index) {
   
   const iframe = document.getElementById('videoIframe');
   if (iframe) {
-    // Check if this is the first video in the current session
-    const isFirstVideoInSession = index === 0 && firstVideoLoad;
-    
-    console.log('🎵 videoPlayVideo debug:', {
-      index: index,
-      firstVideoLoad: firstVideoLoad,
-      isFirstVideoInSession: isFirstVideoInSession,
-      videoId: videoId
-    });
-    
-    if (isFirstVideoInSession) {
-      // First video in session: autoplay (muted to bypass browser restrictions)
-      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&muted=1&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
-      iframe.src = embedUrl;
-      iframe.setAttribute('allow', 'autoplay');
-      videoIsPlaying = true; // Start playing
-      firstVideoLoad = false; // Mark as no longer first load
-      console.log('🎵 First video autoplay in session:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
-      console.log('🎵 Autoplay URL:', embedUrl);
-      
-      // Update video button to show playing state
-      const videoButton = document.querySelector('[data-icon="video"]');
-      if (videoButton && typeof PNGLoader !== 'undefined') {
-        PNGLoader.applyPNG(videoButton, 'video2.png');
-      }
-      
-      // Add event listener to monitor iframe load
-      iframe.onload = function() {
-        console.log('🎥 Iframe loaded for autoplay video');
-        // Try to unmute after load
-        setTimeout(() => {
-          try {
-            iframe.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
-            console.log('🎵 Attempting to unmute video');
-          } catch (error) {
-            console.log('⚠️ Could not unmute video (CORS restriction)');
-          }
-        }, 1000);
-        // Check if video is actually playing after load
-        setTimeout(() => {
-          console.log('🎥 Video state after load - videoIsPlaying:', videoIsPlaying);
-        }, 2000);
-      };
-    } else {
-      // Subsequent videos or non-first session: don't autoplay
-      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&muted=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
-      iframe.src = embedUrl;
-      iframe.setAttribute('allow', 'autoplay');
-      videoIsPlaying = false; // Start in paused state
-      console.log('🎵 Video loaded (paused):', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
-      
-      // Add event listener to monitor iframe load
-      iframe.onload = function() {
-        console.log('🎥 Iframe loaded for paused video');
-      };
-    }
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
+    iframe.src = embedUrl;
+    videoIsPlaying = true;
+    console.log('🎵 Video Playing video:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
     
     // Update the play button icon after a short delay to allow iframe to load
     setTimeout(() => {
@@ -1539,9 +1417,6 @@ function videoTogglePlay() {
       
       // Update the play button icon
       updateVideoPlayButtonIcon();
-      
-      // Update the main video button icon
-      updateVideoButtonIcon();
       
       // Also try to reload the iframe if postMessage fails
       setTimeout(() => {
@@ -1746,11 +1621,6 @@ function videoClose() {
     videoIsPlaying = false;
     console.log('🎥 Video stopped');
   }
-  
-  // Reset video player state
-  videoCurrentIndex = 0;
-  videoPlayerInitialized = false;
-  firstVideoLoad = true; // Reset for fresh start when closed completely
   
   // Hide all video elements
   if (player) {
@@ -2046,12 +1916,10 @@ async function toggleVideoPlayer() {
     videoPlaylistVisible = false;
     console.log('🎥 Video player hidden (playback continues)');
     
-    // Update video button to show inactive state (only if not playing)
-    if (!videoIsPlaying) {
-      const videoButton = document.querySelector('[data-icon="video"]');
-      if (videoButton && typeof PNGLoader !== 'undefined') {
-        PNGLoader.applyPNG(videoButton, 'video.png');
-      }
+    // Update video button to show inactive state
+    const videoButton = document.querySelector('[data-icon="video"]');
+    if (videoButton && typeof PNGLoader !== 'undefined') {
+      PNGLoader.applyPNG(videoButton, 'video.png');
     }
   } else {
     // Show video player with proper z-index and current opacity
@@ -2103,51 +1971,38 @@ async function toggleVideoPlayer() {
         updateVideoPlaylistDisplay();
       }
     } else {
-      // If video player was previously closed, reset video state and load first video
+      // If video player was previously closed, ensure a video is playing
       const iframe = document.getElementById('videoIframe');
-      console.log('🎥 Video player reopened - resetting video state');
-      
-      // Clear the iframe src to force a fresh load
-      if (iframe) {
-        iframe.src = '';
-      }
-      
-      // Reset video state
-      videoIsPlaying = false;
-      videoCurrentIndex = 0;
-      
-      // Try to load and play the first video
-      if (videoPlaylist.length > 0) {
-        setTimeout(() => {
-          videoPlayVideo(0);
-        }, 100);
-      } else if (typeof loadVideoPlaylist === 'function') {
-        // Load playlist and play first video
-        setTimeout(() => {
-          loadVideoPlaylist().then(() => {
-            if (videoPlaylist.length > 0) {
-              videoPlayVideo(0);
-            }
-          }).catch(error => {
-            console.log('🎥 Playlist loading failed on reopen');
-          });
-        }, 100);
+      if (iframe && (!iframe.src || iframe.src === '')) {
+        console.log('🎥 Video player reopened - ensuring video is playing');
+        
+        // Try to load and play a video if none is currently playing
+        if (videoPlaylist.length > 0) {
+          videoPlayVideo(videoCurrentIndex);
+        } else if (typeof loadVideoPlaylist === 'function') {
+          // Load playlist and play first video
+          setTimeout(() => {
+            loadVideoPlaylist().then(() => {
+              if (videoPlaylist.length > 0) {
+                videoPlayVideo(0);
+              }
+            }).catch(error => {
+              console.log('🎥 Playlist loading failed on reopen');
+            });
+          }, 100);
+        }
       }
     }
     
-    // Video player already initialized, ensure first video is loaded if needed
+    // Video player already initialized, just play first video if needed
     const videoIframe = document.getElementById('videoIframe');
     if (videoIframe && videoIframe.src && videoIframe.src !== '' && videoIframe.src !== 'about:blank') {
-      console.log('🎥 Video player shown (video loaded but paused)');
-      // Update button icon based on current state
-      setTimeout(() => {
-        updateVideoButtonIcon();
-      }, 500);
+      console.log('🎥 Video player shown (playback continues)');
     } else if (videoPlaylist.length > 0) {
-      // Load the first video (but don't autoplay)
+      // Start playing the first video immediately
       setTimeout(() => {
         videoPlayVideo(0);
-        console.log('🎥 Video player opened and loaded first video (paused)');
+        console.log('🎥 Video player opened and started playing first video');
       }, 100);
     }
     
@@ -2170,12 +2025,10 @@ async function toggleVideoPlayer() {
     // Reset playlist visibility state
     videoPlaylistVisible = false;
     
-    // Update video button to show active state (only if playing)
-    if (videoIsPlaying) {
-      const videoButton = document.querySelector('[data-icon="video"]');
-      if (videoButton && typeof PNGLoader !== 'undefined') {
-        PNGLoader.applyPNG(videoButton, 'video2.png');
-      }
+    // Update video button to show active state
+    const videoButton = document.querySelector('[data-icon="video"]');
+    if (videoButton && typeof PNGLoader !== 'undefined') {
+      PNGLoader.applyPNG(videoButton, 'video2.png');
     }
   }
   
@@ -2926,8 +2779,7 @@ const PNG_CONFIG = {
     { dataIcon: 'snapshot', file: 'snapshot.png' },
     { dataIcon: 'save', file: 'save.png' },
     { dataIcon: 'load', file: 'load.png' },
-    { dataIcon: 'draw', file: 'draw.png' },
-    { dataIcon: 'analysis', file: 'analysis.png' }
+    { dataIcon: 'draw', file: 'draw.png' }
   ],
   // Video control buttons
   videoControls: [
@@ -3067,15 +2919,6 @@ function updateVideoPlayButtonIcon() {
     const filename = videoIsPlaying ? 'pause.png' : 'play.png';
     PNGLoader.applyPNG(playButton, filename);
     console.log(`🎥 Updated video play button to ${filename} (playing: ${videoIsPlaying})`);
-  }
-}
-
-function updateVideoButtonIcon() {
-  const videoButton = document.querySelector('[data-icon="video"]');
-  if (videoButton && typeof PNGLoader !== 'undefined') {
-    const filename = videoIsPlaying ? 'video2.png' : 'video.png';
-    PNGLoader.applyPNG(videoButton, filename);
-    console.log(`🎥 Updated video button to ${filename} (playing: ${videoIsPlaying})`);
   }
 }
 

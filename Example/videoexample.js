@@ -3,6 +3,7 @@
 // Video Player Variables
 // Note: These variables are defined in main.js to avoid conflicts
 let videoIsPlaying = false;
+let videoControlsTimeout = null;
 let videoPlayerMode = 'centered';
 
 // ===== VIDEO PLAYLIST FUNCTIONS =====
@@ -19,20 +20,29 @@ function videoPlayVideo(index) {
   const videoId = extractYouTubeId(url);
   
   if (videoId) {
-    // Don't autoplay by default - let user control playback
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&muted=0&controls=1&loop=0&enablejsapi=1&origin=${window.location.origin}`;
+    // Try different autoplay settings to work around restrictions
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=0&enablejsapi=1&origin=${window.location.origin}`;
     const videoIframe = document.getElementById('videoIframe');
     if (videoIframe) {
       videoIframe.src = embedUrl;
       videoIframe.style.display = 'block';
       videoIframe.style.zIndex = '1';
-      videoIsPlaying = false; // Start in paused state
+      videoIsPlaying = true;
       updateVideoPlaylistDisplay();
-      console.log('🎵 Video loaded (paused):', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+      console.log('🎵 Video Playing video:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
       
-      // Add event listener for iframe load
+      // Add event listener for iframe load to handle autoplay restrictions
       videoIframe.onload = function() {
         console.log('🎥 Video iframe loaded');
+        // Try to force play after load
+        setTimeout(() => {
+          try {
+            videoIframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+            console.log('🎥 Attempted to force play video');
+          } catch (error) {
+            console.log('⚠️ Could not force play video (autoplay restriction)');
+          }
+        }, 1000);
       };
     }
   } else {
@@ -62,25 +72,13 @@ function extractYouTubeId(url) {
 async function fetchVideoTitle(videoId) {
   try {
     // Use YouTube oEmbed API to get video title
-    const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      mode: 'cors' // Explicitly set CORS mode
-    });
-    
+    const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Successfully fetched video title for', videoId, ':', data.title);
       return data.title;
-    } else {
-      console.warn('⚠️ YouTube API returned status:', response.status, 'for video', videoId);
     }
   } catch (error) {
-    console.warn('⚠️ Network error fetching video title for', videoId, ':', error.message);
-    // Don't log the full error to avoid console spam
+    console.error('❌ Error fetching video title for', videoId, ':', error);
   }
   return null;
 }
