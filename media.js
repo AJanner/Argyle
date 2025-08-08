@@ -3,7 +3,7 @@
 // ===== VIDEO PLAYLIST VARIABLES =====
 let uploadedPlaylists = [];
 let currentPlaylistIndex = -1;
-let firstVideoLoad = true; // Track if this is the first video load
+
 
 // ===== VIDEO CONTROLS AUTO-HIDE VARIABLES =====
 let videoControlsTimeout = null;
@@ -1445,62 +1445,21 @@ function videoPlayVideo(index) {
   
   const iframe = document.getElementById('videoIframe');
   if (iframe) {
-    // Check if this is the first video in the current session
-    const isFirstVideoInSession = index === 0 && firstVideoLoad;
-    
     console.log('🎵 videoPlayVideo debug:', {
       index: index,
-      firstVideoLoad: firstVideoLoad,
-      isFirstVideoInSession: isFirstVideoInSession,
       videoId: videoId
     });
     
-    if (isFirstVideoInSession) {
-      // First video in session: autoplay (muted to bypass browser restrictions)
-      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&muted=1&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
-      iframe.src = embedUrl;
-      iframe.setAttribute('allow', 'autoplay');
-      videoIsPlaying = true; // Start playing
-      firstVideoLoad = false; // Mark as no longer first load
-      console.log('🎵 First video autoplay in session:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
-      console.log('🎵 Autoplay URL:', embedUrl);
-      
-      // Update video button to show playing state
-      const videoButton = document.querySelector('[data-icon="video"]');
-      if (videoButton && typeof PNGLoader !== 'undefined') {
-        PNGLoader.applyPNG(videoButton, 'video2.png');
-      }
-      
-      // Add event listener to monitor iframe load
-      iframe.onload = function() {
-        console.log('🎥 Iframe loaded for autoplay video');
-        // Try to unmute after load
-        setTimeout(() => {
-          try {
-            iframe.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
-            console.log('🎵 Attempting to unmute video');
-          } catch (error) {
-            console.log('⚠️ Could not unmute video (CORS restriction)');
-          }
-        }, 1000);
-        // Check if video is actually playing after load
-        setTimeout(() => {
-          console.log('🎥 Video state after load - videoIsPlaying:', videoIsPlaying);
-        }, 2000);
-      };
-    } else {
-      // Subsequent videos or non-first session: don't autoplay
-      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&muted=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
-      iframe.src = embedUrl;
-      iframe.setAttribute('allow', 'autoplay');
-      videoIsPlaying = false; // Start in paused state
-      console.log('🎵 Video loaded (paused):', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
-      
-      // Add event listener to monitor iframe load
-      iframe.onload = function() {
-        console.log('🎥 Iframe loaded for paused video');
-      };
-    }
+    // Use the working approach from the example
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
+    iframe.src = embedUrl;
+    videoIsPlaying = true;
+    console.log('🎵 Video Playing video:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+    
+    // Update the play button icon after a short delay to allow iframe to load
+    setTimeout(() => {
+      updateVideoPlayButtonIcon();
+    }, 1000);
     
     // Update the play button icon after a short delay to allow iframe to load
     setTimeout(() => {
@@ -1750,7 +1709,7 @@ function videoClose() {
   // Reset video player state
   videoCurrentIndex = 0;
   videoPlayerInitialized = false;
-  firstVideoLoad = true; // Reset for fresh start when closed completely
+  
   
   // Hide all video elements
   if (player) {
