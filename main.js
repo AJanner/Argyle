@@ -989,37 +989,90 @@ function fadeOutDrawingSettingsPanel() {
   }
 }
 
+let analysisPanelFadeTimeout = null;
+
 function toggleAnalysisPanel() {
   const panel = document.getElementById('analysisPanel');
   const analysisButton = document.querySelector('[data-icon="analysis"]');
   
   if (panel) {
     if (panel.style.display === 'block') {
-      panel.style.display = 'none';
-      console.log('📊 Analysis panel closed');
-      
-      // Reset button to default state
-      if (analysisButton && typeof PNGLoader !== 'undefined') {
-        PNGLoader.applyPNG(analysisButton, 'analysis.png');
-      }
+      hideAnalysisPanel();
     } else {
-      panel.style.display = 'block';
-      console.log('📊 Analysis panel opened');
-      
-      // Apply analysis.png to button
-      if (analysisButton && typeof PNGLoader !== 'undefined') {
-        PNGLoader.applyPNG(analysisButton, 'analysis.png');
-      }
+      showAnalysisPanel();
     }
   }
 }
 
-function closeAnalysisPanel() {
+function showAnalysisPanel() {
   const panel = document.getElementById('analysisPanel');
+  const analysisButton = document.querySelector('[data-icon="analysis"]');
+  
+  if (panel && analysisButton) {
+    // Position panel under the analysis button
+    const buttonRect = analysisButton.getBoundingClientRect();
+    panel.style.position = 'fixed';
+    panel.style.left = buttonRect.left + 'px';
+    panel.style.top = (buttonRect.bottom + 10) + 'px';
+    panel.style.display = 'block';
+    panel.style.opacity = '1';
+    panel.style.zIndex = '29999';
+    
+    console.log('📊 Analysis panel opened under button');
+    
+    // Apply analysis.png to button
+    if (typeof PNGLoader !== 'undefined') {
+      PNGLoader.applyPNG(analysisButton, 'analysis.png');
+    }
+    
+    // Clear any existing timeout
+    if (analysisPanelFadeTimeout) {
+      clearTimeout(analysisPanelFadeTimeout);
+    }
+    
+    // Set fade-out timeout for 10 seconds
+    analysisPanelFadeTimeout = setTimeout(() => {
+      fadeOutAnalysisPanel();
+    }, 10000);
+  }
+}
+
+function hideAnalysisPanel() {
+  const panel = document.getElementById('analysisPanel');
+  const analysisButton = document.querySelector('[data-icon="analysis"]');
+  
   if (panel) {
     panel.style.display = 'none';
+    if (analysisPanelFadeTimeout) {
+      clearTimeout(analysisPanelFadeTimeout);
+      analysisPanelFadeTimeout = null;
+    }
     console.log('📊 Analysis panel closed');
   }
+  
+  // Reset button to default state
+  if (analysisButton && typeof PNGLoader !== 'undefined') {
+    PNGLoader.applyPNG(analysisButton, 'analysis.png');
+  }
+}
+
+function fadeOutAnalysisPanel() {
+  const panel = document.getElementById('analysisPanel');
+  if (panel && panel.style.display === 'block') {
+    // Fade out animation
+    panel.style.opacity = '0';
+    
+    // Hide after fade completes
+    setTimeout(() => {
+      panel.style.display = 'none';
+      analysisPanelFadeTimeout = null;
+      console.log('📊 Analysis panel faded out');
+    }, 1000);
+  }
+}
+
+function closeAnalysisPanel() {
+  hideAnalysisPanel();
 }
 
 function openAnalysisIframe(type) {
