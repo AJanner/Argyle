@@ -2689,6 +2689,97 @@ function setupEventListeners() {
     draggedIdea = null;
   });
 
+  // Gamepad controls
+  let gamepadConnected = false;
+  let lastGamepadState = {};
+  
+  function handleGamepadInput() {
+    const gamepads = navigator.getGamepads();
+    const gamepad = gamepads[0]; // Use first connected gamepad
+    
+    if (!gamepad) {
+      gamepadConnected = false;
+      return;
+    }
+    
+    if (!gamepadConnected) {
+      console.log('🎮 PS5 Controller connected:', gamepad.id);
+      gamepadConnected = true;
+    }
+    
+    // PS5 Controller button mapping
+    const buttons = gamepad.buttons;
+    const currentState = {};
+    
+    // Check button states
+    currentState.L1 = buttons[4].pressed; // L1
+    currentState.R1 = buttons[5].pressed; // R1
+    currentState.R2 = buttons[7].pressed; // R2
+    currentState.Triangle = buttons[3].pressed; // Triangle
+    currentState.Circle = buttons[1].pressed; // Circle
+    currentState.X = buttons[0].pressed; // X
+    currentState.Square = buttons[2].pressed; // Square
+    
+    // Handle button presses (only on press, not hold)
+    if (currentState.L1 && !lastGamepadState.L1) {
+      console.log('🎮 L1 pressed - Previous bubble');
+      previousBubble();
+    }
+    
+    if (currentState.R1 && !lastGamepadState.R1) {
+      console.log('🎮 R1 pressed - Next bubble');
+      nextBubble();
+    }
+    
+    if (currentState.R2 && !lastGamepadState.R2) {
+      console.log('🎮 R2 pressed - Striker attack');
+      if (selectedIdea && selectedIdea.shape === 'striker') {
+        triggerStrikerAttack(selectedIdea);
+      }
+    }
+    
+    if (currentState.Triangle && !lastGamepadState.Triangle) {
+      console.log('🎮 Triangle pressed - Toggle video player');
+      if (typeof toggleVideoPlayer === 'function') {
+        toggleVideoPlayer();
+      }
+    }
+    
+    if (currentState.Circle && !lastGamepadState.Circle) {
+      console.log('🎮 Circle pressed - Toggle music panel');
+      if (typeof toggleMusicPanel === 'function') {
+        toggleMusicPanel();
+      }
+    }
+    
+    if (currentState.X && !lastGamepadState.X) {
+      console.log('🎮 X pressed - Select/scroll music track');
+      handleMusicTrackSelection();
+    }
+    
+    if (currentState.Square && !lastGamepadState.Square) {
+      console.log('🎮 Square pressed - Close panels');
+      closeAllPanels();
+    }
+    
+    // Update last state
+    lastGamepadState = currentState;
+  }
+  
+  // Gamepad polling
+  setInterval(handleGamepadInput, 16); // ~60fps polling
+  
+  // Gamepad connection events
+  window.addEventListener("gamepadconnected", (e) => {
+    console.log('🎮 Gamepad connected:', e.gamepad.id);
+    gamepadConnected = true;
+  });
+  
+  window.addEventListener("gamepaddisconnected", (e) => {
+    console.log('🎮 Gamepad disconnected:', e.gamepad.id);
+    gamepadConnected = false;
+  });
+  
   // Keyboard controls
   document.addEventListener("keydown", (e) => {
     // Check if bubble panel is open - if so, don't intercept keyboard shortcuts
@@ -3084,6 +3175,86 @@ function closeAllPanels() {
   }
   
   console.log('🔒 All panels closed via ESC key');
+}
+
+// Gamepad helper functions
+function previousBubble() {
+  if (!ideas || ideas.length === 0) return;
+  
+  let currentIndex = -1;
+  if (selectedIdea) {
+    currentIndex = ideas.indexOf(selectedIdea);
+  }
+  
+  // Go to previous bubble, wrap around to end
+  let newIndex = currentIndex - 1;
+  if (newIndex < 0) {
+    newIndex = ideas.length - 1;
+  }
+  
+  selectedIdea = ideas[newIndex];
+  showPanel();
+  console.log('🎮 Switched to previous bubble:', newIndex + 1, 'of', ideas.length);
+}
+
+function nextBubble() {
+  if (!ideas || ideas.length === 0) return;
+  
+  let currentIndex = -1;
+  if (selectedIdea) {
+    currentIndex = ideas.indexOf(selectedIdea);
+  }
+  
+  // Go to next bubble, wrap around to beginning
+  let newIndex = currentIndex + 1;
+  if (newIndex >= ideas.length) {
+    newIndex = 0;
+  }
+  
+  selectedIdea = ideas[newIndex];
+  showPanel();
+  console.log('🎮 Switched to next bubble:', newIndex + 1, 'of', ideas.length);
+}
+
+function handleMusicTrackSelection() {
+  const musicPanel = document.getElementById('musicPanel');
+  const musicList = document.getElementById('musicList');
+  
+  if (!musicPanel || musicPanel.style.display === 'none') {
+    // If music panel is closed, open it
+    if (typeof toggleMusicPanel === 'function') {
+      toggleMusicPanel();
+      console.log('🎮 Opened music panel');
+    }
+    return;
+  }
+  
+  // If music panel is open, cycle through tracks
+  if (musicList) {
+    const musicItems = musicList.querySelectorAll('.music-item');
+    if (musicItems.length === 0) return;
+    
+    // Find currently playing track
+    let currentIndex = -1;
+    for (let i = 0; i < musicItems.length; i++) {
+      if (musicItems[i].classList.contains('playing')) {
+        currentIndex = i;
+        break;
+      }
+    }
+    
+    // Go to next track
+    let nextIndex = currentIndex + 1;
+    if (nextIndex >= musicItems.length) {
+      nextIndex = 0;
+    }
+    
+    // Simulate click on next track
+    if (musicItems[nextIndex]) {
+      musicItems[nextIndex].click();
+      console.log('🎮 Selected next music track:', nextIndex + 1, 'of', musicItems.length);
+    }
+  }
 }
 
 function togglePanelSide() {
