@@ -71,7 +71,7 @@
     <button onclick="saveIdeas()" title="Save .json File" class="toolbar-btn" data-icon="save">💾Save.json</button>
     <input accept=".json" id="fileLoader" style="display:none" type="file"/>
     <button onclick="document.getElementById('fileLoader').click()" title="Load .json File" class="toolbar-btn" data-icon="load">🆙 Load.json</button>
-    <button onclick="deleteAllIdeas()" oncontextmenu="location.reload(); return false;" title="Blank Canvas (Right-click to reset)" class="toolbar-btn" data-icon="clear">🚮Clear💭Ideas🗑️</button>
+    <button onclick="captureCanvasOnly()" oncontextmenu="deleteAllIdeas(); return false;" title="Snapshot (Right-click to clear canvas)" class="toolbar-btn" data-icon="clear">🚮Clear💭Ideas🗑️</button>
   </div>
 
   <!-- Media Toolbar -->
