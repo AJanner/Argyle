@@ -17,9 +17,9 @@ html, body {
   background: #111;
   opacity: 0.7;
   color: white;
-  padding: 2px 10px 10px 10px;
+  padding: 2px 0px 10px 0px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   z-index: 10001;
   transition: opacity 0.5s ease;
@@ -40,7 +40,7 @@ html, body {
   flex: 1;
   height: 100%;
   min-width: 20px;
-  max-width: 200px;
+  max-width: none;
   min-height: 20px;
   max-height: 180px;
   aspect-ratio: 1;
@@ -60,7 +60,7 @@ html, body {
   padding: 0;
   flex: 1;
   min-width: 20px;
-  max-width: 200px;
+  max-width: none;
   min-height: 20px;
   max-height: 180px;
   aspect-ratio: 1;
@@ -84,9 +84,7 @@ html, body {
 }
 
 /* Add right padding to Blank Canvas button */
-#toolbar button[onclick*="deleteAllIdeas"] {
-  margin-right: 5px;
-}
+
 
 /* ===== CANVAS STYLES ===== */
 #canvas {
@@ -322,7 +320,7 @@ html, body {
   height: 100%;
   flex: 1;
   min-width: 20px;
-  max-width: 200px;
+  max-width: none;
   min-height: 20px;
   max-height: 180px;
   aspect-ratio: 1;
