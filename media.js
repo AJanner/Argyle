@@ -886,8 +886,8 @@ function showWelcomeMessage() {
           • <kbd>X</kbd> - Select music track<br><br>
           
           <strong>Gamepad Controls (Keyboard):</strong><br>
-          • <kbd>.</kbd> - Bubble Bounce<br>
-          • <kbd>/</kbd> - Bubble Collect
+          • <kbd>?</kbd> - Bubble Bounce<br>
+          • <kbd>.</kbd> - Bubble Collect
         </div>
       `;
     }

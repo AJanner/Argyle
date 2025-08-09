@@ -3904,15 +3904,15 @@ function setupEventListeners() {
         selectedIdea.x += moveAmount;
         moved = true;
         break;
-      case ".":
-        // Period triggers striker attack
+      case "?":
+        // Question mark triggers bubble bounce (striker attack)
         if (selectedIdea.shape === 'striker') {
           triggerStrikerAttack(selectedIdea);
           e.preventDefault();
         }
         break;
-      case "/":
-        // Forward slash triggers striker capture
+      case ".":
+        // Period triggers bubble collect (striker capture)
         if (selectedIdea.shape === 'striker') {
           triggerStrikerCapture(selectedIdea);
           e.preventDefault();
