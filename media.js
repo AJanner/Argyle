@@ -891,6 +891,8 @@ window.uploadMp4Video = uploadMp4Video;
 window.playMp4Video = playMp4Video;
 window.pauseMp4Video = pauseMp4Video;
 window.stopMp4Video = stopMp4Video;
+window.playSingleYouTubeVideo = playSingleYouTubeVideo;
+window.stopSingleYouTubeVideo = stopSingleYouTubeVideo;
 
 function loadRadioStation() {
   // Show the custom radio input panel
@@ -1221,6 +1223,92 @@ function stopMp4Video() {
     }
     
     console.log('🎬 MP4 video stopped');
+  }
+}
+
+// ===== SINGLE YOUTUBE VIDEO FUNCTIONS =====
+
+// Global variables for single YouTube video handling
+let currentSingleYouTubeId = null;
+let isPlayingSingleYouTube = false;
+
+function playSingleYouTubeVideo() {
+  const urlInput = document.getElementById('singleYouTubeUrl');
+  if (!urlInput) {
+    console.log('⚠️ YouTube URL input not found');
+    return;
+  }
+
+  const url = urlInput.value.trim();
+  if (!url) {
+    alert('Please enter a YouTube URL');
+    return;
+  }
+
+  // Extract YouTube video ID
+  const videoId = extractYouTubeId(url);
+  if (!videoId) {
+    alert('Please enter a valid YouTube URL (e.g., https://www.youtube.com/watch?v=...)');
+    return;
+  }
+
+  console.log('🎥 Playing single YouTube video:', videoId);
+
+  // Stop any currently playing MP4 video
+  if (isPlayingMp4) {
+    stopMp4Video();
+    console.log('🎬 Stopped MP4 video to play single YouTube video');
+  }
+
+  const iframe = document.getElementById('videoIframe');
+  if (!iframe) {
+    console.log('⚠️ Video iframe not found');
+    return;
+  }
+
+  // Create YouTube embed URL with autoplay and loop
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=1&modestbranding=1&rel=0`;
+  
+  // Load the YouTube video in the iframe
+  iframe.src = embedUrl;
+  
+  currentSingleYouTubeId = videoId;
+  isPlayingSingleYouTube = true;
+  videoIsPlaying = true;
+  
+  // Update video button to show active state
+  const videoButton = document.querySelector('[data-icon="video"]');
+  if (videoButton && typeof PNGLoader !== 'undefined') {
+    PNGLoader.applyPNG(videoButton, 'video2.png');
+  }
+  
+  // Show video player if hidden
+  const player = document.getElementById('videoPlayer');
+  if (player && player.style.display === 'none') {
+    toggleVideoPlayer();
+  }
+  
+  // Clear the input field
+  urlInput.value = '';
+  
+  console.log('🎥 Single YouTube video started playing with loop');
+}
+
+function stopSingleYouTubeVideo() {
+  const iframe = document.getElementById('videoIframe');
+  if (iframe && isPlayingSingleYouTube) {
+    iframe.src = '';
+    isPlayingSingleYouTube = false;
+    videoIsPlaying = false;
+    currentSingleYouTubeId = null;
+    
+    // Update video button to show inactive state
+    const videoButton = document.querySelector('[data-icon="video"]');
+    if (videoButton && typeof PNGLoader !== 'undefined') {
+      PNGLoader.applyPNG(videoButton, 'video.png');
+    }
+    
+    console.log('🎥 Single YouTube video stopped');
   }
 }
 
@@ -1921,10 +2009,17 @@ async function fetchVideoTitle(videoId) {
 function videoPlayVideo(index) {
   if (index < 0 || index >= videoPlaylist.length) return;
   
-  // Stop any currently playing MP4 video when switching to YouTube video
+  // Stop any currently playing MP4 video when switching to YouTube playlist video
   if (isPlayingMp4) {
     stopMp4Video();
-    console.log('🎬 Stopped MP4 video to play YouTube video');
+    console.log('🎬 Stopped MP4 video to play YouTube playlist video');
+  }
+  
+  // Stop any currently playing single YouTube video when switching to playlist video
+  if (isPlayingSingleYouTube) {
+    isPlayingSingleYouTube = false;
+    currentSingleYouTubeId = null;
+    console.log('🎥 Stopped single YouTube video to play playlist video');
   }
   
   videoCurrentIndex = index;

@@ -203,6 +203,13 @@
       <input type="file" id="mp4Upload" accept=".mp4,video/mp4" style="display: none;" onchange="uploadMp4Video(event)"/>
       <button onclick="document.getElementById('mp4Upload').click()" style="background: linear-gradient(45deg, #FF6B6B, #EE5A52); border: none; color: black; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px;">🎬 MP4</button>
     </div>
+    <div style="margin-bottom: 10px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 5px;">
+      <label style="display: block; margin-bottom: 5px; color: gold; font-size: 12px;">🎥 YouTube URL (single video with loop):</label>
+      <div style="display: flex; gap: 5px; align-items: center;">
+        <input type="text" id="singleYouTubeUrl" placeholder="https://www.youtube.com/watch?v=..." onkeydown="if(event.key==='Enter') playSingleYouTubeVideo()" style="flex: 1; padding: 6px; border: 2px solid #FF4444; border-radius: 3px; background: rgba(0, 0, 0, 0.6); color: white; font-size: 12px; outline: none;"/>
+        <button onclick="playSingleYouTubeVideo()" style="background: linear-gradient(45deg, #FF4444, #CC3333); border: none; color: white; padding: 6px 12px; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: bold;">▶️ Play</button>
+      </div>
+    </div>
     <div id="videoPlaylistItems">
       <!-- Playlist items will be loaded here -->
     </div>
