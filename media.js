@@ -2042,9 +2042,17 @@ async function nextPlaylist() {
   
   // Loop to first playlist if at the end
   currentPlaylistIndex = (currentPlaylistIndex + 1) % uploadedPlaylists.length;
-  loadUploadedPlaylist(currentPlaylistIndex);
   
   const playlist = uploadedPlaylists[currentPlaylistIndex];
+  
+  // Update global playlist variables
+  videoPlaylist = playlist.urls;
+  videoCurrentIndex = 0;
+  videoTitles = []; // Clear cached titles for new playlist
+  
+  // Force update display using silent version to avoid flag conflicts
+  await updateVideoPlaylistDisplaySilent();
+  
   console.log(`📋 Switched to next playlist: ${playlist.name} (${playlist.urls.length} videos)`);
 }
 
@@ -2056,9 +2064,17 @@ async function previousPlaylist() {
   
   // Loop to last playlist if at the beginning
   currentPlaylistIndex = currentPlaylistIndex === 0 ? uploadedPlaylists.length - 1 : currentPlaylistIndex - 1;
-  loadUploadedPlaylist(currentPlaylistIndex);
   
   const playlist = uploadedPlaylists[currentPlaylistIndex];
+  
+  // Update global playlist variables
+  videoPlaylist = playlist.urls;
+  videoCurrentIndex = 0;
+  videoTitles = []; // Clear cached titles for new playlist
+  
+  // Force update display using silent version to avoid flag conflicts
+  await updateVideoPlaylistDisplaySilent();
+  
   console.log(`📋 Switched to previous playlist: ${playlist.name} (${playlist.urls.length} videos)`);
 }
 
@@ -2764,17 +2780,17 @@ async function toggleVideoPlayer() {
         currentPlaylistIndex = 0;
         loadUploadedPlaylist(0);
         console.log('🎥 Video player opened with pre-loaded playlist');
-      } else if (typeof loadVideoPlaylist === 'function') {
-        // Try to load playlist, but don't block the UI
-        setTimeout(() => {
-          loadVideoPlaylist().then(() => {
-            // Play first video after playlist is loaded
-            if (videoPlaylist.length > 0) {
-              videoPlayVideo(0);
-            }
-          }).catch(error => {
-            console.log('🎥 Playlist loading failed, but video player is ready');
-          });
+      } else {
+        // If no pre-loaded playlists, wait a moment and try to preload them
+        setTimeout(async () => {
+          await preloadPlaylists();
+          if (uploadedPlaylists.length > 0) {
+            currentPlaylistIndex = 0;
+            loadUploadedPlaylist(0);
+            console.log('🎥 Video player opened after delayed playlist loading');
+          } else {
+            console.log('🎥 No playlists available - video player ready for manual uploads');
+          }
         }, 100);
       }
     } else {
