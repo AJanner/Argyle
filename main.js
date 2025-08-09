@@ -1893,6 +1893,10 @@ let analysisPanelFadeTimeout = null;
 let suggestionsCooldownActive = false;
 let suggestionsCooldownTimer = null;
 
+// Ideas button cooldown
+let ideasCooldownActive = false;
+let ideasCooldownTimer = null;
+
 function toggleAnalysisPanel() {
   const panel = document.getElementById('analysisPanel');
   const analysisButton = document.querySelector('[data-icon="analysis"]');
@@ -2016,6 +2020,12 @@ function openAnalysisIframe(type) {
     return;
   }
   
+  // Check for ideas cooldown
+  if (type === 'ideas' && ideasCooldownActive) {
+    console.log('🧠 Ideas button is on cooldown');
+    return;
+  }
+  
   const container = document.getElementById('analysisIframeContainer');
   const iframe = document.getElementById('analysisIframe');
   
@@ -2026,6 +2036,11 @@ function openAnalysisIframe(type) {
       
       // Start cooldown for suggestions
       startSuggestionsCooldown();
+    } else if (type === 'ideas') {
+      iframe.src = 'https://stonehousess.github.io/Sifi/';
+      
+      // Start cooldown for ideas button
+      startIdeasCooldown();
     } else {
       iframe.src = 'https://ajanner.com';
     }
@@ -2115,6 +2130,78 @@ function endSuggestionsCooldown() {
   if (suggestionsCooldownTimer) {
     clearTimeout(suggestionsCooldownTimer);
     suggestionsCooldownTimer = null;
+  }
+}
+
+// Ideas button cooldown functions
+function startIdeasCooldown() {
+  if (ideasCooldownActive) return;
+  
+  ideasCooldownActive = true;
+  const ideasButton = document.querySelector('button[onclick*="ideas"]');
+  
+  if (ideasButton) {
+    // Visual feedback: disabled state
+    ideasButton.style.opacity = '0.5';
+    ideasButton.style.cursor = 'not-allowed';
+    ideasButton.style.background = 'linear-gradient(45deg, #666, #444)';
+    ideasButton.style.color = '#999';
+    ideasButton.disabled = true;
+    
+    // Show countdown timer
+    let countdown = 20;
+    ideasButton.innerHTML = `🧠 Ideas:<br>Cooldown: ${countdown}s`;
+    
+    const countdownInterval = setInterval(() => {
+      countdown--;
+      if (countdown > 0) {
+        ideasButton.innerHTML = `🧠 Ideas:<br>Cooldown: ${countdown}s`;
+      } else {
+        clearInterval(countdownInterval);
+      }
+    }, 1000);
+    
+    // Set cooldown timer
+    ideasCooldownTimer = setTimeout(() => {
+      endIdeasCooldown();
+      clearInterval(countdownInterval);
+    }, 20000);
+    
+    console.log('🧠 Ideas cooldown started (20 seconds)');
+  }
+}
+
+function endIdeasCooldown() {
+  ideasCooldownActive = false;
+  const ideasButton = document.querySelector('button[onclick*="ideas"]');
+  
+  if (ideasButton) {
+    // Visual feedback: enabled state
+    ideasButton.style.opacity = '1';
+    ideasButton.style.cursor = 'pointer';
+    ideasButton.style.background = 'linear-gradient(45deg, #2196F3, #1976D2)';
+    ideasButton.style.color = 'white';
+    ideasButton.disabled = false;
+    ideasButton.innerHTML = '🧠 Ideas:<br>Current: Main Site';
+    
+    // Flash effect to indicate cooldown ended
+    setTimeout(() => {
+      if (ideasButton) {
+        ideasButton.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+        setTimeout(() => {
+          if (ideasButton) {
+            ideasButton.style.background = 'linear-gradient(45deg, #2196F3, #1976D2)';
+          }
+        }, 500);
+      }
+    }, 2000);
+    
+    console.log('✅ Ideas cooldown ended');
+  }
+  
+  if (ideasCooldownTimer) {
+    clearTimeout(ideasCooldownTimer);
+    ideasCooldownTimer = null;
   }
 }
 
