@@ -891,8 +891,11 @@ window.uploadMp4Video = uploadMp4Video;
 window.playMp4Video = playMp4Video;
 window.pauseMp4Video = pauseMp4Video;
 window.stopMp4Video = stopMp4Video;
-window.playSingleYouTubeVideo = playSingleYouTubeVideo;
-window.stopSingleYouTubeVideo = stopSingleYouTubeVideo;
+window.playSingleVideoStream = playSingleVideoStream;
+window.stopSingleVideoStream = stopSingleVideoStream;
+// Keep old function names for backward compatibility
+window.playSingleYouTubeVideo = playSingleVideoStream;
+window.stopSingleYouTubeVideo = stopSingleVideoStream;
 
 function loadRadioStation() {
   // Show the custom radio input panel
@@ -1226,38 +1229,37 @@ function stopMp4Video() {
   }
 }
 
-// ===== SINGLE YOUTUBE VIDEO FUNCTIONS =====
+// ===== SINGLE VIDEO STREAM FUNCTIONS =====
 
-// Global variables for single YouTube video handling
-let currentSingleYouTubeId = null;
-let isPlayingSingleYouTube = false;
+// Global variables for single video stream handling
+let currentSingleVideoUrl = null;
+let isPlayingSingleVideo = false;
 
-function playSingleYouTubeVideo() {
-  const urlInput = document.getElementById('singleYouTubeUrl');
+function playSingleVideoStream() {
+  const urlInput = document.getElementById('singleVideoUrl');
   if (!urlInput) {
-    console.log('⚠️ YouTube URL input not found');
+    console.log('⚠️ Video URL input not found');
     return;
   }
 
   const url = urlInput.value.trim();
   if (!url) {
-    alert('Please enter a YouTube URL');
+    alert('Please enter a video URL');
     return;
   }
 
-  // Extract YouTube video ID
-  const videoId = extractYouTubeId(url);
-  if (!videoId) {
-    alert('Please enter a valid YouTube URL (e.g., https://www.youtube.com/watch?v=...)');
+  // Basic URL validation
+  if (!isValidUrl(url)) {
+    alert('Please enter a valid URL (e.g., https://example.com/video.mp4 or https://www.youtube.com/watch?v=...)');
     return;
   }
 
-  console.log('🎥 Playing single YouTube video:', videoId);
+  console.log('🎥 Playing single video stream:', url);
 
   // Stop any currently playing MP4 video
   if (isPlayingMp4) {
     stopMp4Video();
-    console.log('🎬 Stopped MP4 video to play single YouTube video');
+    console.log('🎬 Stopped MP4 video to play single video stream');
   }
 
   const iframe = document.getElementById('videoIframe');
@@ -1266,14 +1268,61 @@ function playSingleYouTubeVideo() {
     return;
   }
 
-  // Create YouTube embed URL with autoplay and loop
-  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=1&modestbranding=1&rel=0`;
+  let embedUrl;
   
-  // Load the YouTube video in the iframe
+  // Check if it's a YouTube URL
+  const videoId = extractYouTubeId(url);
+  if (videoId) {
+    // Handle YouTube videos with loop
+    embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=1&modestbranding=1&rel=0`;
+    console.log('🎥 Detected YouTube video, using embed URL');
+  } else {
+    // Handle generic video streams by creating an HTML5 video player
+    const videoHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { margin: 0; padding: 0; background: black; display: flex; justify-content: center; align-items: center; height: 100vh; }
+          video { max-width: 100%; max-height: 100%; object-fit: contain; }
+        </style>
+      </head>
+      <body>
+        <video controls autoplay loop crossorigin="anonymous">
+          <source src="${url}" type="video/mp4">
+          <source src="${url}" type="video/webm">
+          <source src="${url}" type="video/ogg">
+          <source src="${url}">
+          <p>Your browser doesn't support HTML5 video. <a href="${url}">Download the video</a> instead.</p>
+        </video>
+        <script>
+          const video = document.querySelector('video');
+          video.addEventListener('loadstart', () => {
+            console.log('🎥 Video loading started');
+          });
+          video.addEventListener('error', (e) => {
+            console.error('🎥 Video error:', e);
+            document.body.innerHTML = '<div style="color: white; text-align: center; padding: 20px;">Error loading video stream. Please check the URL and try again.</div>';
+          });
+          video.addEventListener('canplay', () => {
+            console.log('🎥 Video ready to play');
+          });
+        </script>
+      </body>
+      </html>
+    `;
+    
+    // Create blob URL for the HTML content
+    const blob = new Blob([videoHtml], { type: 'text/html' });
+    embedUrl = URL.createObjectURL(blob);
+    console.log('🎥 Created HTML5 video player for generic stream');
+  }
+  
+  // Load the video in the iframe
   iframe.src = embedUrl;
   
-  currentSingleYouTubeId = videoId;
-  isPlayingSingleYouTube = true;
+  currentSingleVideoUrl = url;
+  isPlayingSingleVideo = true;
   videoIsPlaying = true;
   
   // Update video button to show active state
@@ -1291,16 +1340,21 @@ function playSingleYouTubeVideo() {
   // Clear the input field
   urlInput.value = '';
   
-  console.log('🎥 Single YouTube video started playing with loop');
+  console.log('🎥 Single video stream started playing with loop');
 }
 
-function stopSingleYouTubeVideo() {
+function stopSingleVideoStream() {
   const iframe = document.getElementById('videoIframe');
-  if (iframe && isPlayingSingleYouTube) {
+  if (iframe && isPlayingSingleVideo) {
+    // If it was a blob URL, revoke it to free memory
+    if (iframe.src.startsWith('blob:')) {
+      URL.revokeObjectURL(iframe.src);
+    }
+    
     iframe.src = '';
-    isPlayingSingleYouTube = false;
+    isPlayingSingleVideo = false;
     videoIsPlaying = false;
-    currentSingleYouTubeId = null;
+    currentSingleVideoUrl = null;
     
     // Update video button to show inactive state
     const videoButton = document.querySelector('[data-icon="video"]');
@@ -1308,7 +1362,17 @@ function stopSingleYouTubeVideo() {
       PNGLoader.applyPNG(videoButton, 'video.png');
     }
     
-    console.log('🎥 Single YouTube video stopped');
+    console.log('🎥 Single video stream stopped');
+  }
+}
+
+// Helper function to validate URLs
+function isValidUrl(string) {
+  try {
+    const url = new URL(string);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch (_) {
+    return false;
   }
 }
 
@@ -2015,11 +2079,10 @@ function videoPlayVideo(index) {
     console.log('🎬 Stopped MP4 video to play YouTube playlist video');
   }
   
-  // Stop any currently playing single YouTube video when switching to playlist video
-  if (isPlayingSingleYouTube) {
-    isPlayingSingleYouTube = false;
-    currentSingleYouTubeId = null;
-    console.log('🎥 Stopped single YouTube video to play playlist video');
+  // Stop any currently playing single video stream when switching to playlist video
+  if (isPlayingSingleVideo) {
+    stopSingleVideoStream();
+    console.log('🎥 Stopped single video stream to play playlist video');
   }
   
   videoCurrentIndex = index;

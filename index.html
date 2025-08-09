@@ -199,15 +199,13 @@
       <button onclick="uploadPlaylist()" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: none; color: black; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px;">📤 Upload</button>
       <button onclick="previousPlaylist()" style="background: linear-gradient(45deg, #FF9800, #F57C00); border: none; color: black; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px;">◀️</button>
       <button onclick="nextPlaylist()" style="background: linear-gradient(45deg, #2196F3, #1976D2); border: none; color: black; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px;">▶️</button>
-      <button onclick="playRandomVideo()" style="background: linear-gradient(45deg, #9C27B0, #7B1FA2); border: none; color: black; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px;">🔄</button>
-      <input type="file" id="mp4Upload" accept=".mp4,video/mp4" style="display: none;" onchange="uploadMp4Video(event)"/>
-      <button onclick="document.getElementById('mp4Upload').click()" style="background: linear-gradient(45deg, #FF6B6B, #EE5A52); border: none; color: black; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px;">🎬 ▵</button>
+      <button onclick="playRandomVideo()" style="background: linear-gradient(45deg, #9C27B0, #7B1FA2); border: none; color: black; padding: 5px 10px; border-radius: 3px 0px 0px 3px; cursor: pointer; font-size: 12px; margin-left: 5px;">🔄</button><input type="file" id="mp4Upload" accept=".mp4,video/mp4" style="display: none;" onchange="uploadMp4Video(event)"/><button onclick="document.getElementById('mp4Upload').click()" style="background: linear-gradient(45deg, #FF6B6B, #EE5A52); border: none; color: black; padding: 5px 10px; border-radius: 0px 3px 3px 0px; cursor: pointer; font-size: 12px;">🀄️</button>
     </div>
     <div style="margin-bottom: 10px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 5px;">
-      <label style="display: block; margin-bottom: 5px; color: gold; font-size: 12px;">🎥 YouTube URL (single video with loop):</label>
+      <label style="display: block; margin-bottom: 5px; color: gold; font-size: 12px;">🎥 Video Stream URL (YouTube or any web video with loop):</label>
       <div style="display: flex; gap: 5px; align-items: center;">
-        <input type="text" id="singleYouTubeUrl" placeholder="https://www.youtube.com/watch?v=..." onkeydown="if(event.key==='Enter') playSingleYouTubeVideo()" style="flex: 1; padding: 6px; border: 2px solid #FF4444; border-radius: 3px; background: rgba(0, 0, 0, 0.6); color: white; font-size: 12px; outline: none;"/>
-        <button onclick="playSingleYouTubeVideo()" style="background: linear-gradient(45deg, #FF4444, #CC3333); border: none; color: white; padding: 6px 12px; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: bold;">▶️ Play</button>
+        <input type="text" id="singleVideoUrl" placeholder="https://www.youtube.com/watch?v=... or any video stream URL" onkeydown="if(event.key==='Enter') playSingleVideoStream()" style="flex: 1; padding: 6px; border: 2px solid #FF4444; border-radius: 3px; background: rgba(0, 0, 0, 0.6); color: white; font-size: 12px; outline: none;"/>
+        <button onclick="playSingleVideoStream()" style="background: linear-gradient(45deg, #FF4444, #CC3333); border: none; color: white; padding: 6px 12px; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: bold;">▶️ Play</button>
       </div>
     </div>
     <div id="videoPlaylistItems">

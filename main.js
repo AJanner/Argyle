@@ -3811,11 +3811,11 @@ function setupEventListeners() {
         return;
       case "v":
       case "V":
-        // V opens video playlist
-        if (typeof videoTogglePlaylist === 'function') {
+        // V opens video playlist (but not when Ctrl+V or Cmd+V for paste)
+        if (!e.ctrlKey && !e.metaKey && typeof videoTogglePlaylist === 'function') {
           videoTogglePlaylist();
+          e.preventDefault();
         }
-        e.preventDefault();
         return;
       case "m":
       case "M":
