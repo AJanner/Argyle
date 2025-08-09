@@ -136,6 +136,26 @@ function drawShape(ctx, shape, x, y, radius, heightRatio = 1.0, rotation = 0) {
       ctx.ellipse(0, 0, width, height, 0, 0, Math.PI * 2);
       break;
       
+    case 'goal':
+      // Goal is drawn as a 2:1 rectangle
+      ctx.beginPath();
+      const goalWidth = radius * 2; // 2:1 ratio
+      const goalHeight = radius;
+      ctx.rect(-goalWidth/2, -goalHeight/2, goalWidth, goalHeight);
+      break;
+      
+    case 'ball':
+      // Ball is drawn as a circle (like a football/soccer ball)
+      ctx.beginPath();
+      ctx.ellipse(0, 0, width, height, 0, 0, Math.PI * 2);
+      break;
+      
+    case 'puck':
+      // Puck is drawn as a circle (like a hockey puck)
+      ctx.beginPath();
+      ctx.ellipse(0, 0, width, height, 0, 0, Math.PI * 2);
+      break;
+      
     default:
       // Default to circle
       ctx.beginPath();
@@ -742,7 +762,14 @@ function clearDrawingOnly() {
       if (a.flash) {
         ctx.globalAlpha = 0.5 + 0.5 * Math.sin(Date.now() / 100);
         ctx.beginPath();
-        ctx.arc(0, 0, a.radius, 0, Math.PI * 2);
+        if (a.shape === 'goal') {
+          // Rectangular flash for goals
+          const goalWidth = a.radius * 2;
+          const goalHeight = a.radius;
+          ctx.rect(-goalWidth/2, -goalHeight/2, goalWidth, goalHeight);
+        } else {
+          ctx.arc(0, 0, a.radius, 0, Math.PI * 2);
+        }
         ctx.strokeStyle = "white";
         ctx.lineWidth = 3;
         ctx.stroke();
@@ -755,7 +782,14 @@ function clearDrawingOnly() {
         ctx.shadowColor = glowColor;
         ctx.shadowBlur = 25;
         ctx.beginPath();
-        ctx.arc(0, 0, a.radius + 3, 0, Math.PI * 2);
+        if (a.shape === 'goal') {
+          // Rectangular glow for goals
+          const goalWidth = a.radius * 2;
+          const goalHeight = a.radius;
+          ctx.rect(-goalWidth/2 - 3, -goalHeight/2 - 3, goalWidth + 6, goalHeight + 6);
+        } else {
+          ctx.arc(0, 0, a.radius + 3, 0, Math.PI * 2);
+        }
         ctx.strokeStyle = glowColor;
         ctx.lineWidth = 2;
         ctx.stroke();
@@ -763,7 +797,14 @@ function clearDrawingOnly() {
         ctx.globalAlpha = 0.4;
         ctx.shadowBlur = 15;
         ctx.beginPath();
-        ctx.arc(0, 0, a.radius + 5, 0, Math.PI * 2);
+        if (a.shape === 'goal') {
+          // Outer rectangular glow for goals
+          const goalWidth = a.radius * 2;
+          const goalHeight = a.radius;
+          ctx.rect(-goalWidth/2 - 5, -goalHeight/2 - 5, goalWidth + 10, goalHeight + 10);
+        } else {
+          ctx.arc(0, 0, a.radius + 5, 0, Math.PI * 2);
+        }
         ctx.strokeStyle = glowColor;
         ctx.lineWidth = 1;
         ctx.stroke();
@@ -2094,13 +2135,17 @@ function addIdea(x, y, title = "", description = "", color = randomColor(), text
   const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD format
   const timeString = now.toTimeString().split(' ')[0]; // HH:MM:SS format
   
+  // Generate initial velocity
+  let vx = (Math.random() * 2 - 1) * maxSpeed;
+  let vy = (Math.random() * 2 - 1) * maxSpeed;
+  
   ideas.push({ 
     title, 
     description, 
     x, 
     y, 
-    vx: (Math.random() * 2 - 1) * maxSpeed, 
-    vy: (Math.random() * 2 - 1) * maxSpeed, 
+    vx, 
+    vy, 
     color: bubbleColor, 
     textColor, 
     radius, 
@@ -2117,7 +2162,14 @@ function addIdea(x, y, title = "", description = "", color = randomColor(), text
     showPauseBorder: false,
     strikerVelocity: 5,
     createdDate: dateString,
-    createdTime: timeString
+    createdTime: timeString,
+    // Goal properties
+    goals: 0,
+    flashUntil: 0,
+    goalCooldown: 0, // 5-second cooldown between goals
+    // Ball properties
+    ballVelocityBoost: 0,
+    ballVelocityDecay: 0
   });
   
   console.log("🆕 New bubble created with color:", bubbleColor, "at", dateString, timeString);
@@ -2215,7 +2267,14 @@ function switchPreset(presetKey) {
     heightRatio: idea.heightRatio || 1.0,
     showPauseBorder: idea.showPauseBorder || false,
     createdDate: idea.createdDate || new Date().toISOString().split('T')[0],
-    createdTime: idea.createdTime || new Date().toTimeString().split(' ')[0]
+    createdTime: idea.createdTime || new Date().toTimeString().split(' ')[0],
+    // Goal properties
+    goals: idea.goals || 0,
+    flashUntil: idea.flashUntil || 0,
+    goalCooldown: idea.goalCooldown || 0,
+    // Ball properties
+    ballVelocityBoost: idea.ballVelocityBoost || 0,
+    ballVelocityDecay: idea.ballVelocityDecay || 0
   }));
   
   // Auto-focus on the last (most recently added) bubble
@@ -2891,13 +2950,66 @@ function draw() {
       a.x += a.vx * actualSpeed;
       a.y += a.vy * actualSpeed;
     }
+    
+    // Ball physics - removed velocity boost/decay system for steady play
 
     // Boundary bounce (skip if captured)
     if (!a.static && !a.attachedTo) {
-      if (a.x - a.radius < border) { a.x = border + a.radius; a.vx *= -1; }
-      if (a.x + a.radius > width - border) { a.x = width - border - a.radius; a.vx *= -1; }
-      if (a.y - a.radius < border + 50) { a.y = border + 50 + a.radius; a.vy *= -1; }
-      if (a.y + a.radius > height - border) { a.y = height - border - a.radius; a.vy *= -1; }
+      // Ball physics for pitch boundaries (no energy loss, clean bounces)
+      if (a.shape === 'ball') {
+        // Perfect bounces off pitch boundaries
+        if (a.x - a.radius < border) { 
+          a.x = border + a.radius; 
+          a.vx *= -1; // Perfect reflection
+        }
+        if (a.x + a.radius > width - border) { 
+          a.x = width - border - a.radius; 
+          a.vx *= -1; // Perfect reflection
+        }
+        if (a.y - a.radius < border + 50) { 
+          a.y = border + 50 + a.radius; 
+          a.vy *= -1; // Perfect reflection
+        }
+        if (a.y + a.radius > height - border) { 
+          a.y = height - border - a.radius; 
+          a.vy *= -1; // Perfect reflection
+        }
+      } else {
+        // Normal bouncing for other shapes
+        if (a.x - a.radius < border) { a.x = border + a.radius; a.vx *= -1; }
+        if (a.x + a.radius > width - border) { a.x = width - border - a.radius; a.vx *= -1; }
+        if (a.y - a.radius < border + 50) { a.y = border + 50 + a.radius; a.vy *= -1; }
+        if (a.y + a.radius > height - border) { a.y = height - border - a.radius; a.vy *= -1; }
+      }
+    }
+    
+    // Ball-specific physics: maintain steady velocity on the pitch
+    if (a.shape === 'ball' && !a.static && !a.attachedTo) {
+      // Very minimal air resistance to maintain steady movement
+      const airResistance = 0.999; // Minimal friction on the pitch
+      a.vx *= airResistance;
+      a.vy *= airResistance;
+      
+      // NO GRAVITY - this is a bird's-eye view of a pitch
+      
+      // Maintain steady velocity to keep ball moving around the pitch
+      const minVelocity = 1.0; // Higher minimum to keep ball active
+      const maxVelocity = 8.0; // Cap maximum speed for playability
+      const currentSpeed = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
+      
+      if (currentSpeed < minVelocity && currentSpeed > 0.1) {
+        // Boost to minimum velocity if too slow
+        const normalizedVx = a.vx / currentSpeed;
+        const normalizedVy = a.vy / currentSpeed;
+        a.vx = normalizedVx * minVelocity;
+        a.vy = normalizedVy * minVelocity;
+      } else if (currentSpeed > maxVelocity) {
+        // Cap maximum velocity
+        const normalizedVx = a.vx / currentSpeed;
+        const normalizedVy = a.vy / currentSpeed;
+        a.vx = normalizedVx * maxVelocity;
+        a.vy = normalizedVy * maxVelocity;
+      }
     }
 
     // Striker capture proximity check (separate from collision detection)
@@ -3045,6 +3157,124 @@ function draw() {
       }
     }
     
+    // Ball-Goal collision detection (check before general collisions)
+    if (a.shape === 'ball' && !a.attachedTo) {
+      for (let j = 0; j < ideas.length; j++) {
+        const goal = ideas[j];
+        if (goal.shape === 'goal' && goal !== a) {
+          // For Goal (rectangle), use more complex collision detection
+          const ballCenterX = a.x;
+          const ballCenterY = a.y;
+          const ballRadius = a.radius;
+          
+          // Goal dimensions (2:1 ratio)
+          const goalWidth = goal.radius * 2;
+          const goalHeight = goal.radius;
+          const goalLeft = goal.x - goalWidth/2;
+          const goalRight = goal.x + goalWidth/2;
+          const goalTop = goal.y - goalHeight/2;
+          const goalBottom = goal.y + goalHeight/2;
+          
+          // Check if ball collides with goal rectangle
+          const closestX = Math.max(goalLeft, Math.min(ballCenterX, goalRight));
+          const closestY = Math.max(goalTop, Math.min(ballCenterY, goalBottom));
+          const distanceX = ballCenterX - closestX;
+          const distanceY = ballCenterY - closestY;
+          const distanceSquared = distanceX * distanceX + distanceY * distanceY;
+          
+          if (distanceSquared < ballRadius * ballRadius) {
+            // Check cooldown - only score if not in cooldown
+            const now = Date.now();
+            if (now > goal.goalCooldown) {
+              // GOAL SCORED!
+              goal.goals += 1;
+              goal.flashUntil = now + 500; // Flash for 500ms
+              goal.goalCooldown = now + 5000; // 5-second cooldown
+              
+              console.log(`⚽ GOAL! Ball hit Goal. Total goals: ${goal.goals}`);
+            }
+            
+            // Ball bounces off goal maintaining velocity (regardless of cooldown)
+            // Reverse ball direction based on collision side
+            if (Math.abs(distanceX) > Math.abs(distanceY)) {
+              a.vx *= -1; // Hit side of goal
+            } else {
+              a.vy *= -1; // Hit top/bottom of goal
+            }
+            
+            // Ensure ball maintains good velocity after goal
+            const currentSpeed = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
+            if (currentSpeed < 2.0) {
+              // Give ball a good velocity if it was too slow
+              const normalizedVx = a.vx / currentSpeed;
+              const normalizedVy = a.vy / currentSpeed;
+              a.vx = normalizedVx * 2.0;
+              a.vy = normalizedVy * 2.0;
+            }
+          }
+        }
+      }
+    }
+    
+    // Puck-Goal collision detection (same as Ball-Goal but for Pucks)
+    if (a.shape === 'puck' && !a.attachedTo) {
+      for (let j = 0; j < ideas.length; j++) {
+        const goal = ideas[j];
+        if (goal.shape === 'goal' && goal !== a) {
+          // For Goal (rectangle), use rectangle-circle collision detection
+          const puckCenterX = a.x;
+          const puckCenterY = a.y;
+          const puckRadius = a.radius;
+          
+          // Goal dimensions (2:1 ratio)
+          const goalWidth = goal.radius * 2;
+          const goalHeight = goal.radius;
+          const goalLeft = goal.x - goalWidth/2;
+          const goalRight = goal.x + goalWidth/2;
+          const goalTop = goal.y - goalHeight/2;
+          const goalBottom = goal.y + goalHeight/2;
+          
+          // Check if puck collides with goal rectangle
+          const closestX = Math.max(goalLeft, Math.min(puckCenterX, goalRight));
+          const closestY = Math.max(goalTop, Math.min(puckCenterY, goalBottom));
+          const distanceX = puckCenterX - closestX;
+          const distanceY = puckCenterY - closestY;
+          const distanceSquared = distanceX * distanceX + distanceY * distanceY;
+          
+          if (distanceSquared < puckRadius * puckRadius) {
+            // Check cooldown - only score if not in cooldown
+            const now = Date.now();
+            if (now > goal.goalCooldown) {
+              // GOAL SCORED!
+              goal.goals += 1;
+              goal.flashUntil = now + 500; // Flash for 500ms
+              goal.goalCooldown = now + 5000; // 5-second cooldown
+              
+              console.log(`🏒 GOAL! Puck hit Goal. Total goals: ${goal.goals}`);
+            }
+            
+            // Puck bounces off goal maintaining velocity (regardless of cooldown)
+            // Reverse puck direction based on collision side
+            if (Math.abs(distanceX) > Math.abs(distanceY)) {
+              a.vx *= -1; // Hit side of goal
+            } else {
+              a.vy *= -1; // Hit top/bottom of goal
+            }
+            
+            // Ensure puck maintains good velocity after goal
+            const currentSpeed = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
+            if (currentSpeed < 2.0) {
+              // Give puck a good velocity if it was too slow
+              const normalizedVx = a.vx / currentSpeed;
+              const normalizedVy = a.vy / currentSpeed;
+              a.vx = normalizedVx * 2.0;
+              a.vy = normalizedVy * 2.0;
+            }
+          }
+        }
+      }
+    }
+    
     // Collision detection (skip if captured)
     if (!a.attachedTo) {
       for (let j = i + 1; j < ideas.length; j++) {
@@ -3084,12 +3314,79 @@ function draw() {
             a.vx *= -1;
             a.vy *= -1;
           } else {
-            const tx = a.x - Math.cos(angle) * (a.radius + b.radius);
-            const ty = a.y - Math.sin(angle) * (a.radius + b.radius);
-            b.x = tx;
-            b.y = ty;
-            [a.vx, b.vx] = [b.vx, a.vx];
-            [a.vy, b.vy] = [b.vy, a.vy];
+            // Special Ball-to-Ball collision physics - stronger velocity wins
+            if (a.shape === 'ball' && b.shape === 'ball') {
+              const tx = a.x - Math.cos(angle) * (a.radius + b.radius);
+              const ty = a.y - Math.sin(angle) * (a.radius + b.radius);
+              b.x = tx;
+              b.y = ty;
+              
+              // Calculate current speeds
+              const speedA = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
+              const speedB = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+              
+              // The stronger (faster) ball dominates the collision
+              if (speedA > speedB) {
+                // Ball A is faster - B takes on A's velocity direction with A's speed
+                const directionA = Math.atan2(a.vy, a.vx);
+                b.vx = Math.cos(directionA) * speedA * 0.8; // 80% of A's speed
+                b.vy = Math.sin(directionA) * speedA * 0.8;
+                // A maintains most of its velocity but deflects slightly
+                a.vx *= 0.9;
+                a.vy *= 0.9;
+              } else if (speedB > speedA) {
+                // Ball B is faster - A takes on B's velocity direction with B's speed
+                const directionB = Math.atan2(b.vy, b.vx);
+                a.vx = Math.cos(directionB) * speedB * 0.8; // 80% of B's speed
+                a.vy = Math.sin(directionB) * speedB * 0.8;
+                // B maintains most of its velocity but deflects slightly
+                b.vx *= 0.9;
+                b.vy *= 0.9;
+              } else {
+                // Similar speeds - exchange velocities with slight variation
+                [a.vx, b.vx] = [b.vx, a.vx];
+                [a.vy, b.vy] = [b.vy, a.vy];
+              }
+              
+              console.log('⚽ Ball-to-Ball collision - stronger velocity dominates!');
+            } else if (a.shape === 'ball' || b.shape === 'ball') {
+              // Ball colliding with other shapes - ball takes stronger velocity
+              const tx = a.x - Math.cos(angle) * (a.radius + b.radius);
+              const ty = a.y - Math.sin(angle) * (a.radius + b.radius);
+              b.x = tx;
+              b.y = ty;
+              
+              const speedA = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
+              const speedB = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+              
+              if (a.shape === 'ball') {
+                // Ball A takes the stronger velocity
+                if (speedB > speedA) {
+                  a.vx = b.vx;
+                  a.vy = b.vy;
+                }
+                // Other shape gets pushed away
+                b.vx = a.vx * 0.5;
+                b.vy = a.vy * 0.5;
+              } else if (b.shape === 'ball') {
+                // Ball B takes the stronger velocity
+                if (speedA > speedB) {
+                  b.vx = a.vx;
+                  b.vy = a.vy;
+                }
+                // Other shape gets pushed away
+                a.vx = b.vx * 0.5;
+                a.vy = b.vy * 0.5;
+              }
+            } else {
+              // Normal collision for non-ball shapes
+              const tx = a.x - Math.cos(angle) * (a.radius + b.radius);
+              const ty = a.y - Math.sin(angle) * (a.radius + b.radius);
+              b.x = tx;
+              b.y = ty;
+              [a.vx, b.vx] = [b.vx, a.vx];
+              [a.vy, b.vy] = [b.vy, a.vy];
+            }
           }
         }
       }
@@ -3224,7 +3521,14 @@ function draw() {
       if (a.flash) {
         ctx.globalAlpha = 0.5 + 0.5 * Math.sin(Date.now() / 100);
         ctx.beginPath();
-        ctx.arc(0, 0, a.radius, 0, Math.PI * 2);
+        if (a.shape === 'goal') {
+          // Rectangular flash for goals
+          const goalWidth = a.radius * 2;
+          const goalHeight = a.radius;
+          ctx.rect(-goalWidth/2, -goalHeight/2, goalWidth, goalHeight);
+        } else {
+          ctx.arc(0, 0, a.radius, 0, Math.PI * 2);
+        }
         ctx.strokeStyle = "white";
         ctx.lineWidth = 3;
         ctx.stroke();
@@ -3237,7 +3541,14 @@ function draw() {
         ctx.shadowColor = glowColor;
         ctx.shadowBlur = 25;
         ctx.beginPath();
-        ctx.arc(0, 0, a.radius + 3, 0, Math.PI * 2);
+        if (a.shape === 'goal') {
+          // Rectangular glow for goals
+          const goalWidth = a.radius * 2;
+          const goalHeight = a.radius;
+          ctx.rect(-goalWidth/2 - 3, -goalHeight/2 - 3, goalWidth + 6, goalHeight + 6);
+        } else {
+          ctx.arc(0, 0, a.radius + 3, 0, Math.PI * 2);
+        }
         ctx.strokeStyle = glowColor;
         ctx.lineWidth = 2;
         ctx.stroke();
@@ -3245,7 +3556,14 @@ function draw() {
         ctx.globalAlpha = 0.4;
         ctx.shadowBlur = 15;
         ctx.beginPath();
-        ctx.arc(0, 0, a.radius + 5, 0, Math.PI * 2);
+        if (a.shape === 'goal') {
+          // Outer rectangular glow for goals
+          const goalWidth = a.radius * 2;
+          const goalHeight = a.radius;
+          ctx.rect(-goalWidth/2 - 5, -goalHeight/2 - 5, goalWidth + 10, goalHeight + 10);
+        } else {
+          ctx.arc(0, 0, a.radius + 5, 0, Math.PI * 2);
+        }
         ctx.strokeStyle = glowColor;
         ctx.lineWidth = 1;
         ctx.stroke();
@@ -3269,7 +3587,57 @@ function draw() {
     words.forEach((word, idx) => {
       ctx.fillText(word, 0, idx * lineHeight - (words.length - 1) * (lineHeight / 2));
     });
+    
+    // For Goal bubbles, show goals count
+    if (a.shape === 'goal') {
+      const goalsText = `Goals: ${a.goals || 0}`;
+      
+      // Special styling for goals count
+      if (a.flashUntil > Date.now()) {
+        // Flash the goals text when scoring
+        const flashIntensity = 0.5 + 0.5 * Math.sin(Date.now() / 100);
+        ctx.fillStyle = `rgba(255, 215, 0, ${flashIntensity})`; // Gold flash
+      } else {
+        ctx.fillStyle = "#FFD700"; // Gold for goals count
+      }
+      ctx.font = `bold ${fontSize + 2}px ${a.font || "Tahoma"}`;
+      ctx.fillText(goalsText, 0, fontSize + 8);
+    }
+    
     ctx.restore();
+    
+    // Goal flash border effect when goals are scored
+    if (a.shape === 'goal' && a.flashUntil > Date.now()) {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      if (a.rotation) {
+        ctx.rotate((a.rotation * Math.PI) / 180);
+      }
+      
+      // Flash effect - pulsing bright border
+      const flashIntensity = 0.5 + 0.5 * Math.sin(Date.now() / 50); // Fast pulse
+      ctx.globalAlpha = flashIntensity;
+      ctx.strokeStyle = "#FFD700"; // Gold color for goal flash
+      ctx.lineWidth = 6;
+      ctx.setLineDash([]);
+      
+      // Draw flashing border around goal rectangle
+      const goalWidth = a.radius * 2;
+      const goalHeight = a.radius;
+      ctx.beginPath();
+      ctx.rect(-goalWidth/2, -goalHeight/2, goalWidth, goalHeight);
+      ctx.stroke();
+      
+      // Add inner flash
+      ctx.strokeStyle = "#FFFFFF"; // White inner flash
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = flashIntensity * 0.7;
+      ctx.beginPath();
+      ctx.rect(-goalWidth/2 + 3, -goalHeight/2 + 3, goalWidth - 6, goalHeight - 6);
+      ctx.stroke();
+      
+      ctx.restore();
+    }
     
     // Checkered border for glowing bubbles
     if (a.glow && a.showPauseBorder) {
@@ -3980,7 +4348,13 @@ function setupEventListeners() {
           heightRatio: idea.heightRatio || 1.0,
           showPauseBorder: idea.showPauseBorder || false,
           createdDate: idea.createdDate || new Date().toISOString().split('T')[0],
-          createdTime: idea.createdTime || new Date().toTimeString().split(' ')[0]
+          createdTime: idea.createdTime || new Date().toTimeString().split(' ')[0],
+          // Goal properties
+          goals: idea.goals || 0,
+          flashUntil: idea.flashUntil || 0,
+          // Ball properties
+          ballVelocityBoost: idea.ballVelocityBoost || 0,
+          ballVelocityDecay: idea.ballVelocityDecay || 0
         }));
 
         movementDelayActive = true;
