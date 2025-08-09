@@ -2743,15 +2743,51 @@ async function updateVideoPlaylistDisplaySilent() {
     }
   }
   
-  // Update the playing indicator without rebuilding the entire list
-  const items = playlistContainer.querySelectorAll('.playlist-item');
-  items.forEach((item, index) => {
+  // Rebuild the entire playlist items list to reflect the current playlist
+  console.log('📋 Video Updating playlist display (silent) with', videoPlaylist.length, 'videos');
+  playlistContainer.innerHTML = '';
+  
+  for (let index = 0; index < videoPlaylist.length; index++) {
+    const url = videoPlaylist[index];
+    const item = document.createElement('div');
+    item.className = 'playlist-item';
+    
+    // Get video ID and title
+    const videoId = extractYouTubeId(url);
+    let title = videoTitles[index];
+    
+    // If title not cached, fetch it (but only if we haven't already tried)
+    if (!title && videoId && !videoTitles[index]) {
+      try {
+        title = await fetchVideoTitle(videoId);
+        if (title) {
+          videoTitles[index] = title;
+        } else {
+          // Mark as attempted to avoid repeated failed requests
+          videoTitles[index] = null;
+        }
+      } catch (error) {
+        console.error('❌ Error fetching video title:', error);
+        // Mark as attempted to avoid repeated failed requests
+        videoTitles[index] = null;
+      }
+    }
+    
+    // Use title if available, otherwise fall back to ID
+    const displayText = title ? title : (videoId ? `Video ${index + 1} (${videoId})` : `Video ${index + 1} (Invalid URL)`);
+    item.textContent = displayText;
+    
+    item.onclick = () => {
+      console.log('📋 Video Clicked playlist item:', index, 'Title:', title || 'Unknown', 'URL:', url);
+      videoPlayVideo(index);
+      showVideoPlaylist(); // Show playlist when clicking
+    };
+    
     if (index === videoCurrentIndex) {
       item.classList.add('playing');
-    } else {
-      item.classList.remove('playing');
     }
-  });
+    playlistContainer.appendChild(item);
+  }
   
   console.log('📋 Video Playlist display updated (silent)');
 }
