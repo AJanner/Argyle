@@ -2076,8 +2076,19 @@ async function nextPlaylist() {
     return;
   }
   
-  // Loop to first playlist if at the end
-  currentPlaylistIndex = (currentPlaylistIndex + 1) % uploadedPlaylists.length;
+  console.log(`📋 Before next: currentPlaylistIndex = ${currentPlaylistIndex}, total playlists = ${uploadedPlaylists.length}`);
+  
+  // Initialize index if it's invalid
+  if (currentPlaylistIndex < 0 || currentPlaylistIndex >= uploadedPlaylists.length) {
+    currentPlaylistIndex = 0;
+    console.log('📋 Initialized currentPlaylistIndex to 0');
+  }
+  
+  // Loop to next playlist
+  const newIndex = (currentPlaylistIndex + 1) % uploadedPlaylists.length;
+  currentPlaylistIndex = newIndex;
+  
+  console.log(`📋 After next: currentPlaylistIndex = ${currentPlaylistIndex}`);
   
   const playlist = uploadedPlaylists[currentPlaylistIndex];
   
@@ -2098,8 +2109,19 @@ async function previousPlaylist() {
     return;
   }
   
-  // Loop to last playlist if at the beginning
-  currentPlaylistIndex = currentPlaylistIndex === 0 ? uploadedPlaylists.length - 1 : currentPlaylistIndex - 1;
+  console.log(`📋 Before previous: currentPlaylistIndex = ${currentPlaylistIndex}, total playlists = ${uploadedPlaylists.length}`);
+  
+  // Initialize index if it's invalid
+  if (currentPlaylistIndex < 0 || currentPlaylistIndex >= uploadedPlaylists.length) {
+    currentPlaylistIndex = 0;
+    console.log('📋 Initialized currentPlaylistIndex to 0');
+  }
+  
+  // Loop to previous playlist
+  const newIndex = currentPlaylistIndex === 0 ? uploadedPlaylists.length - 1 : currentPlaylistIndex - 1;
+  currentPlaylistIndex = newIndex;
+  
+  console.log(`📋 After previous: currentPlaylistIndex = ${currentPlaylistIndex}`);
   
   const playlist = uploadedPlaylists[currentPlaylistIndex];
   
@@ -2130,13 +2152,18 @@ function loadUploadedPlaylist(index) {
   
   const playlist = uploadedPlaylists[index];
   
+  // Update current playlist index to match what we're loading
+  currentPlaylistIndex = index;
+  
   // Update global playlist variables
   videoPlaylist = playlist.urls;
   videoCurrentIndex = 0;
   videoTitles = []; // Clear cached titles for new playlist
   
-  // Update display once
-  if (typeof updateVideoPlaylistDisplay === 'function') {
+  // Update display once using silent version to avoid conflicts
+  if (typeof updateVideoPlaylistDisplaySilent === 'function') {
+    updateVideoPlaylistDisplaySilent();
+  } else if (typeof updateVideoPlaylistDisplay === 'function') {
     updateVideoPlaylistDisplay();
   }
   
@@ -2145,7 +2172,7 @@ function loadUploadedPlaylist(index) {
     videoPlayVideo(0);
   }
   
-  console.log(`🔄 Loaded uploaded playlist: ${playlist.name} with ${playlist.urls.length} videos`);
+  console.log(`🔄 Loaded uploaded playlist: ${playlist.name} with ${playlist.urls.length} videos (index: ${index})`);
 }
 
 // ===== VIDEO PLAYER FUNCTIONS =====
