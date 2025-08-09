@@ -525,15 +525,23 @@ function playMusicFromPlaylist(index) {
       // For radio streams, we need to pass the index to maintain highlighting
       playRadioStreamFromPlaylist(track.url, index);
       console.log(`📻 Playing radio stream ${index + 1}/${musicPlaylist.length}: ${track.title}`);
-      // Start visualizer for radio streams
+      // Start visualizer for radio streams with 1 second delay
       isMusicPlaying = true;
-      startMusicVisualizer();
+      setTimeout(() => {
+        if (isMusicPlaying) {
+          startMusicVisualizer();
+        }
+      }, 1000);
     } else {
       playMusic(track.url);
       console.log(`🎵 Playing track ${index + 1}/${musicPlaylist.length}: ${track.title}`);
-      // Start visualizer for any music playback
+      // Start visualizer for any music playback with 1 second delay
       isMusicPlaying = true;
-      startMusicVisualizer();
+      setTimeout(() => {
+        if (isMusicPlaying) {
+          startMusicVisualizer();
+        }
+      }, 1000);
     }
   }
 }
@@ -596,9 +604,13 @@ function playRadioStream(radioUrl) {
         PNGLoader.applyPNG(musicButton, 'music2.png');
       }
       
-      // Start music visualizer when radio begins playing
+      // Start music visualizer when radio begins playing with 1 second delay
       isMusicPlaying = true;
-      startMusicVisualizer();
+      setTimeout(() => {
+        if (isMusicPlaying) {
+          startMusicVisualizer();
+        }
+      }, 1000);
     });
     
     window.currentAudio = audio;
@@ -609,9 +621,13 @@ function playRadioStream(radioUrl) {
         PNGLoader.applyPNG(musicButton, 'music2.png');
       }
       
-      // Start music visualizer when radio begins playing
+      // Start music visualizer when radio begins playing with 1 second delay
       isMusicPlaying = true;
-      startMusicVisualizer();
+      setTimeout(() => {
+        if (isMusicPlaying) {
+          startMusicVisualizer();
+        }
+      }, 1000);
     }).catch(err => {
       console.error('❌ Error loading radio station:', err);
       alert('Failed to load radio station. Please check the URL.');
@@ -685,9 +701,13 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
         PNGLoader.applyPNG(musicButton, 'music2.png');
       }
       
-      // Start music visualizer when radio begins playing
+      // Start music visualizer when radio begins playing with 1 second delay
       isMusicPlaying = true;
-      startMusicVisualizer();
+      setTimeout(() => {
+        if (isMusicPlaying) {
+          startMusicVisualizer();
+        }
+      }, 1000);
     });
     
     window.currentAudio = audio;
@@ -698,9 +718,13 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
         PNGLoader.applyPNG(musicButton, 'music2.png');
       }
       
-      // Start music visualizer when radio begins playing
+      // Start music visualizer when radio begins playing with 1 second delay
       isMusicPlaying = true;
-      startMusicVisualizer();
+      setTimeout(() => {
+        if (isMusicPlaying) {
+          startMusicVisualizer();
+        }
+      }, 1000);
     }).catch(err => {
       console.error('❌ Error loading radio station:', err);
       alert('Failed to load radio station. Please check the URL.');
@@ -3626,27 +3650,56 @@ function startMusicVisualizer() {
     '#FF1493', '#00FFFF', '#32CD32', '#FF6347', '#9370DB'
   ];
   
-  // Generate 8 random colors for the bars and glows
+  // Create separate color sets for each visualizer
+  // First visualizer: Warm colors (reds, oranges, yellows)
+  const warmColors = [
+    '#FF6B6B', '#FF4757', '#FF3838', '#FF1744', '#F50057',
+    '#E91E63', '#C2185B', '#AD1457', '#FF4081', '#FF9800', 
+    '#FF5722', '#FF7043', '#FF8A65', '#FFAB40', '#FFC107', 
+    '#FFD54F', '#FFEB3B', '#FFF176', '#FFD700', '#FFA500'
+  ];
+  
+  // Second visualizer: Cool colors (blues, greens, purples)  
+  const coolColors = [
+    '#4CAF50', '#8BC34A', '#66BB6A', '#4DB6AC', '#26A69A',
+    '#00BCD4', '#00ACC1', '#009688', '#2196F3', '#42A5F5',
+    '#64B5F6', '#3F51B5', '#5C6BC0', '#7986CB', '#9C27B0',
+    '#BA68C8', '#673AB7', '#7E57C2', '#9575CD', '#00FFFF'
+  ];
+  
+  const warmGlows = ['#FFD700', '#FF69B4', '#FF1493', '#FF6347', '#FF8C00'];
+  const coolGlows = ['#00FFFF', '#32CD32', '#9370DB', '#00CED1', '#4CAF50'];
+  
+  // Generate colors for first visualizer (warm)
+  const visualizer1Colors = [];
   for (let i = 0; i < 8; i++) {
-    const barColor = barColors[Math.floor(Math.random() * barColors.length)];
-    const glowColor = glowColors[Math.floor(Math.random() * glowColors.length)];
-    currentVisualizerColors.push({ bar: barColor, glow: glowColor });
+    const barColor = warmColors[Math.floor(Math.random() * warmColors.length)];
+    const glowColor = warmGlows[Math.floor(Math.random() * warmGlows.length)];
+    visualizer1Colors.push({ bar: barColor, glow: glowColor });
   }
   
-  // Apply random colors to bars
-  const bars1 = document.querySelectorAll('#visualizerBars .viz-bar');
-  const bars2 = document.querySelectorAll('#visualizerBars2 .viz-bar');
+  // Generate colors for second visualizer (cool)
+  const visualizer2Colors = [];
+  for (let i = 0; i < 8; i++) {
+    const barColor = coolColors[Math.floor(Math.random() * coolColors.length)];
+    const glowColor = coolGlows[Math.floor(Math.random() * coolGlows.length)];
+    visualizer2Colors.push({ bar: barColor, glow: glowColor });
+  }
   
+  // Apply warm colors to first visualizer
+  const bars1 = document.querySelectorAll('#visualizerBars .viz-bar');
   bars1.forEach((bar, index) => {
-    bar.style.background = currentVisualizerColors[index].bar;
-    bar.style.boxShadow = `0 0 4px ${currentVisualizerColors[index].glow}`;
-    bar.style.filter = `drop-shadow(0 0 2px ${currentVisualizerColors[index].glow})`;
+    bar.style.background = visualizer1Colors[index].bar;
+    bar.style.boxShadow = `0 0 4px ${visualizer1Colors[index].glow}`;
+    bar.style.filter = `drop-shadow(0 0 2px ${visualizer1Colors[index].glow})`;
   });
   
+  // Apply cool colors to second visualizer
+  const bars2 = document.querySelectorAll('#visualizerBars2 .viz-bar');
   bars2.forEach((bar, index) => {
-    bar.style.background = currentVisualizerColors[index].bar;
-    bar.style.boxShadow = `0 0 4px ${currentVisualizerColors[index].glow}`;
-    bar.style.filter = `drop-shadow(0 0 2px ${currentVisualizerColors[index].glow})`;
+    bar.style.background = visualizer2Colors[index].bar;
+    bar.style.boxShadow = `0 0 4px ${visualizer2Colors[index].glow}`;
+    bar.style.filter = `drop-shadow(0 0 2px ${visualizer2Colors[index].glow})`;
   });
   
   visualizerInterval = setInterval(() => {
