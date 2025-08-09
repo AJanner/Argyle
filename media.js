@@ -885,6 +885,8 @@ window.hideReadPanel = hideReadPanel;
 window.cancelRadioInput = cancelRadioInput;
 window.confirmRadioInput = confirmRadioInput;
 window.showRadioError = showRadioError;
+window.showPlaylistConfirmation = showPlaylistConfirmation;
+window.closePlaylistConfirmation = closePlaylistConfirmation;
 
 function loadRadioStation() {
   // Show the custom radio input panel
@@ -1015,6 +1017,46 @@ function showRadioError(message) {
   }
 }
 
+function showPlaylistConfirmation(trackCount) {
+  const confirmationPanel = document.getElementById('playlistConfirmationPanel');
+  const trackCountElement = document.getElementById('trackCount');
+  
+  if (confirmationPanel && trackCountElement) {
+    // Update the track count
+    trackCountElement.textContent = trackCount;
+    
+    // Show the panel with animation
+    confirmationPanel.style.display = 'block';
+    
+    // Add keyboard support (Enter or Escape to close)
+    const keyHandler = function(e) {
+      if (e.key === 'Enter' || e.key === 'Escape') {
+        closePlaylistConfirmation();
+        document.removeEventListener('keydown', keyHandler);
+      }
+    };
+    document.addEventListener('keydown', keyHandler);
+    
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+      if (confirmationPanel.style.display === 'block') {
+        closePlaylistConfirmation();
+        document.removeEventListener('keydown', keyHandler);
+      }
+    }, 5000);
+    
+    console.log(`🎵 Showing playlist confirmation for ${trackCount} tracks`);
+  }
+}
+
+function closePlaylistConfirmation() {
+  const confirmationPanel = document.getElementById('playlistConfirmationPanel');
+  if (confirmationPanel) {
+    confirmationPanel.style.display = 'none';
+    console.log('🎵 Playlist confirmation closed');
+  }
+}
+
 // ===== MUSIC PLAYLIST UPLOAD FUNCTIONS =====
 
 async function uploadMusicPlaylist(event) {
@@ -1065,8 +1107,8 @@ async function uploadMusicPlaylist(event) {
     console.log('🔄 Reloading music list...');
     await loadMusicList();
     
-    // Show success message
-    alert(`Successfully uploaded playlist with ${tracks.length} tracks! You can now play through them using the Previous/Next buttons.`);
+    // Show success message with styled panel
+    showPlaylistConfirmation(tracks.length);
     
     // Clear the file input
     event.target.value = '';
