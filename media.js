@@ -1238,28 +1238,28 @@ let isPlayingSingleVideo = false;
 function playSingleVideoStream() {
   const urlInput = document.getElementById('singleVideoUrl');
   if (!urlInput) {
-    console.log('⚠️ Video URL input not found');
+    console.log('⚠️ URL input not found');
     return;
   }
 
   const url = urlInput.value.trim();
   if (!url) {
-    alert('Please enter a video URL');
+    alert('Please enter a URL');
     return;
   }
 
   // Basic URL validation
   if (!isValidUrl(url)) {
-    alert('Please enter a valid URL (e.g., https://example.com/video.mp4 or https://www.youtube.com/watch?v=...)');
+    alert('Please enter a valid URL (e.g., https://example.com, https://youtube.com/watch?v=..., or video.mp4)');
     return;
   }
 
-  console.log('🎥 Playing single video stream:', url);
+  console.log('🌐 Loading content:', url);
 
   // Stop any currently playing MP4 video
   if (isPlayingMp4) {
     stopMp4Video();
-    console.log('🎬 Stopped MP4 video to play single video stream');
+    console.log('🎬 Stopped MP4 video to load new content');
   }
 
   const iframe = document.getElementById('videoIframe');
@@ -1269,56 +1269,66 @@ function playSingleVideoStream() {
   }
 
   let embedUrl;
+  const contentType = detectContentType(url);
   
-  // Check if it's a YouTube URL
-  const videoId = extractYouTubeId(url);
-  if (videoId) {
-    // Handle YouTube videos with loop
-    embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=1&modestbranding=1&rel=0`;
-    console.log('🎥 Detected YouTube video, using embed URL');
-  } else {
-    // Handle generic video streams by creating an HTML5 video player
-    const videoHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { margin: 0; padding: 0; background: black; display: flex; justify-content: center; align-items: center; height: 100vh; }
-          video { max-width: 100%; max-height: 100%; object-fit: contain; }
-        </style>
-      </head>
-      <body>
-        <video controls autoplay loop crossorigin="anonymous">
-          <source src="${url}" type="video/mp4">
-          <source src="${url}" type="video/webm">
-          <source src="${url}" type="video/ogg">
-          <source src="${url}">
-          <p>Your browser doesn't support HTML5 video. <a href="${url}">Download the video</a> instead.</p>
-        </video>
-        <script>
-          const video = document.querySelector('video');
-          video.addEventListener('loadstart', () => {
-            console.log('🎥 Video loading started');
-          });
-          video.addEventListener('error', (e) => {
-            console.error('🎥 Video error:', e);
-            document.body.innerHTML = '<div style="color: white; text-align: center; padding: 20px;">Error loading video stream. Please check the URL and try again.</div>';
-          });
-          video.addEventListener('canplay', () => {
-            console.log('🎥 Video ready to play');
-          });
-        </script>
-      </body>
-      </html>
-    `;
-    
-    // Create blob URL for the HTML content
-    const blob = new Blob([videoHtml], { type: 'text/html' });
-    embedUrl = URL.createObjectURL(blob);
-    console.log('🎥 Created HTML5 video player for generic stream');
+  switch(contentType) {
+    case 'youtube':
+      // Handle YouTube videos with loop
+      const videoId = extractYouTubeId(url);
+      embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=1&modestbranding=1&rel=0`;
+      console.log('🎥 Detected YouTube video, using embed URL');
+      break;
+      
+    case 'video':
+      // Handle direct video streams by creating an HTML5 video player
+      const videoHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { margin: 0; padding: 0; background: black; display: flex; justify-content: center; align-items: center; height: 100vh; }
+            video { max-width: 100%; max-height: 100%; object-fit: contain; }
+          </style>
+        </head>
+        <body>
+          <video controls autoplay loop crossorigin="anonymous">
+            <source src="${url}" type="video/mp4">
+            <source src="${url}" type="video/webm">
+            <source src="${url}" type="video/ogg">
+            <source src="${url}">
+            <p>Your browser doesn't support HTML5 video. <a href="${url}">Download the video</a> instead.</p>
+          </video>
+          <script>
+            const video = document.querySelector('video');
+            video.addEventListener('loadstart', () => {
+              console.log('🎥 Video loading started');
+            });
+            video.addEventListener('error', (e) => {
+              console.error('🎥 Video error:', e);
+              document.body.innerHTML = '<div style="color: white; text-align: center; padding: 20px;">Error loading video stream. Please check the URL and try again.</div>';
+            });
+            video.addEventListener('canplay', () => {
+              console.log('🎥 Video ready to play');
+            });
+          </script>
+        </body>
+        </html>
+      `;
+      
+      const blob = new Blob([videoHtml], { type: 'text/html' });
+      embedUrl = URL.createObjectURL(blob);
+      console.log('🎥 Created HTML5 video player for video stream');
+      break;
+      
+    case 'website':
+    default:
+      // Handle regular websites by loading them directly in iframe
+      embedUrl = url;
+      console.log('🌐 Loading website directly in iframe');
+      break;
   }
   
-  // Load the video in the iframe
+  // Load the content in the iframe
   iframe.src = embedUrl;
   
   currentSingleVideoUrl = url;
@@ -1340,7 +1350,7 @@ function playSingleVideoStream() {
   // Clear the input field
   urlInput.value = '';
   
-  console.log('🎥 Single video stream started playing with loop');
+  console.log(`🌐 Content loaded: ${contentType} - ${url}`);
 }
 
 function stopSingleVideoStream() {
@@ -1374,6 +1384,47 @@ function isValidUrl(string) {
   } catch (_) {
     return false;
   }
+}
+
+// Helper function to detect content type
+function detectContentType(url) {
+  // Check if it's a YouTube URL first
+  if (extractYouTubeId(url)) {
+    return 'youtube';
+  }
+  
+  // Check if it's a direct video file
+  const videoExtensions = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.m4v'];
+  const streamingFormats = ['.m3u8', '.mpd', '.f4m'];
+  const allVideoFormats = [...videoExtensions, ...streamingFormats];
+  
+  const urlLower = url.toLowerCase();
+  if (allVideoFormats.some(ext => urlLower.includes(ext))) {
+    return 'video';
+  }
+  
+  // Check for common video streaming domains
+  const videoStreamingDomains = [
+    'vimeo.com',
+    'dailymotion.com', 
+    'twitch.tv',
+    'streamable.com',
+    'video.google.com',
+    'facebook.com/watch',
+    'instagram.com/p/',
+    'tiktok.com',
+    'cdn.',
+    'stream.',
+    'video.',
+    'media.'
+  ];
+  
+  if (videoStreamingDomains.some(domain => urlLower.includes(domain))) {
+    return 'video';
+  }
+  
+  // Default to website
+  return 'website';
 }
 
 // Listen for messages from MP4 video iframe
