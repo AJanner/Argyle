@@ -297,6 +297,10 @@ function playMusic(filename, event) {
   const audio = new Audio(filename);
   audio.volume = 0.5; // Set volume to 50%
 
+  // Clear radio URL tracking since we're playing a file track
+  window.currentRadioUrl = null;
+  window.currentRadioTitle = null;
+
   // Stop any currently playing audio
   if (window.currentAudio) {
     window.currentAudio.pause();
@@ -956,6 +960,11 @@ function confirmRadioInput() {
       });
       
       window.currentAudio = audio;
+      
+      // Store current radio info for highlighting
+      window.currentRadioUrl = radioUrl;
+      window.currentRadioTitle = radioUrl; // Use URL as title for now
+      
       audio.play().then(() => {
         console.log('🎵 Radio station loaded and playing');
         const musicButton = document.querySelector('[data-icon="music"]');
@@ -965,6 +974,9 @@ function confirmRadioInput() {
         
         // Close the radio input panel on successful connection
         radioPanel.style.display = 'none';
+        
+        // Highlight the radio station in the music panel
+        highlightCurrentTrack();
         
         // Start visualizer with delay
         setTimeout(() => {
@@ -3653,7 +3665,7 @@ function highlightCurrentTrack() {
   }
   
   // Also check for radio streams that might be playing but not in playlist
-  if (window.currentAudio && !window.currentAudio.paused && musicPlaylist.length === 0) {
+  if (window.currentAudio && !window.currentAudio.paused) {
     musicItems.forEach((item, index) => {
       const itemOnclick = item.getAttribute('onclick') || '';
       
@@ -3666,7 +3678,104 @@ function highlightCurrentTrack() {
           console.log(`🎵 Highlighted current radio track: ${item.textContent}`);
         }
       }
+      
+      // For radio stations loaded via input panel
+      if (window.currentRadioUrl && window.currentAudio.src) {
+        const currentSrc = window.currentAudio.src;
+        if (currentSrc === window.currentRadioUrl || currentSrc.includes(window.currentRadioUrl)) {
+          // Create a temporary radio item display if not already in list
+          const radioText = item.textContent || '';
+          if (radioText.includes('📻') || radioText.includes('Radio') || itemOnclick.includes('playRadioStream')) {
+            item.classList.add('playing');
+            item.style.background = '#35CF3A';
+            console.log(`📻 Highlighted current radio station from input: ${item.textContent}`);
+          }
+        }
+      }
     });
+  }
+}
+
+// Get a unique identifier for the currently playing track/radio
+function getCurrentTrackId() {
+  // For radio from input panel
+  if (window.currentRadioUrl) {
+    return `radio_${window.currentRadioUrl}`;
+  }
+  
+  // For playlist tracks
+  if (musicPlaylist.length > 0 && currentMusicIndex >= 0) {
+    const currentTrack = musicPlaylist[currentMusicIndex];
+    return `track_${currentTrack.url}_${currentTrack.title}`;
+  }
+  
+  // For audio source
+  if (window.currentAudio && window.currentAudio.src) {
+    return `audio_${window.currentAudio.src}`;
+  }
+  
+  return 'default';
+}
+
+// Generate new color palettes for visualizers
+function generateNewVisualizerColors() {
+  // Create larger, more diverse color pools
+  const colorPools = [
+    // Pool 1: Warm colors
+    ['#FF6B6B', '#FF4757', '#FF3838', '#E74C3C', '#C0392B', '#FF5722', '#FF7043', '#FF8A65', '#FFAB40', '#FFC107', '#FFD54F', '#FFEB3B', '#FFF176', '#FFD700', '#FFA500', '#FF8C00', '#FF6347', '#FF4500'],
+    
+    // Pool 2: Cool colors  
+    ['#3498DB', '#2980B9', '#2196F3', '#42A5F5', '#64B5F6', '#03A9F4', '#00BCD4', '#26C6DA', '#4DD0E1', '#00ACC1', '#009688', '#26A69A', '#4DB6AC', '#80CBC4', '#4CAF50', '#66BB6A', '#8BC34A', '#9CCC65'],
+    
+    // Pool 3: Purple/Pink colors
+    ['#9C27B0', '#BA68C8', '#CE93D8', '#E1BEE7', '#673AB7', '#7E57C2', '#9575CD', '#B39DDB', '#E91E63', '#F06292', '#F8BBD9', '#FF4081', '#F50057', '#C2185B', '#AD1457', '#880E4F'],
+    
+    // Pool 4: Green/Teal colors
+    ['#4CAF50', '#66BB6A', '#81C784', '#A5D6A7', '#8BC34A', '#9CCC65', '#AED581', '#C5E1A5', '#CDDC39', '#DCE775', '#E6EE9C', '#009688', '#4DB6AC', '#80CBC4', '#B2DFDB', '#00BCD4', '#4DD0E1', '#80DEEA'],
+    
+    // Pool 5: Orange/Yellow colors
+    ['#FF9800', '#FFB74D', '#FFCC02', '#FFEB3B', '#FFF176', '#FFF59D', '#FFEE58', '#FFD54F', '#FFC107', '#FFAB40', '#FF8F00', '#FF6F00', '#FFD600', '#FFEA00', '#FFF8E1', '#FFF3C4']
+  ];
+  
+  const glowPools = [
+    ['#FFD700', '#FF69B4', '#FF1493', '#FF6347', '#FF8C00'],
+    ['#00FFFF', '#32CD32', '#00CED1', '#4CAF50', '#26A69A'],
+    ['#9370DB', '#BA55D3', '#DA70D6', '#FF00FF', '#C71585'],
+    ['#90EE90', '#98FB98', '#00FF7F', '#3CB371', '#2E8B57'],
+    ['#FFD700', '#FFA500', '#FF8C00', '#FFFF00', '#F0E68C']
+  ];
+  
+  // Select a random color pool for this track
+  const poolIndex = Math.floor(Math.random() * colorPools.length);
+  const barColorPool = colorPools[poolIndex];
+  const glowColorPool = glowPools[poolIndex];
+  
+  // Select a different pool for the second visualizer
+  let pool2Index = Math.floor(Math.random() * colorPools.length);
+  while (pool2Index === poolIndex && colorPools.length > 1) {
+    pool2Index = Math.floor(Math.random() * colorPools.length);
+  }
+  const barColorPool2 = colorPools[pool2Index];
+  const glowColorPool2 = glowPools[pool2Index];
+  
+  // Store the generated colors globally for use in the visualizer
+  window.currentVisualizerColors = {
+    visualizer1: [],
+    visualizer2: []
+  };
+  
+  // Generate colors for first visualizer
+  for (let i = 0; i < 8; i++) {
+    const barColor = barColorPool[Math.floor(Math.random() * barColorPool.length)];
+    const glowColor = glowColorPool[Math.floor(Math.random() * glowColorPool.length)];
+    window.currentVisualizerColors.visualizer1.push({ bar: barColor, glow: glowColor });
+  }
+  
+  // Generate colors for second visualizer  
+  for (let i = 0; i < 8; i++) {
+    const barColor = barColorPool2[Math.floor(Math.random() * barColorPool2.length)];
+    const glowColor = glowColorPool2[Math.floor(Math.random() * glowColorPool2.length)];
+    window.currentVisualizerColors.visualizer2.push({ bar: barColor, glow: glowColor });
   }
 }
 
@@ -3681,7 +3790,17 @@ function startMusicVisualizer() {
   if (visualizer1) visualizer1.style.display = 'block';
   if (visualizer2) visualizer2.style.display = 'block';
   
-  // Generate random colors for this session
+  // Generate unique colors for each track/radio URL
+  const currentTrackId = getCurrentTrackId();
+  
+  // Check if we need new colors (new track or first time)
+  if (!window.lastTrackId || window.lastTrackId !== currentTrackId) {
+    window.lastTrackId = currentTrackId;
+    generateNewVisualizerColors();
+    console.log(`🎨 Generated new visualizer colors for track: ${currentTrackId}`);
+  }
+  
+  // Generate random colors for this session (backup)
   currentVisualizerColors = [];
   const barColors = [
     // Reds & Pinks
@@ -3745,36 +3864,48 @@ function startMusicVisualizer() {
   const warmGlows = ['#FFD700', '#FF69B4', '#FF1493', '#FF6347', '#FF8C00'];
   const coolGlows = ['#00FFFF', '#32CD32', '#9370DB', '#00CED1', '#4CAF50'];
   
-  // Generate colors for first visualizer (warm)
-  const visualizer1Colors = [];
-  for (let i = 0; i < 8; i++) {
-    const barColor = warmColors[Math.floor(Math.random() * warmColors.length)];
-    const glowColor = warmGlows[Math.floor(Math.random() * warmGlows.length)];
-    visualizer1Colors.push({ bar: barColor, glow: glowColor });
+  // Use the new color system if available, otherwise fallback to old system
+  let visualizer1Colors, visualizer2Colors;
+  
+  if (window.currentVisualizerColors) {
+    visualizer1Colors = window.currentVisualizerColors.visualizer1;
+    visualizer2Colors = window.currentVisualizerColors.visualizer2;
+  } else {
+    // Fallback: generate colors for first visualizer (warm)
+    visualizer1Colors = [];
+    for (let i = 0; i < 8; i++) {
+      const barColor = warmColors[Math.floor(Math.random() * warmColors.length)];
+      const glowColor = warmGlows[Math.floor(Math.random() * warmGlows.length)];
+      visualizer1Colors.push({ bar: barColor, glow: glowColor });
+    }
+    
+    // Fallback: generate colors for second visualizer (cool)
+    visualizer2Colors = [];
+    for (let i = 0; i < 8; i++) {
+      const barColor = coolColors[Math.floor(Math.random() * coolColors.length)];
+      const glowColor = coolGlows[Math.floor(Math.random() * coolGlows.length)];
+      visualizer2Colors.push({ bar: barColor, glow: glowColor });
+    }
   }
   
-  // Generate colors for second visualizer (cool)
-  const visualizer2Colors = [];
-  for (let i = 0; i < 8; i++) {
-    const barColor = coolColors[Math.floor(Math.random() * coolColors.length)];
-    const glowColor = coolGlows[Math.floor(Math.random() * coolGlows.length)];
-    visualizer2Colors.push({ bar: barColor, glow: glowColor });
-  }
-  
-  // Apply warm colors to first visualizer
+  // Apply colors to first visualizer
   const bars1 = document.querySelectorAll('#visualizerBars .viz-bar');
   bars1.forEach((bar, index) => {
-    bar.style.background = visualizer1Colors[index].bar;
-    bar.style.boxShadow = `0 0 4px ${visualizer1Colors[index].glow}`;
-    bar.style.filter = `drop-shadow(0 0 2px ${visualizer1Colors[index].glow})`;
+    if (visualizer1Colors[index]) {
+      bar.style.background = visualizer1Colors[index].bar;
+      bar.style.boxShadow = `0 0 4px ${visualizer1Colors[index].glow}`;
+      bar.style.filter = `drop-shadow(0 0 2px ${visualizer1Colors[index].glow})`;
+    }
   });
   
-  // Apply cool colors to second visualizer
+  // Apply colors to second visualizer
   const bars2 = document.querySelectorAll('#visualizerBars2 .viz-bar');
   bars2.forEach((bar, index) => {
-    bar.style.background = visualizer2Colors[index].bar;
-    bar.style.boxShadow = `0 0 4px ${visualizer2Colors[index].glow}`;
-    bar.style.filter = `drop-shadow(0 0 2px ${visualizer2Colors[index].glow})`;
+    if (visualizer2Colors[index]) {
+      bar.style.background = visualizer2Colors[index].bar;
+      bar.style.boxShadow = `0 0 4px ${visualizer2Colors[index].glow}`;
+      bar.style.filter = `drop-shadow(0 0 2px ${visualizer2Colors[index].glow})`;
+    }
   });
   
   visualizerInterval = setInterval(() => {
