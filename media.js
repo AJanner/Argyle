@@ -747,14 +747,6 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
 }
 
 function nextMusicTrack() {
-  console.log('🎵 nextMusicTrack called');
-  console.log('📊 Debug info:', {
-    uploadedMusicPlaylistLength: window.uploadedMusicPlaylist ? window.uploadedMusicPlaylist.length : 'undefined',
-    musicPlaylistLength: musicPlaylist.length,
-    currentMusicIndex: currentMusicIndex,
-    musicItemsInDOM: document.querySelectorAll('.music-item').length
-  });
-  
   // Check if we have uploaded radio URLs - if so, cycle through only those
   if (window.uploadedMusicPlaylist && window.uploadedMusicPlaylist.length > 0) {
     // Cycle through uploaded radio URLs only
@@ -762,7 +754,7 @@ function nextMusicTrack() {
     window.currentMusicPlaylistIndex = (window.currentMusicPlaylistIndex + 1) % window.uploadedMusicPlaylist.length;
     
     const radioTrack = window.uploadedMusicPlaylist[window.currentMusicPlaylistIndex];
-    console.log(`📻 Next radio station: ${radioTrack.title || radioTrack.url} (${window.currentMusicPlaylistIndex + 1}/${window.uploadedMusicPlaylist.length})`);
+    
     
     if (radioTrack.url) {
       playRadioStreamFromPlaylist(radioTrack.url, window.currentMusicPlaylistIndex);
@@ -775,7 +767,7 @@ function nextMusicTrack() {
   } else if (musicPlaylist.length > 0) {
     // Go to next track in regular playlist
     const nextIndex = (currentMusicIndex + 1) % musicPlaylist.length;
-    console.log(`🎵 Going to next track: ${nextIndex}`);
+
     playMusicFromPlaylist(nextIndex);
     
     // Update highlighting after track change
@@ -811,14 +803,6 @@ function nextMusicTrack() {
 }
 
 function previousMusicTrack() {
-  console.log('🎵 previousMusicTrack called');
-  console.log('📊 Debug info:', {
-    uploadedMusicPlaylistLength: window.uploadedMusicPlaylist ? window.uploadedMusicPlaylist.length : 'undefined',
-    musicPlaylistLength: musicPlaylist.length,
-    currentMusicIndex: currentMusicIndex,
-    musicItemsInDOM: document.querySelectorAll('.music-item').length
-  });
-  
   // Check if we have uploaded radio URLs - if so, cycle through only those
   if (window.uploadedMusicPlaylist && window.uploadedMusicPlaylist.length > 0) {
     // Cycle through uploaded radio URLs only
@@ -826,7 +810,7 @@ function previousMusicTrack() {
     window.currentMusicPlaylistIndex = (window.currentMusicPlaylistIndex - 1 + window.uploadedMusicPlaylist.length) % window.uploadedMusicPlaylist.length;
     
     const radioTrack = window.uploadedMusicPlaylist[window.currentMusicPlaylistIndex];
-    console.log(`📻 Previous radio station: ${radioTrack.title || radioTrack.url} (${window.currentMusicPlaylistIndex + 1}/${window.uploadedMusicPlaylist.length})`);
+    
     
     if (radioTrack.url) {
       playRadioStreamFromPlaylist(radioTrack.url, window.currentMusicPlaylistIndex);
@@ -839,7 +823,7 @@ function previousMusicTrack() {
   } else if (musicPlaylist.length > 0) {
     // Go to previous track in regular playlist
     const prevIndex = (currentMusicIndex - 1 + musicPlaylist.length) % musicPlaylist.length;
-    console.log(`🎵 Going to previous track: ${prevIndex}`);
+
     playMusicFromPlaylist(prevIndex);
     
     // Update highlighting after track change
@@ -1629,7 +1613,6 @@ function isMobileDevice() {
   const isSmallScreen = window.innerWidth <= 768 || window.innerHeight <= 1024;
   
   const isMobile = isMobileUA || (hasTouchScreen && isSmallScreen);
-  console.log('📱 Mobile detection:', { isMobileUA, hasTouchScreen, isSmallScreen, isMobile });
   
   return isMobile;
 }
@@ -1643,7 +1626,7 @@ function toggleMediaToolbar() {
     const newDisplay = (currentDisplay === "none" || currentDisplay === "") ? "flex" : "none";
     bar.style.display = newDisplay;
     isMediaToolbarVisible = (newDisplay === "flex");
-    console.log("📺 Media toolbar toggled:", bar.style.display);
+
   }
 }
 
@@ -1669,26 +1652,47 @@ function toggleMediaToolbarVisibility() {
     const newDisplay = (currentDisplay === "none" || currentDisplay === "") ? "flex" : "none";
     bar.style.display = newDisplay;
     isMediaToolbarVisible = (newDisplay === "flex");
-    console.log("📺 Media toolbar visibility toggled:", bar.style.display);
+
   }
 }
 
 // ===== MOBILE TOOLBAR INITIALIZATION =====
+// Cache mobile detection result to avoid repeated calls
+let cachedMobileStatus = null;
+let resizeTimeout = null;
+
 function ensureMobileToolbarVisibility() {
-  if (isMobileDevice()) {
+  // Only check mobile status if we haven't cached it yet
+  if (cachedMobileStatus === null) {
+    cachedMobileStatus = isMobileDevice();
+  }
+  
+  if (cachedMobileStatus) {
     const topToolbar = document.getElementById("toolbar");
     if (topToolbar) {
       topToolbar.style.display = "flex";
       topToolbar.style.opacity = "1";
       topToolbar.classList.add('mobile-always-visible');
-      console.log("📱 Mobile top toolbar initialized as always visible");
     }
   }
 }
 
-// Handle window resize events to re-check mobile status
+// Debounced resize handler to avoid excessive calls
 function handleWindowResize() {
-  ensureMobileToolbarVisibility();
+  // Clear existing timeout
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout);
+  }
+  
+  // Set new timeout to debounce resize events
+  resizeTimeout = setTimeout(() => {
+    // Only re-check mobile status if screen size changes significantly
+    const newMobileStatus = isMobileDevice();
+    if (newMobileStatus !== cachedMobileStatus) {
+      cachedMobileStatus = newMobileStatus;
+      ensureMobileToolbarVisibility();
+    }
+  }, 250); // 250ms debounce
 }
 
 // Add resize listener
@@ -4351,7 +4355,7 @@ function highlightCurrentTrack() {
     if (currentItem) {
       currentItem.classList.add('playing');
       currentItem.style.background = '#35CF3A';
-      console.log(`🎵 Highlighted track at index ${currentMusicIndex}: ${currentItem.textContent}`);
+
     }
   }
   
@@ -4366,7 +4370,7 @@ function highlightCurrentTrack() {
         if (itemOnclick.includes(currentSrc)) {
           item.classList.add('playing');
           item.style.background = '#35CF3A';
-          console.log(`🎵 Highlighted current radio track: ${item.textContent}`);
+
         }
       }
       
@@ -4379,7 +4383,7 @@ function highlightCurrentTrack() {
           if (radioText.includes('📻') || radioText.includes('Radio') || itemOnclick.includes('playRadioStream')) {
           item.classList.add('playing');
           item.style.background = '#35CF3A';
-            console.log(`📻 Highlighted current radio station from input: ${item.textContent}`);
+
           }
         }
       }
