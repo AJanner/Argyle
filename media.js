@@ -54,10 +54,10 @@ function toggleMusicPanel() {
     // Highlight currently playing track if any
     highlightCurrentTrack();
     
-    // Auto-hide after 20 seconds
+    // Auto-hide after 60 seconds
     setTimeout(() => {
       musicPanel.style.display = 'none';
-    }, 20000);
+    }, 60000);
   } else {
     musicPanel.style.display = 'none';
   }
@@ -814,6 +814,11 @@ function showWelcomeMessage() {
           • <kbd>F</kbd> - Flash drawings<br>
           • <kbd>S</kbd> - Smooth last line<br><br>
           
+          <strong>Bubble Movement:</strong><br>
+          • <kbd>Arrow Keys</kbd> - Move selected bubble<br>
+          • <kbd>.</kbd> - Striker Attack<br>
+          • <kbd>/</kbd> - Striker Capture<br><br>
+          
           <strong>Gamepad Controls (PS5):</strong><br>
           • <kbd>Triangle</kbd> - Toggle video player<br>
           • <kbd>Circle</kbd> - Toggle music panel<br>
@@ -1160,19 +1165,46 @@ function captureCanvasOnly() {
 // Global dice settings
 let diceMaxValue = 6;
 let diceSliderTimeout = null;
+let lastDiceResult = null;
+let consecutiveCount = 0;
 
 function rollDice() {
   const result = Math.floor(Math.random() * diceMaxValue) + 1;
   const diceOverlay = document.getElementById('diceOverlay');
   const diceButton = document.getElementById('diceButton');
   
-  // Show the dice result in overlay
+  // Check if this is the same as the last result
+  if (result === lastDiceResult) {
+    consecutiveCount++;
+  } else {
+    consecutiveCount = 0;
+  }
+  lastDiceResult = result;
+  
+  // Choose color based on whether it's a consecutive roll
+  let textColor, buttonColor;
+  if (consecutiveCount > 0) {
+    // Different color for consecutive same numbers
+    textColor = '#FF8C00'; // Orange text for consecutive numbers
+    buttonColor = '#FF8C00'; // Orange text for button
+    console.log(`🎲 Consecutive roll #${consecutiveCount + 1} of ${result}!`);
+  } else {
+    // Normal color for new numbers
+    textColor = 'gold'; // Normal gold text
+    buttonColor = 'gold'; // Gold text for button
+  }
+  
+  // Show the dice result in overlay with appropriate color
   diceOverlay.textContent = result;
   diceOverlay.style.display = 'block';
+  diceOverlay.style.color = textColor;
+  // Keep the background consistent
+  diceOverlay.style.background = 'rgba(0, 0, 0, 0.8)';
   
   // Show the dice result on top of the button (even with PNG)
   if (diceButton) {
     diceButton.textContent = result;
+    diceButton.style.color = buttonColor;
     // Add CSS class to override PNG styles
     diceButton.classList.add('showing-number');
   }
@@ -1710,7 +1742,13 @@ function videoTogglePlaylist() {
       playlistButton.title = 'Hide Playlist';
     }
     
-    // Removed auto-hide functionality
+    // Auto-hide after 60 seconds
+    videoPlaylistTimeout = setTimeout(() => {
+      if (videoPlaylistVisible) {
+        videoTogglePlaylist(); // This will hide the playlist
+        console.log('📋 Video playlist auto-hidden after 60 seconds');
+      }
+    }, 60000);
   } else {
     // Hide playlist
     playlist.style.display = 'none';

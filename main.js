@@ -1936,7 +1936,39 @@ function closeAnalysisPanel() {
   hideAnalysisPanel();
 }
 
+function setCreditsDropdowns() {
+  // Set theme dropdown to "credits" (💚)
+  const themeSelector = document.getElementById('themeSelector');
+  if (themeSelector) {
+    themeSelector.value = 'credits';
+    // Trigger the change event to actually switch the theme
+    switchTheme('credits');
+  }
+  
+  // Set preset dropdown to "start" 
+  const presetSelector = document.getElementById('presetSelector');
+  if (presetSelector) {
+    // Wait a moment for theme to load, then set preset
+    setTimeout(() => {
+      presetSelector.value = 'start';
+      // Trigger the change event to actually switch the preset
+      switchPreset('start');
+    }, 100);
+  }
+  
+  // Close the analysis panel after setting dropdowns
+  closeAnalysisPanel();
+  
+  console.log('💚 Credits: Set theme to 💚 and preset to Start');
+}
+
 function openAnalysisIframe(type) {
+  // Special handling for credits - set dropdowns instead of opening iframe
+  if (type === 'credits') {
+    setCreditsDropdowns();
+    return;
+  }
+  
   // Check for suggestions cooldown
   if (type === 'suggestions' && suggestionsCooldownActive) {
     console.log('💡 Suggestions button is on cooldown');
@@ -2028,7 +2060,7 @@ function endSuggestionsCooldown() {
     suggestionsButton.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
     suggestionsButton.style.color = 'white';
     suggestionsButton.disabled = false;
-    suggestionsButton.textContent = 'Suggestions';
+    suggestionsButton.innerHTML = '🍿 Suggestions:<br>Current: Anime (All)';
     
     // Add brief visual indication that cooldown ended
     suggestionsButton.style.boxShadow = '0 0 10px #4CAF50';
@@ -3438,6 +3470,10 @@ function setupEventListeners() {
   canvas.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     
+    // Stop any dragging that might be happening
+    isDragging = false;
+    draggedIdea = null;
+    
     // In bubble mode, check if right-clicking on a bubble first
     if (!isDrawingMode) {
       const rect = canvas.getBoundingClientRect();
@@ -3517,6 +3553,9 @@ function setupEventListeners() {
   // Drag and drop functionality
   canvas.addEventListener("mousedown", (e) => {
     if (isDrawingMode) return; // Don't drag bubbles while in drawing mode
+    
+    // Only start dragging on left-click (button 0), not right-click (button 2)
+    if (e.button !== 0) return;
     
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -3810,15 +3849,15 @@ function setupEventListeners() {
         selectedIdea.x += moveAmount;
         moved = true;
         break;
-      case "\\":
-        // Backslash triggers striker attack
+      case ".":
+        // Period triggers striker attack
         if (selectedIdea.shape === 'striker') {
           triggerStrikerAttack(selectedIdea);
           e.preventDefault();
         }
         break;
-      case "]":
-        // Right bracket triggers striker capture
+      case "/":
+        // Forward slash triggers striker capture
         if (selectedIdea.shape === 'striker') {
           triggerStrikerCapture(selectedIdea);
           e.preventDefault();

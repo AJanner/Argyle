@@ -507,8 +507,11 @@ button[data-png="bucheck"].has-png {
   z-index: 60000;
   display: none;
   animation: diceFadeIn 0.3s ease-in;
-  min-width: 300px;
-  max-width: 500px;
+  min-width: 400px;
+  max-width: 80vw;
+  width: auto;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 #diceSlider input[type="range"] {
@@ -549,7 +552,7 @@ button[data-png="bucheck"].has-png {
 .music-panel {
   position: fixed;
   top: 130px;
-  right: 15px;
+  left: 20px;
   width: 300px;
   background: rgba(34, 34, 34, 0.90);
   color: white;
@@ -822,7 +825,7 @@ button[data-png="bucheck"].has-png {
 #videoPlaylist {
   position: fixed;
   top: 130px;
-  left: 20px;
+  right: 15px;
   width: 300px;
   height: 400px;
   max-height: 400px;
@@ -1165,6 +1168,7 @@ button[data-png="bucheck"].has-png {
 
 input[type="range"] {
   -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   height: 8px;
   background: rgba(0, 0, 0, 0.6);
