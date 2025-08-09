@@ -887,6 +887,10 @@ window.confirmRadioInput = confirmRadioInput;
 window.showRadioError = showRadioError;
 window.showPlaylistConfirmation = showPlaylistConfirmation;
 window.closePlaylistConfirmation = closePlaylistConfirmation;
+window.uploadMp4Video = uploadMp4Video;
+window.playMp4Video = playMp4Video;
+window.pauseMp4Video = pauseMp4Video;
+window.stopMp4Video = stopMp4Video;
 
 function loadRadioStation() {
   // Show the custom radio input panel
@@ -1056,6 +1060,186 @@ function closePlaylistConfirmation() {
     console.log('🎵 Playlist confirmation closed');
   }
 }
+
+// ===== MP4 VIDEO UPLOAD FUNCTIONS =====
+
+// Global variables for MP4 video handling
+let currentMp4Url = null;
+let isPlayingMp4 = false;
+let mp4VideoElement = null;
+
+function uploadMp4Video(event) {
+  const file = event.target.files[0];
+  if (!file) {
+    console.log('⚠️ No MP4 file selected');
+    return;
+  }
+
+  // Validate file type
+  if (!file.type.startsWith('video/mp4') && !file.name.toLowerCase().endsWith('.mp4')) {
+    alert('Please select a valid .mp4 video file.');
+    event.target.value = '';
+    return;
+  }
+
+  console.log('🎬 MP4 file selected:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+
+  // Create object URL for the video file
+  if (currentMp4Url) {
+    URL.revokeObjectURL(currentMp4Url);
+  }
+  
+  currentMp4Url = URL.createObjectURL(file);
+  
+  // Clear the file input
+  event.target.value = '';
+  
+  // Play the MP4 video
+  playMp4Video();
+  
+  console.log('🎬 MP4 video uploaded and ready to play');
+}
+
+function playMp4Video() {
+  if (!currentMp4Url) {
+    console.log('⚠️ No MP4 video uploaded');
+    return;
+  }
+
+  const iframe = document.getElementById('videoIframe');
+  if (!iframe) {
+    console.log('⚠️ Video iframe not found');
+    return;
+  }
+
+  // Stop any currently playing YouTube video
+  if (videoIsPlaying) {
+    videoPause();
+  }
+
+  // Create a video element HTML to display in the iframe
+  const videoHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          margin: 0;
+          padding: 0;
+          background: black;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+        }
+        video {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+      </style>
+    </head>
+    <body>
+      <video id="mp4Player" controls autoplay loop>
+        <source src="${currentMp4Url}" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+      <script>
+        const video = document.getElementById('mp4Player');
+        
+        // Handle play/pause events
+        video.addEventListener('play', () => {
+          window.parent.postMessage({type: 'mp4Play'}, '*');
+        });
+        
+        video.addEventListener('pause', () => {
+          window.parent.postMessage({type: 'mp4Pause'}, '*');
+        });
+        
+        // Make video accessible to parent
+        window.toggleMp4Playback = function() {
+          if (video.paused) {
+            video.play();
+          } else {
+            video.pause();
+          }
+        };
+        
+        // Auto-play
+        video.play().catch(err => {
+          console.log('Autoplay prevented:', err);
+        });
+      </script>
+    </body>
+    </html>
+  `;
+
+  // Create a blob URL for the HTML content
+  const blob = new Blob([videoHtml], { type: 'text/html' });
+  const htmlUrl = URL.createObjectURL(blob);
+  
+  // Load the HTML into the iframe
+  iframe.src = htmlUrl;
+  
+  isPlayingMp4 = true;
+  videoIsPlaying = true;
+  
+  // Update video button to show active state
+  const videoButton = document.querySelector('[data-icon="video"]');
+  if (videoButton && typeof PNGLoader !== 'undefined') {
+    PNGLoader.applyPNG(videoButton, 'video2.png');
+  }
+  
+  // Show video player if hidden
+  const player = document.getElementById('videoPlayer');
+  if (player && player.style.display === 'none') {
+    toggleVideoPlayer();
+  }
+  
+  console.log('🎬 MP4 video started playing in iframe');
+}
+
+function pauseMp4Video() {
+  const iframe = document.getElementById('videoIframe');
+  if (iframe && iframe.contentWindow && isPlayingMp4) {
+    iframe.contentWindow.toggleMp4Playback();
+    console.log('🎬 MP4 video pause/play toggled');
+  }
+}
+
+function stopMp4Video() {
+  const iframe = document.getElementById('videoIframe');
+  if (iframe && isPlayingMp4) {
+    iframe.src = '';
+    isPlayingMp4 = false;
+    videoIsPlaying = false;
+    
+    // Update video button to show inactive state
+    const videoButton = document.querySelector('[data-icon="video"]');
+    if (videoButton && typeof PNGLoader !== 'undefined') {
+      PNGLoader.applyPNG(videoButton, 'video.png');
+    }
+    
+    console.log('🎬 MP4 video stopped');
+  }
+}
+
+// Listen for messages from MP4 video iframe
+window.addEventListener('message', function(event) {
+  if (event.data && event.data.type) {
+    switch(event.data.type) {
+      case 'mp4Play':
+        isPlayingMp4 = true;
+        videoIsPlaying = true;
+        console.log('🎬 MP4 video started playing');
+        break;
+      case 'mp4Pause':
+        // Don't set isPlayingMp4 = false here as user might resume
+        console.log('🎬 MP4 video paused');
+        break;
+    }
+  }
+});
 
 // ===== MUSIC PLAYLIST UPLOAD FUNCTIONS =====
 
@@ -1736,6 +1920,12 @@ async function fetchVideoTitle(videoId) {
 
 function videoPlayVideo(index) {
   if (index < 0 || index >= videoPlaylist.length) return;
+  
+  // Stop any currently playing MP4 video when switching to YouTube video
+  if (isPlayingMp4) {
+    stopMp4Video();
+    console.log('🎬 Stopped MP4 video to play YouTube video');
+  }
   
   videoCurrentIndex = index;
   const url = videoPlaylist[index];

@@ -3825,6 +3825,14 @@ function setupEventListeners() {
         }
         e.preventDefault();
         return;
+      case "p":
+      case "P":
+        // P pauses/plays MP4 video
+        if (typeof pauseMp4Video === 'function') {
+          pauseMp4Video();
+        }
+        e.preventDefault();
+        return;
     }
     
     if (!selectedIdea) return;
