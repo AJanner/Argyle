@@ -2160,6 +2160,12 @@ function switchTheme(themeName) {
         createdDate: idea.createdDate || new Date().toISOString().split('T')[0],
         createdTime: idea.createdTime || new Date().toTimeString().split(' ')[0]
       }));
+      
+      // Auto-focus on the last (most recently added) bubble
+      if (ideas.length > 0) {
+        selectedIdea = ideas[ideas.length - 1];
+        console.log('🎯 Auto-focused on last bubble from theme:', selectedIdea.title || 'Untitled');
+      }
     }
     
     if (theme.bg) {
@@ -2211,6 +2217,12 @@ function switchPreset(presetKey) {
     createdDate: idea.createdDate || new Date().toISOString().split('T')[0],
     createdTime: idea.createdTime || new Date().toTimeString().split(' ')[0]
   }));
+  
+  // Auto-focus on the last (most recently added) bubble
+  if (ideas && ideas.length > 0) {
+    selectedIdea = ideas[ideas.length - 1];
+    console.log('🎯 Auto-focused on last bubble from preset:', selectedIdea.title || 'Untitled');
+  }
   
   // Load preset background
   if (preset.bg) {
@@ -3836,15 +3848,7 @@ function setupEventListeners() {
       case "b":
       case "B":
         // B toggles bubble panel visibility
-        const panel = document.getElementById('panel');
-        if (panel) {
-          if (panel.style.display === 'block') {
-            closeAllPanels();
-          } else if (selectedIdea) {
-            // Only open if there's a selected bubble
-            openPanel(selectedIdea);
-          }
-        }
+        toggleBubblePanel();
         e.preventDefault();
         return;
       case "-":
@@ -4195,6 +4199,35 @@ function testImageUpload() {
 function testEffects() {
   console.log('🎭 Testing effects functionality...');
   alert('🎭 Effects test - functionality working!');
+}
+
+function toggleBubblePanel() {
+  const panel = document.getElementById('panel');
+  if (!panel) {
+    console.log('⚠️ Bubble panel not found');
+    return;
+  }
+  
+  const computedStyle = window.getComputedStyle(panel);
+  if (computedStyle.display !== 'none') {
+    // Panel is open, close it
+    closePanel();
+    console.log('🫧 Bubble panel closed');
+  } else {
+    // Panel is closed, open it
+    if (!selectedIdea) {
+      // No bubble selected, select the last one (most recently added)
+      if (ideas && ideas.length > 0) {
+        selectedIdea = ideas[ideas.length - 1];
+        console.log('🫧 Auto-selected last bubble for panel');
+      } else {
+        console.log('⚠️ No bubbles available to show panel');
+        return;
+      }
+    }
+    showPanel();
+    console.log('🫧 Bubble panel opened');
+  }
 }
 
 function closeAllPanels() {
