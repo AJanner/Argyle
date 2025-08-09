@@ -1506,8 +1506,29 @@ async function loadVideoPlaylist() {
       return videoPlaylist;
     }
     
-    // Try to load the playlist file
-    const response = await fetch('s25_playlist.txt', {
+    // Try to load playlists from playlist.txt
+    const playlistResponse = await fetch('playlist.txt', {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/plain',
+      }
+    });
+    
+    if (!playlistResponse.ok) {
+      throw new Error(`Could not load playlist.txt: ${playlistResponse.status}`);
+    }
+    
+    const playlistContent = await playlistResponse.text();
+    const playlistFiles = playlistContent.split('\n')
+      .map(line => line.trim())
+      .filter(line => line !== '' && line.endsWith('.txt'));
+    
+    if (playlistFiles.length === 0) {
+      throw new Error('No playlist files found in playlist.txt');
+    }
+    
+    // Load the first playlist file as the primary playlist
+    const response = await fetch(playlistFiles[0], {
       method: 'GET',
       headers: {
         'Accept': 'text/plain',
@@ -3313,9 +3334,7 @@ async function preloadPlaylists() {
     return;
   }
   
-  const playlistFiles = ['s25_playlist.txt', 'Argyle🎧Podcasts.txt'];
-  
-  console.log('📋 Pre-loading playlists from root folder...');
+  console.log('📋 Pre-loading playlists from playlist.txt...');
   
   // Clear existing playlists to prevent duplication
   uploadedPlaylists.length = 0;
@@ -3323,7 +3342,22 @@ async function preloadPlaylists() {
   videoTitles = [];
   videoCurrentIndex = 0;
   
-  for (const filename of playlistFiles) {
+  try {
+    // First, read playlist.txt to get the list of playlist files
+    const playlistResponse = await fetch('playlist.txt');
+    if (!playlistResponse.ok) {
+      console.log('⚠️ Could not load playlist.txt:', playlistResponse.status);
+      return;
+    }
+    
+    const playlistContent = await playlistResponse.text();
+    const playlistFiles = playlistContent.split('\n')
+      .map(line => line.trim())
+      .filter(line => line !== '' && line.endsWith('.txt'));
+    
+    console.log(`📋 Found ${playlistFiles.length} playlist files in playlist.txt:`, playlistFiles);
+    
+    for (const filename of playlistFiles) {
     try {
       const response = await fetch(filename);
       if (response.ok) {
@@ -3358,9 +3392,13 @@ async function preloadPlaylists() {
   if (uploadedPlaylists.length > 0) {
     currentPlaylistIndex = 0;
     loadUploadedPlaylist(0);
-    console.log(`📋 Loaded ${uploadedPlaylists.length} playlists from root folder`);
+    console.log(`📋 Loaded ${uploadedPlaylists.length} playlists from playlist.txt`);
   } else {
-    console.log('📋 No playlists found in root folder');
+    console.log('📋 No playlists found in playlist.txt');
+  }
+  
+  } catch (error) {
+    console.log('⚠️ Error reading playlist.txt:', error.message);
   }
   
   playlistsPreloaded = true;
