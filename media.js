@@ -54,6 +54,16 @@ function toggleMusicPanel() {
     // Highlight currently playing track if any
     highlightCurrentTrack();
     
+    // Load PNG images for music control buttons
+    setTimeout(() => {
+      PNG_CONFIG.musicPanel.forEach(({ dataIcon, file }) => {
+        const button = PNGLoader.findButtonInContainer(dataIcon, '#musicPanel');
+        if (button) {
+          PNGLoader.applyPNG(button, file);
+        }
+      });
+    }, 100);
+    
     // Auto-hide after 60 seconds
     setTimeout(() => {
       musicPanel.style.display = 'none';
@@ -210,14 +220,11 @@ async function loadMusicList() {
     musicList.appendChild(musicItem);
   });
   
-  // Add seeking bar
-  const seekingBar = document.createElement('div');
-  seekingBar.style.cssText = 'margin-top: 10px; padding: 10px;';
-  seekingBar.innerHTML = `
-    <input type="range" id="musicSeekBar" min="0" max="100" value="0" style="width: 100%; height: 6px; background: rgba(0, 0, 0, 0.6); border: 2px solid darkgreen; border-radius: 5px; outline: none;">
-    <div id="musicTime" style="text-align: center; font-size: 12px; color: #888; margin-top: 5px;">00:00 / 00:00</div>
-  `;
-  musicList.appendChild(seekingBar);
+  // Show the existing seek bar (now positioned between next and radio buttons)
+  const musicPlayerSlider = document.getElementById('musicPlayerSlider');
+  if (musicPlayerSlider) {
+    musicPlayerSlider.style.display = 'block';
+  }
   
   // Set up seeking bar functionality
   const seekBar = document.getElementById('musicSeekBar');
@@ -737,45 +744,27 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
 
 function nextMusicTrack() {
   if (musicPlaylist.length > 0) {
-    // Find the currently playing track index
-    let currentIndex = currentMusicIndex;
-    const playingItem = document.querySelector('.music-item.playing');
-    if (playingItem) {
-      // Find the index of the currently playing item
-      const allItems = document.querySelectorAll('.music-item');
-      for (let i = 0; i < allItems.length; i++) {
-        if (allItems[i] === playingItem) {
-          currentIndex = i;
-          break;
-        }
-      }
-    }
-    
     // Go to next track
-    const nextIndex = (currentIndex + 1) % musicPlaylist.length;
+    const nextIndex = (currentMusicIndex + 1) % musicPlaylist.length;
     playMusicFromPlaylist(nextIndex);
+    
+    // Update highlighting after track change
+    setTimeout(() => {
+      highlightCurrentTrack();
+    }, 100);
   }
 }
 
 function previousMusicTrack() {
   if (musicPlaylist.length > 0) {
-    // Find the currently playing track index
-    let currentIndex = currentMusicIndex;
-    const playingItem = document.querySelector('.music-item.playing');
-    if (playingItem) {
-      // Find the index of the currently playing item
-      const allItems = document.querySelectorAll('.music-item');
-      for (let i = 0; i < allItems.length; i++) {
-        if (allItems[i] === playingItem) {
-          currentIndex = i;
-          break;
-        }
-      }
-    }
-    
     // Go to previous track
-    const prevIndex = (currentIndex - 1 + musicPlaylist.length) % musicPlaylist.length;
+    const prevIndex = (currentMusicIndex - 1 + musicPlaylist.length) % musicPlaylist.length;
     playMusicFromPlaylist(prevIndex);
+    
+    // Update highlighting after track change
+    setTimeout(() => {
+      highlightCurrentTrack();
+    }, 100);
   }
 }
 
@@ -889,10 +878,47 @@ window.hideWelcomeMessage = hideWelcomeMessage;
 window.showWelcomeMessage = showWelcomeMessage;
 window.showReadPanel = showReadPanel;
 window.hideReadPanel = hideReadPanel;
+window.cancelRadioInput = cancelRadioInput;
+window.confirmRadioInput = confirmRadioInput;
+window.showRadioError = showRadioError;
 
 function loadRadioStation() {
-  const radioUrl = prompt('Enter radio station URL (stream URL):');
-  if (radioUrl && radioUrl.trim() !== '') {
+  // Show the custom radio input panel
+  const radioPanel = document.getElementById('radioInputPanel');
+  const radioInput = document.getElementById('radioUrlInput');
+  
+  if (radioPanel && radioInput) {
+    radioPanel.style.display = 'block';
+    radioInput.value = '';
+    radioInput.focus();
+    
+    // Add Enter key support
+    radioInput.onkeydown = function(e) {
+      if (e.key === 'Enter') {
+        confirmRadioInput();
+      } else if (e.key === 'Escape') {
+        cancelRadioInput();
+      }
+    };
+  }
+}
+
+function cancelRadioInput() {
+  const radioPanel = document.getElementById('radioInputPanel');
+  if (radioPanel) {
+    radioPanel.style.display = 'none';
+  }
+  console.log('📻 Radio input cancelled');
+}
+
+function confirmRadioInput() {
+  const radioInput = document.getElementById('radioUrlInput');
+  const radioPanel = document.getElementById('radioInputPanel');
+  
+  if (!radioInput || !radioPanel) return;
+  
+  const radioUrl = radioInput.value.trim();
+  if (radioUrl !== '') {
     try {
       // Stop current music
       if (window.currentAudio) {
@@ -936,14 +962,44 @@ function loadRadioStation() {
         if (musicButton && typeof PNGLoader !== 'undefined') {
           PNGLoader.applyPNG(musicButton, 'music2.png');
         }
+        
+        // Close the radio input panel on successful connection
+        radioPanel.style.display = 'none';
+        
+        // Start visualizer with delay
+        setTimeout(() => {
+          if (window.currentAudio && !window.currentAudio.paused) {
+            startMusicVisualizer();
+          }
+        }, 1000);
       }).catch(err => {
         console.error('❌ Error loading radio station:', err);
-        alert('Failed to load radio station. Please check the URL.');
+        // Show styled error message instead of alert
+        showRadioError('Failed to load radio station. Please check the URL and try again.');
       });
     } catch (error) {
       console.error('❌ Error creating radio audio:', error);
-      alert('Failed to load radio station. Please check the URL.');
+      showRadioError('Failed to load radio station. Please check the URL and try again.');
     }
+  } else {
+    showRadioError('Please enter a valid radio stream URL.');
+  }
+}
+
+function showRadioError(message) {
+  const radioInput = document.getElementById('radioUrlInput');
+  if (radioInput) {
+    radioInput.style.borderColor = '#f44336';
+    radioInput.style.boxShadow = '0 0 10px rgba(244, 67, 54, 0.3)';
+    radioInput.placeholder = message;
+    radioInput.value = '';
+    
+    // Reset border color after 3 seconds
+    setTimeout(() => {
+      radioInput.style.borderColor = '#4CAF50';
+      radioInput.style.boxShadow = 'none';
+      radioInput.placeholder = 'https://example.com/stream.m3u8';
+    }, 3000);
   }
 }
 
@@ -3066,6 +3122,14 @@ const PNG_CONFIG = {
     { dataIcon: 'draw', file: 'draw.png' },
     { dataIcon: 'analysis', file: 'analysis.png' }
   ],
+  // Music panel control buttons
+  musicPanel: [
+    { dataIcon: 'mprevious', file: 'mprevious.png' },
+    { dataIcon: 'mplay', file: 'mplay.png' },
+    { dataIcon: 'mnext', file: 'mnext.png' },
+    { dataIcon: 'mradio', file: 'mradio.png' },
+    { dataIcon: 'mplaylist', file: 'mplaylist.png' }
+  ],
   // Video control buttons
   videoControls: [
     { dataIcon: 'playlist', file: 'playlist.png' },
@@ -3184,8 +3248,19 @@ function loadToolbarButtonImages() {
   // Load video control PNGs
   const videoCount = PNGLoader.loadToolbarPNGs(PNG_CONFIG.videoControls);
   
-  const totalCount = mediaCount + mainCount + videoCount;
-  console.log(`🎛️ PNG loading system complete: ${totalCount} PNGs loaded (Media: ${mediaCount}, Main: ${mainCount}, Video: ${videoCount})`);
+  // Load music panel PNGs (specific to #musicPanel)
+  let musicCount = 0;
+  PNG_CONFIG.musicPanel.forEach(({ dataIcon, file }) => {
+    const button = PNGLoader.findButtonInContainer(dataIcon, '#musicPanel');
+    if (button) {
+      if (PNGLoader.applyPNG(button, file)) {
+        musicCount++;
+      }
+    }
+  });
+  
+  const totalCount = mediaCount + mainCount + videoCount + musicCount;
+  console.log(`🎛️ PNG loading system complete: ${totalCount} PNGs loaded (Media: ${mediaCount}, Main: ${mainCount}, Video: ${videoCount}, Music: ${musicCount})`);
 }
 
 function updatePauseButtonIcon() {
@@ -3560,35 +3635,35 @@ window.updateKeyframesForCurrentPositions = updateKeyframesForCurrentPositions;
 // ===== MUSIC VISUALIZER FUNCTIONS =====
 
 function highlightCurrentTrack() {
-  // Find the currently playing audio and highlight it in the music panel
-  if (window.currentAudio && !window.currentAudio.paused) {
-    const musicItems = document.querySelectorAll('.music-item');
-    
+  // Clear all previous highlights
+  const musicItems = document.querySelectorAll('.music-item');
+  musicItems.forEach(item => {
+    item.classList.remove('playing');
+    item.style.background = 'rgba(0, 0, 0, 0.6)';
+  });
+  
+  // Highlight the current track based on currentMusicIndex
+  if (musicPlaylist.length > 0 && currentMusicIndex >= 0 && currentMusicIndex < musicItems.length) {
+    const currentItem = musicItems[currentMusicIndex];
+    if (currentItem) {
+      currentItem.classList.add('playing');
+      currentItem.style.background = '#35CF3A';
+      console.log(`🎵 Highlighted track at index ${currentMusicIndex}: ${currentItem.textContent}`);
+    }
+  }
+  
+  // Also check for radio streams that might be playing but not in playlist
+  if (window.currentAudio && !window.currentAudio.paused && musicPlaylist.length === 0) {
     musicItems.forEach((item, index) => {
-      item.classList.remove('playing');
-      item.style.background = 'rgba(0, 0, 0, 0.6)';
-      
-      // Check if this item corresponds to the currently playing track
-      const itemText = item.textContent || '';
       const itemOnclick = item.getAttribute('onclick') || '';
       
-      // For radio streams, check if the URL is in the onclick
+      // For radio streams not in playlist
       if (itemOnclick.includes('playRadioStream') && window.currentAudio.src) {
         const currentSrc = window.currentAudio.src;
-        if (itemOnclick.includes(currentSrc) || itemText.includes(currentSrc)) {
+        if (itemOnclick.includes(currentSrc)) {
           item.classList.add('playing');
           item.style.background = '#35CF3A';
-          console.log(`🎵 Highlighted current radio track: ${itemText}`);
-        }
-      }
-      // For local files, check if the filename matches
-      else if (itemOnclick.includes('playMusic') && window.currentAudio.src) {
-        const currentSrc = window.currentAudio.src;
-        const filename = currentSrc.split('/').pop();
-        if (itemOnclick.includes(filename) || itemText.includes(filename)) {
-          item.classList.add('playing');
-          item.style.background = '#35CF3A';
-          console.log(`🎵 Highlighted current music track: ${itemText}`);
+          console.log(`🎵 Highlighted current radio track: ${item.textContent}`);
         }
       }
     });

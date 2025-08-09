@@ -303,23 +303,39 @@
   <!-- Canvas -->
   <canvas id="canvas"></canvas>
 
+  <!-- Radio URL Input Panel -->
+  <div class="radio-input-panel" id="radioInputPanel" style="display: none;">
+    <h3>📻 Radio Station</h3>
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 8px; color: #fff; font-weight: bold;">Enter Radio Stream URL:</label>
+      <input type="text" id="radioUrlInput" placeholder="https://example.com/stream.m3u8" style="width: 100%; padding: 10px; border: 2px solid #4CAF50; border-radius: 6px; background: rgba(0, 0, 0, 0.8); color: #fff; font-size: 14px; outline: none;" />
+    </div>
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+      <button onclick="cancelRadioInput()" style="background: linear-gradient(45deg, #f44336, #da190b); border: none; color: white; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">Cancel</button>
+      <button onclick="confirmRadioInput()" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: none; color: white; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">Connect</button>
+    </div>
+  </div>
+
   <!-- Music Panel -->
   <div class="music-panel" id="musicPanel">
     <h3>🎵 Music Player</h3>
-    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-      <button onclick="previousMusicTrack()" style="background: linear-gradient(45deg, #FF9800, #F57C00); border: none; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;">⏮️ Previous</button>
-      <button onclick="nextMusicTrack()" style="background: linear-gradient(45deg, #2196F3, #1976D2); border: none; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;">⏭️ Next</button>
+    <div style="display: flex; gap: 0px; margin-bottom: 10px;">
+      <button onclick="previousMusicTrack()" class="music-control-btn" data-icon="mprevious" style="background: linear-gradient(45deg, #FF9800, #F57C00); border: none; color: white; padding: 1px; border-radius: 6px 0px 0px 6px; cursor: pointer; font-weight: bold; flex: 1; height: 48px; background-size: 100% 100% !important; background-position: center !important;">⏮️ Previous</button>
+      <button onclick="stopMusic()" class="music-control-btn" data-icon="mplay" style="background: linear-gradient(45deg, #f44336, #da190b); border: none; color: white; padding: 1px; border-radius: 0px; cursor: pointer; font-weight: bold; flex: 1; height: 48px; background-size: 100% 100% !important; background-position: center !important;">⏯️Play🎚️</button>
+      <button onclick="nextMusicTrack()" class="music-control-btn" data-icon="mnext" style="background: linear-gradient(45deg, #2196F3, #1976D2); border: none; color: white; padding: 1px; border-radius: 0px 6px 6px 0px; cursor: pointer; font-weight: bold; flex: 1; height: 48px; background-size: 100% 100% !important; background-position: center !important;">⏭️ Next</button>
+    </div>
+    <!-- Music Player Slider Container -->
+    <div id="musicPlayerSlider" style="margin: 10px 0; display: none;">
+      <input type="range" id="musicSeekBar" min="0" max="100" value="0" style="width: 100%; height: 6px; background: rgba(0, 0, 0, 0.6); border: 2px solid darkgreen; border-radius: 5px; outline: none;">
+      <div id="musicTime" style="text-align: center; font-size: 12px; color: #888; margin-top: 5px;">00:00 / 00:00</div>
+    </div>
+    <div style="display: flex; gap: 0px; margin-bottom: 10px;">
+      <button onclick="loadRadioStation()" class="music-control-btn" data-icon="mradio" style="background: linear-gradient(45deg, #9C27B0, #7B1FA2); border: none; color: white; padding: 1px; border-radius: 6px 0px 0px 6px; cursor: pointer; font-weight: bold; flex: 1; height: 96px; background-size: 100% 100% !important; background-position: center !important;">📻 Radio</button>
+      <input type="file" id="musicPlaylistUpload" accept=".txt" style="display: none;" onchange="uploadMusicPlaylist(event)"/>
+      <button onclick="document.getElementById('musicPlaylistUpload').click()" class="music-control-btn" data-icon="mplaylist" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: none; color: white; padding: 1px; border-radius: 0px 6px 6px 0px; cursor: pointer; font-weight: bold; flex: 1; height: 96px; background-size: 100% 100% !important; background-position: center !important;">📁 Upload Playlist</button>
     </div>
     <div id="musicList">
       <!-- Music items will be loaded here -->
-    </div>
-    <div style="display: flex; gap: 5px; margin-top: 10px;">
-      <button onclick="stopMusic()" style="background: linear-gradient(45deg, #f44336, #da190b); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;">⏯️Play🎚️</button>
-      <button onclick="loadRadioStation()" style="background: linear-gradient(45deg, #9C27B0, #7B1FA2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;">📻 Radio</button>
-    </div>
-    <div style="margin-top: 10px;">
-      <input type="file" id="musicPlaylistUpload" accept=".txt" style="display: none;" onchange="uploadMusicPlaylist(event)"/>
-      <button onclick="document.getElementById('musicPlaylistUpload').click()" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">📁 Upload Playlist</button>
     </div>
   </div>
 
