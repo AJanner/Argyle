@@ -2323,10 +2323,13 @@ async function toggleVideoPlayer() {
       controls.style.visibility = 'visible';
     }
     
-    // Initialize video player on first open
-    if (!videoPlayerInitialized) {
+    // Initialize video player only if it hasn't been initialized OR if it was closed (iframe src is empty)
+    const iframe = document.getElementById('videoIframe');
+    const needsInitialization = !videoPlayerInitialized || (iframe && iframe.src === '');
+    
+    if (needsInitialization) {
       videoPlayerInitialized = true;
-      console.log('🎥 Video player initialized for first time');
+      console.log('🎥 Video player initialized/reinitialized');
       
       // Try to load pre-loaded playlists first
       if (uploadedPlaylists.length > 0) {
@@ -2346,56 +2349,12 @@ async function toggleVideoPlayer() {
           });
         }, 100);
       }
-      if (typeof updateVideoPlaylistDisplay === 'function') {
-        updateVideoPlaylistDisplay();
-      }
     } else {
-      // If video player was previously closed, reset video state and load first video
-      const iframe = document.getElementById('videoIframe');
-      console.log('🎥 Video player reopened - resetting video state');
-      
-      // Clear the iframe src to force a fresh load
-      if (iframe) {
-        iframe.src = '';
-      }
-      
-      // Reset video state
-      videoIsPlaying = false;
-      videoCurrentIndex = 0;
-      
-      // Try to load and play the first video
-      if (videoPlaylist.length > 0) {
-        setTimeout(() => {
-          videoPlayVideo(0);
-        }, 100);
-      } else if (typeof loadVideoPlaylist === 'function') {
-        // Load playlist and play first video
-        setTimeout(() => {
-          loadVideoPlaylist().then(() => {
-            if (videoPlaylist.length > 0) {
-              videoPlayVideo(0);
-            }
-          }).catch(error => {
-            console.log('🎥 Playlist loading failed on reopen');
-          });
-        }, 100);
-      }
+      console.log('🎥 Video player toggled (no reinitialization needed)');
     }
-    
-    // Video player already initialized, ensure first video is loaded if needed
-    const videoIframe = document.getElementById('videoIframe');
-    if (videoIframe && videoIframe.src && videoIframe.src !== '' && videoIframe.src !== 'about:blank') {
-      console.log('🎥 Video player shown (video loaded but paused)');
-      // Update button icon based on current state
-      setTimeout(() => {
-        updateVideoButtonIcon();
-      }, 500);
-    } else if (videoPlaylist.length > 0) {
-      // Load the first video (but don't autoplay)
-      setTimeout(() => {
-        videoPlayVideo(0);
-        console.log('🎥 Video player opened and loaded first video (paused)');
-      }, 100);
+      
+    if (needsInitialization && typeof updateVideoPlaylistDisplay === 'function') {
+        updateVideoPlaylistDisplay();
     }
     
     // Start with playlist hidden and update button text
