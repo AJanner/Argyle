@@ -3904,8 +3904,8 @@ function setupEventListeners() {
         selectedIdea.x += moveAmount;
         moved = true;
         break;
-      case "?":
-        // Question mark triggers bubble bounce (striker attack)
+      case "Shift":
+        // Shift key triggers bubble bounce (striker attack)
         if (selectedIdea.shape === 'striker') {
           triggerStrikerAttack(selectedIdea);
           e.preventDefault();

@@ -540,7 +540,7 @@ function playMusicFromPlaylist(index) {
       isMusicPlaying = true;
       setTimeout(() => {
         if (isMusicPlaying) {
-          startMusicVisualizer();
+      startMusicVisualizer();
         }
       }, 1000);
     } else {
@@ -550,7 +550,7 @@ function playMusicFromPlaylist(index) {
       isMusicPlaying = true;
       setTimeout(() => {
         if (isMusicPlaying) {
-          startMusicVisualizer();
+      startMusicVisualizer();
         }
       }, 1000);
     }
@@ -619,7 +619,7 @@ function playRadioStream(radioUrl) {
       isMusicPlaying = true;
       setTimeout(() => {
         if (isMusicPlaying) {
-          startMusicVisualizer();
+      startMusicVisualizer();
         }
       }, 1000);
     });
@@ -636,7 +636,7 @@ function playRadioStream(radioUrl) {
       isMusicPlaying = true;
       setTimeout(() => {
         if (isMusicPlaying) {
-          startMusicVisualizer();
+      startMusicVisualizer();
         }
       }, 1000);
     }).catch(err => {
@@ -716,7 +716,7 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
       isMusicPlaying = true;
       setTimeout(() => {
         if (isMusicPlaying) {
-          startMusicVisualizer();
+      startMusicVisualizer();
         }
       }, 1000);
     });
@@ -733,7 +733,7 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
       isMusicPlaying = true;
       setTimeout(() => {
         if (isMusicPlaying) {
-          startMusicVisualizer();
+      startMusicVisualizer();
         }
       }, 1000);
     }).catch(err => {
@@ -886,7 +886,7 @@ function showWelcomeMessage() {
           • <kbd>X</kbd> - Select music track<br><br>
           
           <strong>Gamepad Controls (Keyboard):</strong><br>
-          • <kbd>?</kbd> - Bubble Bounce<br>
+          • <kbd>Shift</kbd> - Bubble Bounce<br>
           • <kbd>.</kbd> - Bubble Collect
         </div>
       `;
@@ -3842,8 +3842,8 @@ async function preloadPlaylists() {
       .filter(line => line !== '' && line.endsWith('.txt'));
     
     console.log(`📋 Found ${playlistFiles.length} playlist files in playlist.txt:`, playlistFiles);
-    
-    for (const filename of playlistFiles) {
+  
+  for (const filename of playlistFiles) {
     try {
       const response = await fetch(filename);
       if (response.ok) {
@@ -4173,10 +4173,10 @@ window.updateKeyframesForCurrentPositions = updateKeyframesForCurrentPositions;
 
 function highlightCurrentTrack() {
   // Clear all previous highlights
-  const musicItems = document.querySelectorAll('.music-item');
+    const musicItems = document.querySelectorAll('.music-item');
   musicItems.forEach(item => {
-    item.classList.remove('playing');
-    item.style.background = 'rgba(0, 0, 0, 0.6)';
+      item.classList.remove('playing');
+      item.style.background = 'rgba(0, 0, 0, 0.6)';
   });
   
   // Highlight the current track based on currentMusicIndex
@@ -4211,8 +4211,8 @@ function highlightCurrentTrack() {
           // Create a temporary radio item display if not already in list
           const radioText = item.textContent || '';
           if (radioText.includes('📻') || radioText.includes('Radio') || itemOnclick.includes('playRadioStream')) {
-            item.classList.add('playing');
-            item.style.background = '#35CF3A';
+          item.classList.add('playing');
+          item.style.background = '#35CF3A';
             console.log(`📻 Highlighted current radio station from input: ${item.textContent}`);
           }
         }
@@ -4398,7 +4398,7 @@ function startMusicVisualizer() {
   } else {
     // Fallback: generate colors for first visualizer (warm)
     visualizer1Colors = [];
-    for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 8; i++) {
       const barColor = warmColors[Math.floor(Math.random() * warmColors.length)];
       const glowColor = warmGlows[Math.floor(Math.random() * warmGlows.length)];
       visualizer1Colors.push({ bar: barColor, glow: glowColor });
