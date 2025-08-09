@@ -361,7 +361,7 @@ const themePresets = {
     "fontSize": 14,
     "rotation": 0,
     "glow": true,
-    "shape": "circle",
+    "shape": "striker",
     "heightRatio": 1,
     "showPauseBorder": false,
     "createdDate": "2025-08-07",
