@@ -370,10 +370,10 @@ const themePresets = {
   {
     "title": "",
     "description": "",
-    "x": 580,
-    "y": 695.3243865378786,
-    "vx": 2.555616986936294,
-    "vy": -0.2387138134250082,
+    "x": 54.326902427658,
+    "y": 136.9544773387439,
+    "vx": 2.17444995509932,
+    "vy": -2.158829730837228,
     "color": "hsl(37.62768643513751, 100%, 70%)",
     "textColor": "white",
     "radius": 35,
@@ -386,7 +386,8 @@ const themePresets = {
     "heightRatio": 1,
     "showPauseBorder": false,
     "createdDate": "2025-08-07",
-    "createdTime": "23:27:46"
+    "createdTime": "23:27:46",
+    "glowColor": "hsl(110.03007539802587, 100%, 70%)"
   },
   {
     "title": "",
