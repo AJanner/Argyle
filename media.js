@@ -747,6 +747,14 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
 }
 
 function nextMusicTrack() {
+  console.log('🎵 nextMusicTrack called');
+  console.log('📊 Debug info:', {
+    uploadedMusicPlaylistLength: window.uploadedMusicPlaylist ? window.uploadedMusicPlaylist.length : 'undefined',
+    musicPlaylistLength: musicPlaylist.length,
+    currentMusicIndex: currentMusicIndex,
+    musicItemsInDOM: document.querySelectorAll('.music-item').length
+  });
+  
   // Check if we have uploaded radio URLs - if so, cycle through only those
   if (window.uploadedMusicPlaylist && window.uploadedMusicPlaylist.length > 0) {
     // Cycle through uploaded radio URLs only
@@ -767,16 +775,50 @@ function nextMusicTrack() {
   } else if (musicPlaylist.length > 0) {
     // Go to next track in regular playlist
     const nextIndex = (currentMusicIndex + 1) % musicPlaylist.length;
+    console.log(`🎵 Going to next track: ${nextIndex}`);
     playMusicFromPlaylist(nextIndex);
     
     // Update highlighting after track change
     setTimeout(() => {
       highlightCurrentTrack();
     }, 100);
+  } else {
+    // Check if there are music items in the DOM but not in the playlists
+    const musicItems = document.querySelectorAll('.music-item');
+    if (musicItems.length > 0) {
+      console.log('🎵 Found music items in DOM but no playlist arrays populated. Using DOM navigation.');
+      
+      // Find currently playing item
+      let currentIndex = -1;
+      const playingItem = document.querySelector('.music-item.playing');
+      if (playingItem) {
+        for (let i = 0; i < musicItems.length; i++) {
+          if (musicItems[i] === playingItem) {
+            currentIndex = i;
+            break;
+          }
+        }
+      }
+      
+      // Go to next item (or first if none playing)
+      const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % musicItems.length : 0;
+      console.log(`🎵 Clicking next DOM item at index: ${nextIndex}`);
+      musicItems[nextIndex].click();
+    } else {
+      console.log('🎵 No music tracks or radio stations available');
+    }
   }
 }
 
 function previousMusicTrack() {
+  console.log('🎵 previousMusicTrack called');
+  console.log('📊 Debug info:', {
+    uploadedMusicPlaylistLength: window.uploadedMusicPlaylist ? window.uploadedMusicPlaylist.length : 'undefined',
+    musicPlaylistLength: musicPlaylist.length,
+    currentMusicIndex: currentMusicIndex,
+    musicItemsInDOM: document.querySelectorAll('.music-item').length
+  });
+  
   // Check if we have uploaded radio URLs - if so, cycle through only those
   if (window.uploadedMusicPlaylist && window.uploadedMusicPlaylist.length > 0) {
     // Cycle through uploaded radio URLs only
@@ -797,12 +839,38 @@ function previousMusicTrack() {
   } else if (musicPlaylist.length > 0) {
     // Go to previous track in regular playlist
     const prevIndex = (currentMusicIndex - 1 + musicPlaylist.length) % musicPlaylist.length;
+    console.log(`🎵 Going to previous track: ${prevIndex}`);
     playMusicFromPlaylist(prevIndex);
     
     // Update highlighting after track change
     setTimeout(() => {
       highlightCurrentTrack();
     }, 100);
+  } else {
+    // Check if there are music items in the DOM but not in the playlists
+    const musicItems = document.querySelectorAll('.music-item');
+    if (musicItems.length > 0) {
+      console.log('🎵 Found music items in DOM but no playlist arrays populated. Using DOM navigation.');
+      
+      // Find currently playing item
+      let currentIndex = -1;
+      const playingItem = document.querySelector('.music-item.playing');
+      if (playingItem) {
+        for (let i = 0; i < musicItems.length; i++) {
+          if (musicItems[i] === playingItem) {
+            currentIndex = i;
+            break;
+          }
+        }
+      }
+      
+      // Go to previous item (or last if none playing)
+      const prevIndex = currentIndex >= 0 ? (currentIndex - 1 + musicItems.length) % musicItems.length : musicItems.length - 1;
+      console.log(`🎵 Clicking previous DOM item at index: ${prevIndex}`);
+      musicItems[prevIndex].click();
+    } else {
+      console.log('🎵 No music tracks or radio stations available');
+    }
   }
 }
 
@@ -1550,6 +1618,22 @@ async function uploadMusicPlaylist(event) {
   }
 }
 
+// ===== MOBILE DETECTION =====
+function isMobileDevice() {
+  const userAgent = navigator.userAgent.toLowerCase();
+  const mobileKeywords = ['android', 'iphone', 'ipad', 'ipod', 'blackberry', 'windows phone', 'mobile'];
+  const isMobileUA = mobileKeywords.some(keyword => userAgent.includes(keyword));
+  
+  // Also check for touch capability and screen size
+  const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const isSmallScreen = window.innerWidth <= 768 || window.innerHeight <= 1024;
+  
+  const isMobile = isMobileUA || (hasTouchScreen && isSmallScreen);
+  console.log('📱 Mobile detection:', { isMobileUA, hasTouchScreen, isSmallScreen, isMobile });
+  
+  return isMobile;
+}
+
 // ===== MEDIA TOOLBAR FUNCTIONS =====
 
 function toggleMediaToolbar() {
@@ -1587,6 +1671,30 @@ function toggleMediaToolbarVisibility() {
     isMediaToolbarVisible = (newDisplay === "flex");
     console.log("📺 Media toolbar visibility toggled:", bar.style.display);
   }
+}
+
+// ===== MOBILE TOOLBAR INITIALIZATION =====
+function ensureMobileToolbarVisibility() {
+  if (isMobileDevice()) {
+    const topToolbar = document.getElementById("toolbar");
+    if (topToolbar) {
+      topToolbar.style.display = "flex";
+      topToolbar.style.opacity = "1";
+      topToolbar.classList.add('mobile-always-visible');
+      console.log("📱 Mobile top toolbar initialized as always visible");
+    }
+  }
+}
+
+// Handle window resize events to re-check mobile status
+function handleWindowResize() {
+  ensureMobileToolbarVisibility();
+}
+
+// Add resize listener
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', handleWindowResize);
+  window.addEventListener('orientationchange', handleWindowResize);
 }
 
 // ===== BACKGROUND UPLOAD FUNCTIONS =====
@@ -2077,6 +2185,7 @@ async function nextPlaylist() {
   }
   
   console.log(`📋 Before next: currentPlaylistIndex = ${currentPlaylistIndex}, total playlists = ${uploadedPlaylists.length}`);
+  console.log('📊 Available playlists:', uploadedPlaylists.map((p, i) => `${i}: ${p.name} (${p.urls.length} videos)`));
   
   // Initialize index if it's invalid
   if (currentPlaylistIndex < 0 || currentPlaylistIndex >= uploadedPlaylists.length) {
@@ -2110,6 +2219,7 @@ async function previousPlaylist() {
   }
   
   console.log(`📋 Before previous: currentPlaylistIndex = ${currentPlaylistIndex}, total playlists = ${uploadedPlaylists.length}`);
+  console.log('📊 Available playlists:', uploadedPlaylists.map((p, i) => `${i}: ${p.name} (${p.urls.length} videos)`));
   
   // Initialize index if it's invalid
   if (currentPlaylistIndex < 0 || currentPlaylistIndex >= uploadedPlaylists.length) {
@@ -3849,14 +3959,23 @@ function updateVideoButtonIcon() {
 
 // ===== PRE-LOAD PLAYLISTS FROM ROOT FOLDER =====
 let playlistsPreloaded = false; // Flag to prevent double loading
+let preloadingInProgress = false; // Flag to prevent race conditions
 
 async function preloadPlaylists() {
   if (playlistsPreloaded) {
     console.log('📋 Playlists already pre-loaded, skipping');
+    console.log('📊 Current uploadedPlaylists:', uploadedPlaylists.map(p => p.name));
     return;
   }
   
+  if (preloadingInProgress) {
+    console.log('📋 Playlist preloading already in progress, skipping');
+    return;
+  }
+  
+  preloadingInProgress = true;
   console.log('📋 Pre-loading playlists from playlist.txt...');
+  console.log('📊 Before loading - uploadedPlaylists count:', uploadedPlaylists.length);
   
   // Clear existing playlists to prevent duplication
   uploadedPlaylists.length = 0;
@@ -3894,11 +4013,17 @@ async function preloadPlaylists() {
         if (youtubeUrls.length > 0) {
           const playlistName = filename.replace('.txt', '');
           
-          uploadedPlaylists.push({
-            name: playlistName,
-            urls: youtubeUrls
-          });
-          console.log(`📋 Pre-loaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
+          // Check if playlist already exists (additional safety check)
+          const existingPlaylist = uploadedPlaylists.find(p => p.name === playlistName);
+          if (!existingPlaylist) {
+            uploadedPlaylists.push({
+              name: playlistName,
+              urls: youtubeUrls
+            });
+            console.log(`📋 Pre-loaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
+          } else {
+            console.log(`⚠️ Playlist "${playlistName}" already exists, skipping duplicate`);
+          }
         } else {
           console.log(`⚠️ No YouTube URLs found in ${filename}`);
         }
@@ -3914,7 +4039,8 @@ async function preloadPlaylists() {
   if (uploadedPlaylists.length > 0) {
     currentPlaylistIndex = 0;
     loadUploadedPlaylist(0);
-    console.log(`📋 Loaded ${uploadedPlaylists.length} playlists from playlist.txt`);
+    console.log(`📋 Successfully loaded ${uploadedPlaylists.length} playlists from playlist.txt`);
+    console.log('📊 Final playlist names:', uploadedPlaylists.map(p => p.name));
   } else {
     console.log('📋 No playlists found in playlist.txt');
   }
@@ -3923,7 +4049,9 @@ async function preloadPlaylists() {
     console.log('⚠️ Error reading playlist.txt:', error.message);
   }
   
+  preloadingInProgress = false;
   playlistsPreloaded = true;
+  console.log('📋 Playlist preloading completed');
 }
 
 // ===== MEDIA.JS LOADED =====
@@ -3938,6 +4066,7 @@ function initializeMediaSystem() {
     document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         loadToolbarButtonImages();
+        ensureMobileToolbarVisibility();
         console.log('🎛️ Media system initialized after DOM load');
       }, 100);
     });
@@ -3945,6 +4074,7 @@ function initializeMediaSystem() {
     // DOM is already loaded
     setTimeout(() => {
       loadToolbarButtonImages();
+      ensureMobileToolbarVisibility();
       console.log('🎛️ Media system initialized immediately');
     }, 100);
   }

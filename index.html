@@ -569,6 +569,8 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
         window.toggleMediaToolbar = toggleMediaToolbar;
         window.toggleMediaToolbarMinimize = toggleMediaToolbarMinimize;
         window.toggleMediaToolbarVisibility = toggleMediaToolbarVisibility;
+        window.isMobileDevice = isMobileDevice;
+        window.ensureMobileToolbarVisibility = ensureMobileToolbarVisibility;
         window.playRadioStreamFromPlaylist = playRadioStreamFromPlaylist;
         window.handleBackgroundUpload = handleBackgroundUpload;
         window.handleVideoUpload = handleVideoUpload;
@@ -753,6 +755,13 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
       function showToolbar() {
         toolbar.style.opacity = "1";
         clearTimeout(inactivityTimeout);
+        
+        // Don't auto-hide toolbar on mobile devices
+        if (typeof isMobileDevice === 'function' && isMobileDevice()) {
+          console.log("📱 Mobile device detected - toolbar will not auto-hide");
+          return;
+        }
+        
         inactivityTimeout = setTimeout(() => {
           toolbar.style.opacity = "0";
         }, 5000);
@@ -768,6 +777,11 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
       
       document.addEventListener("mousemove", handleMouseMove);
       showToolbar();
+      
+      // Ensure mobile toolbar visibility
+      if (typeof ensureMobileToolbarVisibility === 'function') {
+        ensureMobileToolbarVisibility();
+      }
       
       console.log("✅ MindsEye initialization complete");
     });

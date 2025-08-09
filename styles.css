@@ -1220,6 +1220,20 @@ button[data-png="bucheck"].has-png {
   gap: 10px;
 }
 
+/* ===== MOBILE DEVICE TOP TOOLBAR RULES ===== */
+/* Simple mobile rule: just ensure toolbar stays visible */
+@media screen and (max-width: 768px), (hover: none) and (pointer: coarse) {
+  #toolbar {
+    display: flex !important;
+    opacity: 1 !important;
+  }
+  
+  #toolbar.mobile-always-visible {
+    display: flex !important;
+    opacity: 1 !important;
+  }
+}
+
 #mediaToolbar .timeline-control span,
 #mediaToolbar .duration-control span {
   color: #ccc;
