@@ -747,8 +747,25 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
 }
 
 function nextMusicTrack() {
-  if (musicPlaylist.length > 0) {
-    // Go to next track
+  // Check if we have uploaded radio URLs - if so, cycle through only those
+  if (window.uploadedMusicPlaylist && window.uploadedMusicPlaylist.length > 0) {
+    // Cycle through uploaded radio URLs only
+    window.currentMusicPlaylistIndex = window.currentMusicPlaylistIndex || 0;
+    window.currentMusicPlaylistIndex = (window.currentMusicPlaylistIndex + 1) % window.uploadedMusicPlaylist.length;
+    
+    const radioTrack = window.uploadedMusicPlaylist[window.currentMusicPlaylistIndex];
+    console.log(`📻 Next radio station: ${radioTrack.title || radioTrack.url} (${window.currentMusicPlaylistIndex + 1}/${window.uploadedMusicPlaylist.length})`);
+    
+    if (radioTrack.url) {
+      playRadioStreamFromPlaylist(radioTrack.url, window.currentMusicPlaylistIndex);
+    }
+    
+    // Update highlighting after track change
+    setTimeout(() => {
+      highlightCurrentTrack();
+    }, 100);
+  } else if (musicPlaylist.length > 0) {
+    // Go to next track in regular playlist
     const nextIndex = (currentMusicIndex + 1) % musicPlaylist.length;
     playMusicFromPlaylist(nextIndex);
     
@@ -760,8 +777,25 @@ function nextMusicTrack() {
 }
 
 function previousMusicTrack() {
-  if (musicPlaylist.length > 0) {
-    // Go to previous track
+  // Check if we have uploaded radio URLs - if so, cycle through only those
+  if (window.uploadedMusicPlaylist && window.uploadedMusicPlaylist.length > 0) {
+    // Cycle through uploaded radio URLs only
+    window.currentMusicPlaylistIndex = window.currentMusicPlaylistIndex || 0;
+    window.currentMusicPlaylistIndex = (window.currentMusicPlaylistIndex - 1 + window.uploadedMusicPlaylist.length) % window.uploadedMusicPlaylist.length;
+    
+    const radioTrack = window.uploadedMusicPlaylist[window.currentMusicPlaylistIndex];
+    console.log(`📻 Previous radio station: ${radioTrack.title || radioTrack.url} (${window.currentMusicPlaylistIndex + 1}/${window.uploadedMusicPlaylist.length})`);
+    
+    if (radioTrack.url) {
+      playRadioStreamFromPlaylist(radioTrack.url, window.currentMusicPlaylistIndex);
+    }
+    
+    // Update highlighting after track change
+    setTimeout(() => {
+      highlightCurrentTrack();
+    }, 100);
+  } else if (musicPlaylist.length > 0) {
+    // Go to previous track in regular playlist
     const prevIndex = (currentMusicIndex - 1 + musicPlaylist.length) % musicPlaylist.length;
     playMusicFromPlaylist(prevIndex);
     
