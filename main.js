@@ -3833,6 +3833,49 @@ function setupEventListeners() {
         }
         e.preventDefault();
         return;
+      case "b":
+      case "B":
+        // B toggles bubble panel visibility
+        const panel = document.getElementById('panel');
+        if (panel) {
+          if (panel.style.display === 'block') {
+            closeAllPanels();
+          } else if (selectedIdea) {
+            // Only open if there's a selected bubble
+            openPanel(selectedIdea);
+          }
+        }
+        e.preventDefault();
+        return;
+      case "-":
+        // Minus decreases speed multiplier
+        if (speedMultiplier > 0.1) { // Minimum speed limit
+          speedMultiplier = Math.max(0.1, speedMultiplier - 0.1);
+          speedMultiplier = Math.round(speedMultiplier * 10) / 10; // Round to 1 decimal
+          // Update speed slider if it exists
+          const speedSlider = document.querySelector('input[type="range"][max="3"]');
+          if (speedSlider) {
+            speedSlider.value = speedMultiplier;
+          }
+          console.log('⚡ Speed decreased to:', speedMultiplier);
+        }
+        e.preventDefault();
+        return;
+      case "+":
+      case "=": // Handle both + and = keys (since + requires shift)
+        // Plus increases speed multiplier
+        if (speedMultiplier < 3.0) { // Maximum speed limit
+          speedMultiplier = Math.min(3.0, speedMultiplier + 0.1);
+          speedMultiplier = Math.round(speedMultiplier * 10) / 10; // Round to 1 decimal
+          // Update speed slider if it exists
+          const speedSlider = document.querySelector('input[type="range"][max="3"]');
+          if (speedSlider) {
+            speedSlider.value = speedMultiplier;
+          }
+          console.log('⚡ Speed increased to:', speedMultiplier);
+        }
+        e.preventDefault();
+        return;
     }
     
     if (!selectedIdea) return;
@@ -3876,6 +3919,20 @@ function setupEventListeners() {
         // S key smooths the last drawn line (works in drawing mode)
         if (isDrawingMode && drawingPaths.length > 0) {
           smoothLastLine();
+          e.preventDefault();
+        }
+        break;
+      case "[":
+        // Left bracket decreases bubble size
+        if (selectedIdea.radius > 20) { // Minimum size limit
+          selectedIdea.radius -= 5;
+          e.preventDefault();
+        }
+        break;
+      case "]":
+        // Right bracket increases bubble size
+        if (selectedIdea.radius < 200) { // Maximum size limit
+          selectedIdea.radius += 5;
           e.preventDefault();
         }
         break;

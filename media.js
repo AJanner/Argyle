@@ -833,8 +833,16 @@ function showWelcomeMessage() {
           
           <strong>Bubble Movement:</strong><br>
           • <kbd>Arrow Keys</kbd> - Move selected bubble<br>
+          • <kbd>B</kbd> - Toggle bubble panel<br>
+          • <kbd>[</kbd> - Decrease bubble size<br>
+          • <kbd>]</kbd> - Increase bubble size<br>
           • <kbd>.</kbd> - Striker Attack<br>
           • <kbd>/</kbd> - Striker Capture<br><br>
+          
+          <strong>Speed Control:</strong><br>
+          • <kbd>-</kbd> - Decrease speed<br>
+          • <kbd>+</kbd> - Increase speed<br>
+          • <kbd>Space</kbd> - Pause/Resume<br><br>
           
           <strong>Gamepad Controls (PS5):</strong><br>
           • <kbd>Triangle</kbd> - Toggle video player<br>
