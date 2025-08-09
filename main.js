@@ -2032,12 +2032,12 @@ function openAnalysisIframe(type) {
   if (container && iframe) {
     // Set the iframe source based on type
     if (type === 'suggestions') {
-      iframe.src = 'https://stonehousess.github.io/Sifi/';
+      iframe.src = 'https://ajanner.github.io/Sifi/';
       
       // Start cooldown for suggestions
       startSuggestionsCooldown();
     } else if (type === 'ideas') {
-      iframe.src = 'https://stonehousess.github.io/Sifi/';
+      iframe.src = 'https://ajanner.github.io/Sifi/Comedy/';
       
       // Start cooldown for ideas button
       startIdeasCooldown();
@@ -2182,7 +2182,7 @@ function endIdeasCooldown() {
     ideasButton.style.background = 'linear-gradient(45deg, #2196F3, #1976D2)';
     ideasButton.style.color = 'white';
     ideasButton.disabled = false;
-    ideasButton.innerHTML = '🧠 Ideas:<br>Current: Main Site';
+    ideasButton.innerHTML = '🧠 Ideas:<br>Current: Comedy (All)';
     
     // Flash effect to indicate cooldown ended
     setTimeout(() => {
