@@ -835,9 +835,7 @@ function showWelcomeMessage() {
           • <kbd>Arrow Keys</kbd> - Move selected bubble<br>
           • <kbd>B</kbd> - Toggle bubble panel<br>
           • <kbd>[</kbd> - Decrease bubble size<br>
-          • <kbd>]</kbd> - Increase bubble size<br>
-          • <kbd>.</kbd> - Striker Attack<br>
-          • <kbd>/</kbd> - Striker Capture<br><br>
+          • <kbd>]</kbd> - Increase bubble size<br><br>
           
           <strong>Speed Control:</strong><br>
           • <kbd>-</kbd> - Decrease speed<br>
@@ -849,9 +847,13 @@ function showWelcomeMessage() {
           • <kbd>Circle</kbd> - Toggle music panel<br>
           • <kbd>Square</kbd> - Close all panels<br>
           • <kbd>L1/R1</kbd> - Switch bubbles<br>
-          • <kbd>R2</kbd> - Striker attack<br>
-          • <kbd>L2</kbd> - Striker capture<br>
-          • <kbd>X</kbd> - Select music track
+          • <kbd>R2</kbd> - Bubble Bounce<br>
+          • <kbd>L2</kbd> - Bubble Collect<br>
+          • <kbd>X</kbd> - Select music track<br><br>
+          
+          <strong>Gamepad Controls (Keyboard):</strong><br>
+          • <kbd>.</kbd> - Bubble Bounce<br>
+          • <kbd>/</kbd> - Bubble Collect
         </div>
       `;
     }
