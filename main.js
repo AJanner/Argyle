@@ -4404,21 +4404,8 @@ function setupEventListeners() {
         toggleBubblePanel();
         e.preventDefault();
         return;
-      case "s":
-      case "S":
-        // S searches bubbles (when not in text input)
-        if (!e.target.matches('input, textarea')) {
-          const query = prompt('🔍 Search bubbles:');
-          if (query) {
-            const results = searchBubbles(query);
-            if (results.length > 0) {
-              selectedIdea = results[0];
-              showPanel();
-            }
-          }
-        }
-        e.preventDefault();
-        return;
+      // S key shortcut removed - conflicts with smooth drawing shortcut
+      // Search functionality available through bubble panel instead
       case "d":
       case "D":
         // D duplicates selected bubble

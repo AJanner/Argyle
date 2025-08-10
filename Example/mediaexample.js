@@ -535,7 +535,7 @@ function playMusicFromPlaylist(index) {
       startMusicVisualizer();
     } else {
       playMusic(track.url);
-      console.log(`🎵 Playing track ${index + 1}/${musicPlaylist.length}: ${track.title}`);
+      logger.info(`Playing track ${index + 1}/${musicPlaylist.length}: ${track.title}`, null, 'AUDIO');
       // Start visualizer for any music playback
       isMusicPlaying = true;
       startMusicVisualizer();
@@ -822,7 +822,7 @@ function loadRadioStation() {
       
       // Add event listeners
       audio.addEventListener('ended', () => {
-        console.log('🎵 Radio stream ended');
+        logger.info('Radio stream ended', null, 'AUDIO');
         const musicButton = document.querySelector('[data-icon="music"]');
         if (musicButton && typeof PNGLoader !== 'undefined') {
           PNGLoader.applyPNG(musicButton, 'music.png');
@@ -830,7 +830,7 @@ function loadRadioStation() {
       });
 
       audio.addEventListener('pause', () => {
-        console.log('🎵 Radio paused');
+        logger.info('Radio paused', null, 'AUDIO');
         const musicButton = document.querySelector('[data-icon="music"]');
         if (musicButton && typeof PNGLoader !== 'undefined') {
           PNGLoader.applyPNG(musicButton, 'music.png');
@@ -838,7 +838,7 @@ function loadRadioStation() {
       });
 
       audio.addEventListener('play', () => {
-        console.log('🎵 Radio started playing');
+        logger.info('Radio started playing', null, 'AUDIO');
         const musicButton = document.querySelector('[data-icon="music"]');
         if (musicButton && typeof PNGLoader !== 'undefined') {
           PNGLoader.applyPNG(musicButton, 'music2.png');
@@ -847,17 +847,17 @@ function loadRadioStation() {
       
       window.currentAudio = audio;
       audio.play().then(() => {
-        console.log('🎵 Radio station loaded and playing');
+        logger.info('Radio station loaded and playing', null, 'AUDIO');
         const musicButton = document.querySelector('[data-icon="music"]');
         if (musicButton && typeof PNGLoader !== 'undefined') {
           PNGLoader.applyPNG(musicButton, 'music2.png');
         }
       }).catch(err => {
-        console.error('❌ Error loading radio station:', err);
+        logger.error('Error loading radio station', err, 'AUDIO');
         alert('Failed to load radio station. Please check the URL.');
       });
     } catch (error) {
-      console.error('❌ Error creating radio audio:', error);
+              logger.error('Error creating radio audio', error, 'AUDIO');
       alert('Failed to load radio station. Please check the URL.');
     }
   }
@@ -901,7 +901,7 @@ function toggleMediaToolbarVisibility() {
     const newDisplay = (currentDisplay === "none" || currentDisplay === "") ? "flex" : "none";
     bar.style.display = newDisplay;
     isMediaToolbarVisible = (newDisplay === "flex");
-    console.log("📺 Media toolbar visibility toggled:", bar.style.display);
+    logger.info(`Media toolbar visibility toggled: ${bar.style.display}`, null, 'VIDEO');
   }
 }
 
@@ -1078,7 +1078,7 @@ function rollDice() {
     diceButton.classList.add('showing-number');
   }
   
-  console.log("🎲 Dice roll result:", result, "(max:", diceMaxValue, ")");
+      logger.info(`Dice roll result: ${result} (max: ${diceMaxValue})`, null, 'SYSTEM');
   
   // Hide overlay after 5 seconds
   setTimeout(() => {
@@ -1151,7 +1151,7 @@ function hideDiceSlider() {
 
 // Initialize video player
 function initVideoPlayer() {
-  console.log('🎥 Initializing video player...');
+      logger.info('Initializing video player...', null, 'VIDEO');
   
   // Ensure video elements are properly hidden initially
   const player = document.getElementById('videoPlayer');
@@ -1163,7 +1163,7 @@ function initVideoPlayer() {
     player.style.pointerEvents = 'none';
     player.style.zIndex = '-1';
     player.style.visibility = 'hidden';
-    console.log('🎥 Video player element properly initialized');
+          logger.info('Video player element properly initialized', null, 'VIDEO');
   }
   
   if (controls) {
@@ -1183,7 +1183,7 @@ function initVideoPlayer() {
   // Pre-load playlists from root folder
   setTimeout(async () => {
     await preloadPlaylists();
-    console.log('🎥 Video player initialized with pre-loaded playlists');
+    logger.info('Video player initialized with pre-loaded playlists', null, 'VIDEO');
   }, 100);
   
   // Load video control images
@@ -1193,14 +1193,14 @@ function initVideoPlayer() {
   const opacitySlider = document.getElementById('videoOpacitySlider');
   if (opacitySlider && player) {
     player.style.opacity = opacitySlider.value;
-    console.log('🎥 Initial video opacity set to:', opacitySlider.value);
+    logger.info(`Initial video opacity set to: ${opacitySlider.value}`, null, 'VIDEO');
   }
   
   // Set initial size
   const sizeSlider = document.getElementById('videoSizeSlider');
   if (sizeSlider && player) {
     player.style.transform = `translate(-50%, -50%) scale(${sizeSlider.value})`;
-    console.log('🎥 Initial video size set to:', sizeSlider.value);
+    logger.info(`Initial video size set to: ${sizeSlider.value}`, null, 'VIDEO');
   }
   
   // Debug video controls after a short delay
@@ -1229,8 +1229,8 @@ async function loadVideoPlaylist() {
     const isLocalFile = window.location.protocol === 'file:';
     
     if (isLocalFile) {
-      console.log('📋 Running from local file - playlist loading may be restricted by CORS');
-      console.log('📋 You can upload your own playlist file using the upload button');
+          logger.warn('Running from local file - playlist loading may be restricted by CORS', null, 'PLAYLIST');
+    logger.info('You can upload your own playlist file using the upload button', null, 'PLAYLIST');
       videoPlaylist = [];
       
       // Update display with empty playlist
@@ -1261,7 +1261,7 @@ async function loadVideoPlaylist() {
       return line.includes('youtube.com') || line.includes('youtu.be');
     });
     
-    console.log(`📋 Video Loaded ${videoPlaylist.length} videos from playlist`);
+          logger.info(`Loaded ${videoPlaylist.length} videos from playlist`, null, 'PLAYLIST');
     
     // Update display after loading
     if (typeof updateVideoPlaylistDisplay === 'function') {
@@ -1270,8 +1270,8 @@ async function loadVideoPlaylist() {
     
     return videoPlaylist;
   } catch (error) {
-    console.error('❌ Error loading video playlist:', error);
-    console.log('📋 Creating empty playlist - you can upload your own playlist file');
+          logger.error('Error loading video playlist', error, 'PLAYLIST');
+      logger.info('Creating empty playlist - you can upload your own playlist file', null, 'PLAYLIST');
     
     // Create a default empty playlist
     videoPlaylist = [];
@@ -1346,7 +1346,7 @@ async function uploadPlaylist() {
     // Clear the file input
     fileInput.value = '';
     
-    console.log(`📋 Uploaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
+    logger.info(`Uploaded playlist "${playlistName}" with ${youtubeUrls.length} videos`, null, 'PLAYLIST');
     alert(`✅ Uploaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
   };
   
@@ -1355,7 +1355,7 @@ async function uploadPlaylist() {
 
 async function nextPlaylist() {
   if (uploadedPlaylists.length === 0) {
-    console.log('📋 No uploaded playlists available');
+    logger.warn('No uploaded playlists available', null, 'PLAYLIST');
     return;
   }
   
@@ -1364,12 +1364,12 @@ async function nextPlaylist() {
   loadUploadedPlaylist(currentPlaylistIndex);
   
   const playlist = uploadedPlaylists[currentPlaylistIndex];
-  console.log(`📋 Switched to next playlist: ${playlist.name} (${playlist.urls.length} videos)`);
+  logger.info(`Switched to next playlist: ${playlist.name} (${playlist.urls.length} videos)`, null, 'PLAYLIST');
 }
 
 async function previousPlaylist() {
   if (uploadedPlaylists.length === 0) {
-    console.log('📋 No uploaded playlists available');
+    logger.warn('No uploaded playlists available', null, 'PLAYLIST');
     return;
   }
   
@@ -1378,18 +1378,18 @@ async function previousPlaylist() {
   loadUploadedPlaylist(currentPlaylistIndex);
   
   const playlist = uploadedPlaylists[currentPlaylistIndex];
-  console.log(`📋 Switched to previous playlist: ${playlist.name} (${playlist.urls.length} videos)`);
+  logger.info(`Switched to previous playlist: ${playlist.name} (${playlist.urls.length} videos)`, null, 'PLAYLIST');
 }
 
 async function playRandomVideo() {
   if (videoPlaylist.length === 0) {
-    console.log('📋 No videos in current playlist');
+    logger.warn('No videos in current playlist', null, 'PLAYLIST');
     return;
   }
   
   const randomIndex = Math.floor(Math.random() * videoPlaylist.length);
   videoPlayVideo(randomIndex);
-  console.log(`🎲 Playing random video: ${randomIndex + 1} of ${videoPlaylist.length}`);
+  logger.info(`Playing random video: ${randomIndex + 1} of ${videoPlaylist.length}`, null, 'PLAYLIST');
 }
 
 function loadUploadedPlaylist(index) {
@@ -1412,7 +1412,7 @@ function loadUploadedPlaylist(index) {
     videoPlayVideo(0);
   }
   
-  console.log(`🔄 Loaded uploaded playlist: ${playlist.name} with ${playlist.urls.length} videos`);
+  logger.info(`Loaded uploaded playlist: ${playlist.name} with ${playlist.urls.length} videos`, null, 'PLAYLIST');
 }
 
 // ===== VIDEO PLAYER FUNCTIONS =====
@@ -1431,7 +1431,7 @@ async function fetchVideoTitle(videoId) {
       return data.title;
     }
   } catch (error) {
-    console.error('❌ Error fetching video title for', videoId, ':', error);
+    logger.error(`Error fetching video title for ${videoId}`, error, 'VIDEO');
   }
   return null;
 }
@@ -1444,7 +1444,7 @@ function videoPlayVideo(index) {
   const videoId = extractYouTubeId(url);
   
   if (!videoId) {
-    console.error('❌ Invalid YouTube URL:', url);
+    logger.error(`Invalid YouTube URL: ${url}`, null, 'VIDEO');
     return;
   }
   
@@ -1453,7 +1453,7 @@ function videoPlayVideo(index) {
     const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
     iframe.src = embedUrl;
     videoIsPlaying = true;
-    console.log('🎵 Video Playing video:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+    logger.info(`Video Playing video: ${index + 1} of ${videoPlaylist.length} Video ID: ${videoId}`, null, 'VIDEO');
     
     // Update the play button icon after a short delay to allow iframe to load
     setTimeout(() => {
@@ -1467,9 +1467,9 @@ function videoPlayVideo(index) {
 
 function videoTogglePlay() {
   const iframe = document.getElementById('videoIframe');
-  console.log('🎥 videoTogglePlay called');
-  console.log('🎥 iframe:', iframe);
-  console.log('🎥 videoIsPlaying before:', videoIsPlaying);
+  logger.debug('videoTogglePlay called', null, 'VIDEO');
+  logger.debug(`iframe: ${iframe}`, null, 'VIDEO');
+  logger.debug(`videoIsPlaying before: ${videoIsPlaying}`, null, 'VIDEO');
   
   if (iframe) {
     try {
@@ -1479,16 +1479,16 @@ function videoTogglePlay() {
         iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
         iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
         videoIsPlaying = false;
-        console.log('⏸️ Video paused');
+        logger.info('Video paused', null, 'VIDEO');
       } else {
         // Try multiple methods to play the video
         iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
         iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":[]}', '*');
         videoIsPlaying = true;
-        console.log('▶️ Video playing');
+        logger.info('Video playing', null, 'VIDEO');
       }
       
-      console.log('🎥 videoIsPlaying after:', videoIsPlaying);
+              logger.debug(`videoIsPlaying after: ${videoIsPlaying}`, null, 'VIDEO');
       
       // Update the play button icon
       updateVideoPlayButtonIcon();
@@ -1496,7 +1496,7 @@ function videoTogglePlay() {
       // Also try to reload the iframe if postMessage fails
       setTimeout(() => {
         if (videoIsPlaying && iframe.src) {
-          console.log('🔄 Attempting to force play by reloading iframe');
+          logger.info('Attempting to force play by reloading iframe', null, 'VIDEO');
           const currentSrc = iframe.src;
           iframe.src = currentSrc.replace('autoplay=0', 'autoplay=1');
           setTimeout(() => {
@@ -1508,29 +1508,29 @@ function videoTogglePlay() {
       // Alternative approach: try to click the play button inside the iframe
       setTimeout(() => {
         if (videoIsPlaying) {
-          console.log('🎥 Attempting alternative play method');
+          logger.info('Attempting alternative play method', null, 'VIDEO');
           try {
             // Try to find and click the play button inside the iframe
             const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
             const playButton = iframeDoc.querySelector('.ytp-play-button');
             if (playButton) {
               playButton.click();
-              console.log('🎥 Clicked play button inside iframe');
+              logger.info('Clicked play button inside iframe', null, 'VIDEO');
             }
           } catch (error) {
-            console.log('⚠️ Could not access iframe content (CORS restriction)');
+                          logger.warn('Could not access iframe content (CORS restriction)', null, 'VIDEO');
           }
         }
       }, 1000);
       
     } catch (error) {
-      console.error('❌ Error toggling video:', error);
+      logger.error('Error toggling video', error, 'VIDEO');
       // Fallback: just toggle the state and update button
       videoIsPlaying = !videoIsPlaying;
       updateVideoPlayButtonIcon();
     }
   } else {
-    console.log('❌ No video iframe found');
+    logger.error('No video iframe found', null, 'VIDEO');
   }
 }
 
@@ -1607,7 +1607,7 @@ function videoTogglePlaylist() {
     }
   }
   
-  console.log('📋 Playlist toggled:', videoPlaylistVisible ? 'ON' : 'OFF');
+  logger.info(`Playlist toggled: ${videoPlaylistVisible ? 'ON' : 'OFF'}`, null, 'PLAYLIST');
 }
 
 function videoToggleFullscreen() {

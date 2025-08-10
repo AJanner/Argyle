@@ -3621,9 +3621,12 @@ function captureBubblePositions() {
   
   const positions = deepCopyIdeas();
   
-  positions.forEach((idea, index) => {
-    logger.debug(`  Idea ${index}: x=${idea.x.toFixed(1)}, y=${idea.y.toFixed(1)}, title="${idea.title}"`);
-  });
+  // Only log detailed info in debug mode and limit frequency
+  if (typeof window.frameCounter !== 'undefined' && window.frameCounter % 120 === 0) {
+    positions.forEach((idea, index) => {
+      logger.debug(`  Idea ${index}: x=${idea.x.toFixed(1)}, y=${idea.y.toFixed(1)}, title="${idea.title}"`);
+    });
+  }
   
   logger.info('✅ Captured positions for', positions.length, 'ideas');
   return positions;
@@ -3734,6 +3737,12 @@ function stopPlayback() {
 function animateBubbles(duration) {
   if (!AnimationState.data.isPlaying) return;
   
+  // Cache DOM elements and calculations for better performance
+  const timelineSlider = document.getElementById('mediaPlaybackSlider');
+  const inPoint = AnimationState.data.inPoint;
+  const outPoint = AnimationState.data.outPoint;
+  const durationSeconds = AnimationState.data.duration / 1000;
+  
   function animate() {
     if (!AnimationState.data.isPlaying) return;
     
@@ -3742,16 +3751,15 @@ function animateBubbles(duration) {
     const progress = Math.min(elapsed / duration, 1);
     
     // Calculate current playback time in seconds
-    AnimationState.currentPlaybackTime = AnimationState.data.inPoint + (progress * (AnimationState.data.outPoint - AnimationState.data.inPoint));
+    AnimationState.currentPlaybackTime = inPoint + (progress * (outPoint - inPoint));
     
-    // Update timeline slider
-    const timelineSlider = document.getElementById('mediaPlaybackSlider');
+    // Update timeline slider (only if it exists)
     if (timelineSlider) {
       timelineSlider.value = progress;
     }
     
     // Update time display
-    updatePlaybackTimeDisplay(AnimationState.currentPlaybackTime, AnimationState.data.duration / 1000);
+    updatePlaybackTimeDisplay(AnimationState.currentPlaybackTime, durationSeconds);
     
     // Interpolate bubble positions
     interpolateBubblePositions(progress);
@@ -3777,16 +3785,26 @@ function interpolateBubblePositions(progress) {
   // Convert progress to time in seconds
   const currentTime = progress * (AnimationState.data.duration / 1000);
   
-  logger.debug('🎬 Interpolating at progress:', progress, 'time:', currentTime.toFixed(1), 's');
+  // Only log debug info every 30 frames to reduce performance impact
+  if (typeof window.frameCounter !== 'undefined' && window.frameCounter % 30 === 0) {
+    logger.debug('🎬 Interpolating at progress:', progress, 'time:', currentTime.toFixed(1), 's');
+  }
   
   // Find the two keyframes to interpolate between
   let startKeyframe = AnimationState.data.keyframes[0];
   let endKeyframe = AnimationState.data.keyframes[AnimationState.data.keyframes.length - 1];
   
-  for (let i = 0; i < AnimationState.data.keyframes.length - 1; i++) {
-    if (currentTime >= AnimationState.data.keyframes[i].time && currentTime <= AnimationState.data.keyframes[i + 1].time) {
-      startKeyframe = AnimationState.data.keyframes[i];
-      endKeyframe = AnimationState.data.keyframes[i + 1];
+  // Optimize keyframe search with early exit
+  const keyframes = AnimationState.data.keyframes;
+  const keyframeCount = keyframes.length;
+  
+  for (let i = 0; i < keyframeCount - 1; i++) {
+    const currentKeyframe = keyframes[i];
+    const nextKeyframe = keyframes[i + 1];
+    
+    if (currentTime >= currentKeyframe.time && currentTime <= nextKeyframe.time) {
+      startKeyframe = currentKeyframe;
+      endKeyframe = nextKeyframe;
       break;
     }
   }
@@ -3794,37 +3812,54 @@ function interpolateBubblePositions(progress) {
   // Calculate interpolation factor
   const segmentProgress = (currentTime - startKeyframe.time) / (endKeyframe.time - startKeyframe.time);
   
-  logger.debug('🎬 Interpolating between keyframes:', startKeyframe.time.toFixed(1), 's and', endKeyframe.time.toFixed(1), 's, factor:', segmentProgress.toFixed(2));
+  // Only log debug info every 30 frames
+  if (typeof window.frameCounter !== 'undefined' && window.frameCounter % 30 === 0) {
+    logger.debug('🎬 Interpolating between keyframes:', startKeyframe.time.toFixed(1), 's and', endKeyframe.time.toFixed(1), 's, factor:', segmentProgress.toFixed(2));
+  }
   
   // Apply interpolated positions to ideas array (which drives the rendering)
   const startPositions = startKeyframe.positions;
   const endPositions = endKeyframe.positions;
   
   if (startPositions && endPositions) {
+    // Cache ideas array length for better performance
+    const ideasLength = ideas.length;
+    
     // Update the ideas array with interpolated positions
-    ideas.forEach((idea, index) => {
+    for (let index = 0; index < ideasLength; index++) {
+      const idea = ideas[index];
       const startPos = startPositions[index];
       const endPos = endPositions[index];
       
       if (startPos && endPos) {
-        // Interpolate position
-        idea.x = startPos.x + (endPos.x - startPos.x) * segmentProgress;
-        idea.y = startPos.y + (endPos.y - startPos.y) * segmentProgress;
+        // Interpolate position with optimized math
+        const deltaX = endPos.x - startPos.x;
+        const deltaY = endPos.y - startPos.y;
+        
+        idea.x = startPos.x + deltaX * segmentProgress;
+        idea.y = startPos.y + deltaY * segmentProgress;
         
         // Interpolate velocity (optional)
         if (startPos.vx !== undefined && endPos.vx !== undefined) {
-          idea.vx = startPos.vx + (endPos.vx - startPos.vx) * segmentProgress;
-          idea.vy = startPos.vy + (endPos.vy - startPos.vy) * segmentProgress;
+          const deltaVX = endPos.vx - startPos.vx;
+          const deltaVY = endPos.vy - startPos.vy;
+          
+          idea.vx = startPos.vx + deltaVX * segmentProgress;
+          idea.vy = startPos.vy + deltaVY * segmentProgress;
         }
         
         // Interpolate other properties if they exist
         if (startPos.radius !== undefined && endPos.radius !== undefined) {
-          idea.radius = startPos.radius + (endPos.radius - startPos.radius) * segmentProgress;
+          const deltaRadius = endPos.radius - startPos.radius;
+          idea.radius = startPos.radius + deltaRadius * segmentProgress;
         }
       }
-    });
+    }
     
-    logger.info('✅ Applied interpolated positions to ideas array');
+    // Only log success every 60 frames to reduce performance impact
+    if (typeof window.frameCounter !== 'undefined' && window.frameCounter % 60 === 0) {
+      logger.info('✅ Applied interpolated positions to ideas array');
+    }
   }
 }
 
@@ -4243,7 +4278,9 @@ const PNGLoader = {
     let successCount = 0;
     const totalButtons = toolbarConfig.length;
     
-    toolbarConfig.forEach(({ dataIcon, file }) => {
+    // Use for loop instead of forEach for better performance
+    for (let i = 0; i < totalButtons; i++) {
+      const { dataIcon, file } = toolbarConfig[i];
       const button = this.findButton(dataIcon);
       if (button) {
         if (this.applyPNG(button, file)) {
@@ -4252,7 +4289,7 @@ const PNGLoader = {
       } else {
         logger.warn(`⚠️ Button not found: ${dataIcon}`, null, 'VIDEO');
       }
-    });
+    }
     
     logger.info(`🎛️ PNG loading complete: ${successCount}/${totalButtons} successful`, null, 'VIDEO');
     return successCount;
@@ -4279,25 +4316,33 @@ function loadToolbarButtonImages() {
   
   // Load media toolbar PNGs (specific to #mediaToolbar)
   let mediaCount = 0;
-  PNG_CONFIG.mediaToolbar.forEach(({ dataIcon, file }) => {
+  const mediaToolbar = PNG_CONFIG.mediaToolbar;
+  const mediaToolbarLength = mediaToolbar.length;
+  
+  for (let i = 0; i < mediaToolbarLength; i++) {
+    const { dataIcon, file } = mediaToolbar[i];
     const button = PNGLoader.findButtonInContainer(dataIcon, '#mediaToolbar');
     if (button) {
       if (PNGLoader.applyPNG(button, file)) {
         mediaCount++;
       }
     }
-  });
+  }
   
   // Load main toolbar PNGs (specific to #toolbar)
   let mainCount = 0;
-  PNG_CONFIG.mainToolbar.forEach(({ dataIcon, file }) => {
+  const mainToolbar = PNG_CONFIG.mainToolbar;
+  const mainToolbarLength = mainToolbar.length;
+  
+  for (let i = 0; i < mainToolbarLength; i++) {
+    const { dataIcon, file } = mainToolbar[i];
     const button = PNGLoader.findButtonInContainer(dataIcon, '#toolbar');
     if (button) {
       if (PNGLoader.applyPNG(button, file)) {
         mainCount++;
       }
     }
-  });
+  }
   
   // Load video control PNGs
   const videoCount = PNGLoader.loadToolbarPNGs(PNG_CONFIG.videoControls);
@@ -4910,6 +4955,8 @@ function startMusicVisualizer() {
   
   // Generate random colors for this session (backup)
   currentVisualizerColors = [];
+  
+  // Pre-define color arrays for better performance
   const barColors = [
     // Reds & Pinks
     '#FF6B6B', '#FF4757', '#FF3838', '#FF1744', '#F50057',
