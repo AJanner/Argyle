@@ -76,24 +76,29 @@ async function loadMusicList() {
   let loaded = false;
   for (const path of possiblePaths) {
     try {
-      console.log(`🎵 Attempting to load tracklist from ${path} for music panel`);
+      // Note: This file is an example - in production, use logger.info() instead
+      // logger.info(`Attempting to load tracklist from ${path} for music panel`, null, 'AUDIO');
       const response = await fetch(path);
       if (response.ok) {
         const content = await response.text();
         musicFiles = content.split('\n').filter(line => line.trim() !== '');
-        console.log(`🎵 Loaded ${musicFiles.length} tracks from ${path} for music panel`);
+        // Note: This file is an example - in production, use logger.info() instead
+        // logger.info(`Loaded ${musicFiles.length} tracks from ${path} for music panel`, null, 'AUDIO');
         loaded = true;
         break;
       } else {
-        console.log(`⚠️ Could not load ${path} for music panel, status:`, response.status);
+        // Note: This file is an example - in production, use logger.warn() instead
+        // logger.warn(`Could not load ${path} for music panel`, { status: response.status }, 'AUDIO');
       }
     } catch (error) {
-      console.log(`⚠️ Error loading ${path} for music panel:`, error);
+              // Note: This file is an example - in production, use logger.error() instead
+        // logger.error(`Error loading ${path} for music panel`, { error: error.message, path: path }, 'AUDIO');
     }
   }
   
   if (!loaded) {
-    console.log('⚠️ Could not load tracklist.txt from any path for music panel, using default tracks');
+    // Note: This file is an example - in production, use logger.warn() instead
+    // logger.warn('Could not load tracklist.txt from any path for music panel, using default tracks', null, 'AUDIO');
     musicFiles = getDefaultPlaylist();
   }
   
@@ -101,7 +106,8 @@ async function loadMusicList() {
   const parsedTracks = musicFiles.map(track => {
     if (typeof track === 'object' && track.title && track.url) {
       // Already in correct format
-      console.log(`🎵 Parsed object track: ${track.title} -> ${track.url}`);
+      // Note: This file is an example - in production, use logger.debug() instead
+      // logger.debug(`Parsed object track: ${track.title} -> ${track.url}`, null, 'AUDIO');
       return track;
     } else if (typeof track === 'string') {
       // Parse string format (Title|URL or just URL)
@@ -111,7 +117,8 @@ async function loadMusicList() {
           title: parts[0].trim(),
           url: parts[1].trim()
         };
-        console.log(`🎵 Parsed string track: ${parsedTrack.title} -> ${parsedTrack.url}`);
+        // Note: This file is an example - in production, use logger.debug() instead
+      // logger.debug(`Parsed string track: ${parsedTrack.title} -> ${parsedTrack.url}`, null, 'AUDIO');
         return parsedTrack;
       } else {
         // Fallback for old format - use filename as title
@@ -121,7 +128,8 @@ async function loadMusicList() {
           title: filename,
           url: url
         };
-        console.log(`🎵 Parsed fallback track: ${parsedTrack.title} -> ${parsedTrack.url}`);
+        // Note: This file is an example - in production, use logger.debug() instead
+      // logger.debug(`Parsed fallback track: ${parsedTrack.title} -> ${parsedTrack.url}`, null, 'AUDIO');
         return parsedTrack;
       }
     }
@@ -137,12 +145,12 @@ async function loadMusicList() {
   const canPlayMp3 = audio.canPlayType('audio/mpeg');
   const canPlayOpus = audio.canPlayType('audio/opus');
   
-  console.log('🎵 Browser audio support:');
-  console.log('   MP3:', canPlayMp3);
-  console.log('   OPUS:', canPlayOpus);
+  // Note: This file is an example - in production, use logger.info() instead
+  // logger.info('Browser audio support', { mp3: canPlayMp3, opus: canPlayOpus }, 'AUDIO');
   
   musicFiles.forEach(track => {
-    console.log(`🎵 Processing track: ${track.title} -> ${track.url}`);
+          // Note: This file is an example - in production, use logger.debug() instead
+      // logger.debug(`Processing track: ${track.title} -> ${track.url}`, null, 'AUDIO');
     const musicItem = document.createElement('div');
     musicItem.className = 'music-item';
     
@@ -153,7 +161,8 @@ async function loadMusicList() {
       musicItem.textContent = displayName;
       musicItem.style.borderLeft = '3px solid #9C27B0';
       musicItem.title = `Radio Stream: ${track.url}`;
-      console.log(`📻 Created radio item: ${displayName}`);
+              // Note: This file is an example - in production, use logger.debug() instead
+        // logger.debug(`Created radio item: ${displayName}`, null, 'AUDIO');
     } else {
       // Local file
       const filename = track.url.split('/').pop();
@@ -166,7 +175,8 @@ async function loadMusicList() {
         musicItem.style.borderLeft = '3px solid #ff6b6b';
         musicItem.title = 'OPUS format - may not work in all browsers';
       }
-      console.log(`🎵 Created music item: ${displayName}`);
+              // Note: This file is an example - in production, use logger.debug() instead
+        // logger.debug(`Created music item: ${displayName}`, null, 'AUDIO');
     }
     
     musicItem.onclick = (event) => {
@@ -215,11 +225,13 @@ async function loadMusicList() {
 }
 
 function playMusic(filename, event) {
-  console.log(`🎵 playMusic called with filename: ${filename}, event:`, event);
+  // Note: This file is an example - in production, use logger.debug() instead
+  // logger.debug(`playMusic called with filename: ${filename}`, { event: event }, 'AUDIO');
   
   // Remove playing class from all items and reset background
   const musicItems = document.querySelectorAll('.music-item');
-  console.log(`🎵 Found ${musicItems.length} music items to reset`);
+      // Note: This file is an example - in production, use logger.debug() instead
+    // logger.debug(`Found ${musicItems.length} music items to reset`, null, 'AUDIO');
   
   musicItems.forEach(item => {
     item.classList.remove('playing');
@@ -230,10 +242,12 @@ function playMusic(filename, event) {
   if (event && event.target) {
     event.target.classList.add('playing');
     event.target.style.background = '#35CF3A';
-    console.log(`🎵 Highlighted clicked item:`, event.target.textContent);
+          // Note: This file is an example - in production, use logger.debug() instead
+      // logger.debug(`Highlighted clicked item: ${event.target.textContent}`, null, 'AUDIO');
   }
 
-  console.log(`🎵 Playing: ${filename}`);
+      // Note: This file is an example - in production, use logger.info() instead
+    // logger.info(`Playing: ${filename}`, null, 'AUDIO');
   
   // Mark playlist as started when any music is played
   isPlaylistStarted = true;
@@ -242,16 +256,19 @@ function playMusic(filename, event) {
   const isOpus = filename.toLowerCase().endsWith('.opus');
   
   if (isOpus) {
-    console.log('🎵 OPUS file detected, checking browser support...');
+    // Note: This file is an example - in production, use logger.info() instead
+    // logger.info('OPUS file detected, checking browser support...', null, 'AUDIO');
     
     // Check if browser supports OPUS
     const audio = new Audio();
     const canPlayOpus = audio.canPlayType('audio/opus');
     
     if (canPlayOpus === 'probably' || canPlayOpus === 'maybe') {
-      console.log('✅ Browser supports OPUS natively');
+      // Note: This file is an example - in production, use logger.info() instead
+      // logger.info('Browser supports OPUS natively', null, 'AUDIO');
     } else {
-      console.warn('⚠️ Browser may not support OPUS natively, trying anyway...');
+              // Note: This file is an example - in production, use logger.warn() instead
+        // logger.warn('Browser may not support OPUS natively, trying anyway...', null, 'AUDIO');
     }
   }
 
@@ -269,7 +286,8 @@ function playMusic(filename, event) {
 
   // Add event listeners to detect when music ends naturally
   audio.addEventListener('ended', () => {
-    console.log('🎵 Music track ended naturally');
+    // Note: This file is an example - in production, use logger.info() instead
+    // logger.info('Music track ended naturally', null, 'AUDIO');
     isMusicPlaying = false;
     stopMusicVisualizer();
     
@@ -288,7 +306,8 @@ function playMusic(filename, event) {
   });
 
   audio.addEventListener('pause', () => {
-    console.log('🎵 Music paused');
+    // Note: This file is an example - in production, use logger.info() instead
+    // logger.info('Music paused', null, 'AUDIO');
     isMusicPlaying = false;
     stopMusicVisualizer();
     // Update music button to show inactive state
@@ -299,7 +318,8 @@ function playMusic(filename, event) {
   });
 
   audio.addEventListener('play', () => {
-    console.log('🎵 Music started playing');
+    // Note: This file is an example - in production, use logger.info() instead
+    // logger.info('Music started playing', null, 'AUDIO');
     isMusicPlaying = true;
     startMusicVisualizer();
     // Update music button to show active state
@@ -310,23 +330,25 @@ function playMusic(filename, event) {
   });
 
   audio.play().then(() => {
-    console.log(`🎵 Successfully started playing: ${filename}`);
+          // Note: This file is an example - in production, use logger.info() instead
+      // logger.info(`Successfully started playing: ${filename}`, null, 'AUDIO');
     
     // Update music button to show active state
     const musicButton = document.querySelector('[data-icon="music"]');
     if (musicButton && typeof PNGLoader !== 'undefined') {
       PNGLoader.applyPNG(musicButton, 'music2.png');
     }
-  }).catch(err => {
-    console.error(`❌ Error playing audio: ${err}`);
+      }).catch(err => {
+      // Note: This file is an example - in production, use logger.error() instead
+      // logger.error(`Error playing audio: ${err}`, { error: err.message, filename: filename }, 'AUDIO');
     
     // If OPUS fails, try to provide helpful error message
     if (filename.toLowerCase().endsWith('.opus')) {
-      console.error('❌ OPUS playback failed. This might be due to:');
-      console.error('   - Browser not supporting OPUS format');
-      console.error('   - Missing OPUS codec');
-      console.error('   - File corruption');
-      console.error('   - CORS issues');
+      // Note: This file is an example - in production, use logger.error() instead
+      // logger.error('OPUS playback failed', { 
+      //   reasons: ['Browser not supporting OPUS format', 'Missing OPUS codec', 'File corruption', 'CORS issues'],
+      //   filename: filename 
+      // }, 'AUDIO');
     }
     
     if (event && event.target) {
@@ -348,7 +370,8 @@ function stopMusic() {
   if (window.currentAudio) {
     if (window.currentAudio.paused) {
       window.currentAudio.play();
-      console.log("▶️ Music resumed");
+      // Note: This file is an example - in production, use logger.info() instead
+    // logger.info("Music resumed", null, 'AUDIO');
       isMusicPlaying = true;
       startMusicVisualizer();
       
@@ -359,7 +382,8 @@ function stopMusic() {
       }
     } else {
       window.currentAudio.pause();
-      console.log("⏸️ Music paused");
+      // Note: This file is an example - in production, use logger.info() instead
+    // logger.info("Music paused", null, 'AUDIO');
       isMusicPlaying = false;
       stopMusicVisualizer();
       
@@ -370,7 +394,8 @@ function stopMusic() {
       }
     }
   } else {
-    console.log("🔇 No music currently loaded");
+    // Note: This file is an example - in production, use logger.warn() instead
+    // logger.warn("No music currently loaded", null, 'AUDIO');
     isMusicPlaying = false;
     stopMusicVisualizer();
     
@@ -392,13 +417,16 @@ async function loadMusicPlaylist() {
   
   for (const path of possiblePaths) {
     try {
-      console.log(`🎵 Attempting to load tracklist from: ${path}`);
+      // Note: This file is an example - in production, use logger.info() instead
+      // logger.info(`Attempting to load tracklist from: ${path}`, null, 'AUDIO');
       const response = await fetch(path);
-      console.log(`🎵 Fetch response status for ${path}:`, response.status, response.statusText);
+              // Note: This file is an example - in production, use logger.debug() instead
+        // logger.debug(`Fetch response status for ${path}`, { status: response.status, statusText: response.statusText }, 'AUDIO');
       
       if (response.ok) {
         const content = await response.text();
-        console.log('🎵 File content length:', content.length);
+        // Note: This file is an example - in production, use logger.debug() instead
+        // logger.debug('File content length', { length: content.length }, 'AUDIO');
         const lines = content.split('\n').filter(line => line.trim() !== '');
         
         // Parse tracks with titles (format: "Title|URL" or just "URL")
@@ -421,17 +449,21 @@ async function loadMusicPlaylist() {
         });
         
         musicPlaylist = tracks;
-        console.log(`🎵 Loaded ${tracks.length} tracks from ${path}:`, tracks);
+        // Note: This file is an example - in production, use logger.info() instead
+        // logger.info(`Loaded ${tracks.length} tracks from ${path}`, { tracks: tracks }, 'AUDIO');
         return true;
       } else {
-        console.log(`⚠️ Could not load ${path}, status:`, response.status);
+                  // Note: This file is an example - in production, use logger.warn() instead
+          // logger.warn(`Could not load ${path}`, { status: response.status }, 'AUDIO');
       }
     } catch (error) {
-      console.log(`⚠️ Error loading ${path}:`, error);
+              // Note: This file is an example - in production, use logger.error() instead
+        // logger.error(`Error loading ${path}`, { error: error.message, path: path }, 'AUDIO');
     }
   }
   
-  console.log('⚠️ Could not load tracklist.txt from any path, using default tracks');
+      // Note: This file is an example - in production, use logger.warn() instead
+    // logger.warn('Could not load tracklist.txt from any path, using default tracks', null, 'AUDIO');
   return false;
 }
 
@@ -473,11 +505,13 @@ function playMusicFromPlaylist(index) {
     currentMusicIndex = index;
     const track = musicPlaylist[index];
     
-    console.log(`🎵 playMusicFromPlaylist called with index: ${index}, track:`, track);
+    // Note: This file is an example - in production, use logger.debug() instead
+    // logger.debug(`playMusicFromPlaylist called with index: ${index}`, { track: track }, 'AUDIO');
     
     // Update visual indicators
     const musicItems = document.querySelectorAll('.music-item');
-    console.log(`🎵 Found ${musicItems.length} music items`);
+    // Note: This file is an example - in production, use logger.debug() instead
+    // logger.debug(`Found ${musicItems.length} music items`, null, 'AUDIO');
     
     musicItems.forEach((item, i) => {
       item.classList.remove('playing');
@@ -485,7 +519,8 @@ function playMusicFromPlaylist(index) {
       if (i === index) {
         item.classList.add('playing');
         item.style.background = '#35CF3A';
-        console.log(`🎵 Highlighted item ${i}:`, item.textContent);
+        // Note: This file is an example - in production, use logger.debug() instead
+        // logger.debug(`Highlighted item ${i}: ${item.textContent}`, null, 'AUDIO');
       }
     });
     
@@ -493,7 +528,8 @@ function playMusicFromPlaylist(index) {
     if (track.url.startsWith('http://') || track.url.startsWith('https://')) {
       // For radio streams, we need to pass the index to maintain highlighting
       playRadioStreamFromPlaylist(track.url, index);
-      console.log(`📻 Playing radio stream ${index + 1}/${musicPlaylist.length}: ${track.title}`);
+      // Note: This file is an example - in production, use logger.info() instead
+    // logger.info(`Playing radio stream ${index + 1}/${musicPlaylist.length}: ${track.title}`, null, 'AUDIO');
       // Start visualizer for radio streams
       isMusicPlaying = true;
       startMusicVisualizer();
@@ -509,7 +545,8 @@ function playMusicFromPlaylist(index) {
 
 function playRadioStream(radioUrl) {
   try {
-    console.log(`📻 playRadioStream called with URL: ${radioUrl}`);
+    // Note: This file is an example - in production, use logger.debug() instead
+    // logger.debug(`playRadioStream called with URL: ${radioUrl}`, null, 'AUDIO');
     
     // Stop current music
     if (window.currentAudio) {
@@ -522,7 +559,8 @@ function playRadioStream(radioUrl) {
     
     // Find and highlight the radio item in the music panel
     const musicItems = document.querySelectorAll('.music-item');
-    console.log(`📻 Found ${musicItems.length} music items to check for radio`);
+            // Note: This file is an example - in production, use logger.debug() instead
+        // logger.debug(`Found ${musicItems.length} music items to check for radio`, null, 'AUDIO');
     
     musicItems.forEach((item, index) => {
       item.classList.remove('playing');
@@ -533,7 +571,8 @@ function playRadioStream(radioUrl) {
       if (itemText.includes(radioUrl) || item.getAttribute('onclick')?.includes(radioUrl)) {
         item.classList.add('playing');
         item.style.background = '#35CF3A';
-        console.log(`📻 Highlighted radio item ${index}:`, itemText);
+        // Note: This file is an example - in production, use logger.debug() instead
+        // logger.debug(`Highlighted radio item ${index}: ${itemText}`, null, 'AUDIO');
       }
     });
     
@@ -543,7 +582,8 @@ function playRadioStream(radioUrl) {
     
     // Add event listeners
     audio.addEventListener('ended', () => {
-      console.log('📻 Radio stream ended');
+      // Note: This file is an example - in production, use logger.info() instead
+      // logger.info('Radio stream ended', null, 'AUDIO');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music.png');
@@ -551,7 +591,8 @@ function playRadioStream(radioUrl) {
     });
 
     audio.addEventListener('pause', () => {
-      console.log('📻 Radio paused');
+      // Note: This file is an example - in production, use logger.info() instead
+      // logger.info('Radio paused', null, 'AUDIO');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music.png');
@@ -559,7 +600,8 @@ function playRadioStream(radioUrl) {
     });
 
     audio.addEventListener('play', () => {
-      console.log('📻 Radio started playing');
+      // Note: This file is an example - in production, use logger.info() instead
+      // logger.info('Radio started playing', null, 'AUDIO');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music2.png');
@@ -568,24 +610,28 @@ function playRadioStream(radioUrl) {
     
     window.currentAudio = audio;
     audio.play().then(() => {
-      console.log('📻 Radio station loaded and playing');
+      // Note: This file is an example - in production, use logger.info() instead
+      // logger.info('Radio station loaded and playing', null, 'AUDIO');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music2.png');
       }
     }).catch(err => {
-      console.error('❌ Error loading radio station:', err);
+      // Note: This file is an example - in production, use logger.error() instead
+      // logger.error('Error loading radio station', { error: err.message }, 'AUDIO');
       alert('Failed to load radio station. Please check the URL.');
     });
   } catch (error) {
-    console.error('❌ Error creating radio audio:', error);
+    // Note: This file is an example - in production, use logger.error() instead
+    // logger.error('Error creating radio audio', { error: error.message }, 'AUDIO');
     alert('Failed to load radio station. Please check the URL.');
   }
 }
 
 function playRadioStreamFromPlaylist(radioUrl, index) {
   try {
-    console.log(`📻 playRadioStreamFromPlaylist called with URL: ${radioUrl}, index: ${index}`);
+    // Note: This file is an example - in production, use logger.debug() instead
+    // logger.debug(`playRadioStreamFromPlaylist called with URL: ${radioUrl}, index: ${index}`, null, 'AUDIO');
     
     // Stop current music
     if (window.currentAudio) {
@@ -598,7 +644,8 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
     
     // Update visual indicators using the index
     const musicItems = document.querySelectorAll('.music-item');
-    console.log(`📻 Found ${musicItems.length} music items to highlight`);
+    // Note: This file is an example - in production, use logger.debug() instead
+    // logger.debug(`Found ${musicItems.length} music items to highlight`, null, 'AUDIO');
     
     musicItems.forEach((item, i) => {
       item.classList.remove('playing');
@@ -606,7 +653,8 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
       if (i === index) {
         item.classList.add('playing');
         item.style.background = '#35CF3A';
-        console.log(`📻 Highlighted radio item ${i}:`, item.textContent);
+        // Note: This file is an example - in production, use logger.debug() instead
+        // logger.debug(`Highlighted radio item ${i}: ${item.textContent}`, null, 'AUDIO');
       }
     });
     
@@ -616,7 +664,8 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
     
     // Add event listeners
     audio.addEventListener('ended', () => {
-      console.log('📻 Radio stream ended');
+      // Note: This file is an example - in production, use logger.info() instead
+      // logger.info('Radio stream ended', null, 'AUDIO');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music.png');
@@ -624,7 +673,8 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
     });
 
     audio.addEventListener('pause', () => {
-      console.log('📻 Radio paused');
+      // Note: This file is an example - in production, use logger.info() instead
+      // logger.info('Radio paused', null, 'AUDIO');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music.png');
@@ -632,7 +682,8 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
     });
 
     audio.addEventListener('play', () => {
-      console.log('📻 Radio started playing');
+      // Note: This file is an example - in production, use logger.info() instead
+      // logger.info('Radio started playing', null, 'AUDIO');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music2.png');
@@ -641,17 +692,20 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
     
     window.currentAudio = audio;
     audio.play().then(() => {
-      console.log('📻 Radio station loaded and playing');
+      // Note: This file is an example - in production, use logger.info() instead
+      // logger.info('Radio station loaded and playing', null, 'AUDIO');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music2.png');
       }
     }).catch(err => {
-      console.error('❌ Error loading radio station:', err);
+      // Note: This file is an example - in production, use logger.error() instead
+      // logger.error('Error loading radio station', { error: err.message }, 'AUDIO');
       alert('Failed to load radio station. Please check the URL.');
     });
   } catch (error) {
-    console.error('❌ Error creating radio audio:', error);
+    // Note: This file is an example - in production, use logger.error() instead
+    // logger.error('Error creating radio audio', { error: error.message }, 'AUDIO');
     alert('Failed to load radio station. Please check the URL.');
   }
 }
@@ -722,7 +776,8 @@ function handleVideoRightClick() {
     if (isVisible) {
       // Use the same logic as videoClose() to properly close the video
       videoClose();
-      console.log('🎥 Video player closed via right-click');
+      // Note: This file is an example - in production, use logger.info() instead
+    // logger.info('Video player closed via right-click', null, 'VIDEO');
     } else {
       // If video player is closed, show read panel
       showReadPanel();
@@ -737,7 +792,8 @@ function showReadPanel() {
   const readPanel = document.getElementById('readPanel');
   if (readPanel) {
     readPanel.style.display = 'block';
-    console.log('📖 Read panel shown');
+    // Note: This file is an example - in production, use logger.info() instead
+    // logger.info('Read panel shown', null, 'SYSTEM');
   }
 }
 
@@ -745,7 +801,8 @@ function hideReadPanel() {
   const readPanel = document.getElementById('readPanel');
   if (readPanel) {
     readPanel.style.display = 'none';
-    console.log('📖 Read panel hidden');
+    // Note: This file is an example - in production, use logger.info() instead
+    // logger.info('Read panel hidden', null, 'SYSTEM');
   }
 }
 
@@ -815,7 +872,8 @@ function toggleMediaToolbar() {
     const newDisplay = (currentDisplay === "none" || currentDisplay === "") ? "flex" : "none";
     bar.style.display = newDisplay;
     isMediaToolbarVisible = (newDisplay === "flex");
-    console.log("📺 Media toolbar toggled:", bar.style.display);
+    // Note: This file is an example - in production, use logger.info() instead
+    // logger.info("Media toolbar toggled", { display: bar.style.display }, 'SYSTEM');
   }
 }
 
@@ -826,10 +884,12 @@ function toggleMediaToolbarMinimize() {
     
     if (isMediaToolbarMinimized) {
       bar.classList.add('minimized');
-      console.log("📺 Media toolbar minimized");
+      // Note: This file is an example - in production, use logger.info() instead
+    // logger.info("Media toolbar minimized", null, 'SYSTEM');
     } else {
       bar.classList.remove('minimized');
-      console.log("📺 Media toolbar expanded");
+      // Note: This file is an example - in production, use logger.info() instead
+    // logger.info("Media toolbar expanded", null, 'SYSTEM');
     }
   }
 }
@@ -872,7 +932,8 @@ function handleBackgroundUpload(event) {
         iframe.style.display = "none";
         iframe.src = "";
       }
-      console.log("🖼️ Background image uploaded successfully");
+      // Note: This file is an example - in production, use logger.success() instead
+    // logger.success("Background image uploaded successfully", null, 'UPLOAD');
     };
     img.src = e.target.result;
   };
@@ -905,9 +966,11 @@ function handleVideoUpload(event) {
     video.src = videoURL;
     video.style.display = "block";
     video.play().then(() => {
-      console.log("📀 Video uploaded and playing successfully");
+      // Note: This file is an example - in production, use logger.success() instead
+    // logger.success("Video uploaded and playing successfully", null, 'UPLOAD');
     }).catch(err => {
-      console.error("❌ Error playing uploaded video:", err);
+              // Note: This file is an example - in production, use logger.error() instead
+        // logger.error("Error playing uploaded video", { error: err.message }, 'UPLOAD');
     });
     
     // Clear background image
@@ -920,21 +983,25 @@ function handleVideoUpload(event) {
 function captureCanvas() {
   const canvas = document.getElementById("canvas");
   if (!canvas) {
-    console.error("Canvas not found");
+    // Note: This file is an example - in production, use logger.error() instead
+    // logger.error("Canvas not found", null, 'SYSTEM');
     return;
   }
   
   // Ensure canvas is properly sized
   if (canvas.width === 0 || canvas.height === 0) {
-    console.error("Canvas has zero dimensions");
+    // Note: This file is an example - in production, use logger.error() instead
+    // logger.error("Canvas has zero dimensions", null, 'SYSTEM');
     return;
   }
   
-  console.log("Canvas dimensions:", canvas.width, "x", canvas.height);
+  // Note: This file is an example - in production, use logger.debug() instead
+  // logger.debug("Canvas dimensions", { width: canvas.width, height: canvas.height }, 'SYSTEM');
   
   try {
     const dataURL = canvas.toDataURL("image/png");
-    console.log("Data URL length:", dataURL.length);
+    // Note: This file is an example - in production, use logger.debug() instead
+    // logger.debug("Data URL length", { length: dataURL.length }, 'SYSTEM');
     
     const link = document.createElement("a");
     link.download = "snapshot.png";
@@ -943,30 +1010,36 @@ function captureCanvas() {
     link.click();
     document.body.removeChild(link);
     
-    console.log("Snapshot download initiated");
+    // Note: This file is an example - in production, use logger.info() instead
+    // logger.info("Snapshot download initiated", null, 'SYSTEM');
   } catch (error) {
-    console.error("Error capturing snapshot:", error);
+    // Note: This file is an example - in production, use logger.error() instead
+    // logger.error("Error capturing snapshot", { error: error.message }, 'SYSTEM');
   }
 }
 
 function captureCanvasOnly() {
   const canvas = document.getElementById("canvas");
   if (!canvas) {
-    console.error("Canvas not found");
+    // Note: This file is an example - in production, use logger.error() instead
+    // logger.error("Canvas not found", null, 'SYSTEM');
     return;
   }
   
   // Ensure canvas is properly sized
   if (canvas.width === 0 || canvas.height === 0) {
-    console.error("Canvas has zero dimensions");
+    // Note: This file is an example - in production, use logger.error() instead
+    // logger.error("Canvas has zero dimensions", null, 'SYSTEM');
     return;
   }
   
-  console.log("Canvas dimensions:", canvas.width, "x", canvas.height);
+  // Note: This file is an example - in production, use logger.debug() instead
+  // logger.debug("Canvas dimensions", { width: canvas.width, height: canvas.height }, 'SYSTEM');
   
   try {
     const dataURL = canvas.toDataURL("image/png");
-    console.log("Data URL length:", dataURL.length);
+    // Note: This file is an example - in production, use logger.debug() instead
+    // logger.debug("Data URL length", { length: dataURL.length }, 'SYSTEM');
     
     const link = document.createElement("a");
     link.download = "canvas_snapshot.png";
@@ -975,9 +1048,11 @@ function captureCanvasOnly() {
     link.click();
     document.body.removeChild(link);
     
-    console.log("Canvas snapshot download initiated");
+    // Note: This file is an example - in production, use logger.info() instead
+    // logger.info("Canvas snapshot download initiated", null, 'SYSTEM');
   } catch (error) {
-    console.error("Error capturing canvas snapshot:", error);
+    // Note: This file is an example - in production, use logger.error() instead
+    // logger.error("Error capturing canvas snapshot", { error: error.message }, 'SYSTEM');
   }
 }
 

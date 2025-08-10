@@ -1,75 +1,99 @@
 // ===== MINDS EYE - MAIN CORE =====
 
 // Centralized logging system - OPTIMIZED FOR PERFORMANCE
-const LOG_LEVELS = {
-    ERROR: 0,
-    WARN: 1,
-    INFO: 2,
-    DEBUG: 3
-};
+(function() {
+    const LOG_LEVELS = {
+        ERROR: 0,
+        WARN: 1,
+        INFO: 2,
+        DEBUG: 3
+    };
 
-// Set to ERROR only for production - reduces console spam significantly
-let currentLogLevel = LOG_LEVELS.ERROR; // Changed from INFO to ERROR for performance
-let logCount = 0;
-const MAX_LOGS_PER_SECOND = 2; // Reduced from 3 to 2 for even less spam
-let lastLogTime = 0;
-const MIN_LOG_INTERVAL = 200; // Increased from 100ms to 200ms for less frequent logging
+    // Set to ERROR only for production - reduces console spam significantly
+    let currentLogLevel = LOG_LEVELS.ERROR; // Changed from INFO to ERROR for performance
+    let logCount = 0;
+    const MAX_LOGS_PER_SECOND = 2; // Reduced from 3 to 2 for even less spam
+    let lastLogTime = 0;
+    const MIN_LOG_INTERVAL = 200; // Increased from 100ms to 200ms for less frequent logging
 
-// Frame-based logging control to prevent spam in animation loops
-let frameCounter = 0;
-const LOG_EVERY_N_FRAMES = 60; // Only log every 60 frames (once per second at 60fps)
+    // Frame-based logging control to prevent spam in animation loops
+    let frameCounter = 0;
+    const LOG_EVERY_N_FRAMES = 60; // Only log every 60 frames (once per second at 60fps)
 
-function log(level, message, data = null) {
-    const now = Date.now();
+    function log(level, message, data = null) {
+        const now = Date.now();
+        
+        // Rate limiting: only log if enough time has passed and we're under the limit
+        if (level <= currentLogLevel && 
+            logCount < MAX_LOGS_PER_SECOND && 
+            (now - lastLogTime) >= MIN_LOG_INTERVAL) {
+            
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            const prefix = `[${timestamp}] `;
+            
+            switch (level) {
+                case LOG_LEVELS.ERROR:
+                    console.error(prefix + message, data);
+                    break;
+                case LOG_LEVELS.WARN:
+                    console.warn(prefix + message, data);
+                    break;
+                case LOG_LEVELS.INFO:
+                    console.info(prefix + message, data);
+                    break;
+                case LOG_LEVELS.DEBUG:
+                    console.log(prefix + message, data);
+                    break;
+            }
+            logCount++;
+            lastLogTime = now;
+        }
+    }
+
+    // Reset log counter every second
+    setInterval(() => { logCount = 0; }, 1000);
+
+    // Logging utility functions with frame-based control
+    const logger = {
+        error: (msg, data) => log(LOG_LEVELS.ERROR, msg, data),
+        warn: (msg, data) => log(LOG_LEVELS.WARN, msg, data),
+        info: (msg, data) => log(LOG_LEVELS.INFO, msg, data),
+        debug: (msg, data) => {
+            // Only log debug messages every N frames to prevent spam in animation loops
+            if (window.frameCounter % LOG_EVERY_N_FRAMES === 0) {
+                log(LOG_LEVELS.DEBUG, msg, data);
+            }
+        },
+        // Special function for frequent updates that should be logged sparingly
+        debugSparse: (msg, data, interval = 120) => {
+            if (window.frameCounter % interval === 0) {
+                log(LOG_LEVELS.DEBUG, msg, data);
+            }
+        }
+    };
+
+    // Make logger available globally for this file
+    window.mainLogger = logger;
+    window.logger = logger; // Also make it available as 'logger' for convenience
     
-    // Rate limiting: only log if enough time has passed and we're under the limit
-    if (level <= currentLogLevel && 
-        logCount < MAX_LOGS_PER_SECOND && 
-        (now - lastLogTime) >= MIN_LOG_INTERVAL) {
-        
-        const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
-        const prefix = `[${timestamp}] `;
-        
-        switch (level) {
-            case LOG_LEVELS.ERROR:
-                console.error(prefix + message, data);
-                break;
-            case LOG_LEVELS.WARN:
-                console.warn(prefix + message, data);
-                break;
-            case LOG_LEVELS.INFO:
-                console.info(prefix + message, data);
-                break;
-            case LOG_LEVELS.DEBUG:
-                console.log(prefix + message, data);
-                break;
-        }
-        logCount++;
-        lastLogTime = now;
-    }
-}
-
-// Reset log counter every second
-setInterval(() => { logCount = 0; }, 1000);
-
-// Logging utility functions with frame-based control
-const logger = {
-    error: (msg, data) => log(LOG_LEVELS.ERROR, msg, data),
-    warn: (msg, data) => log(LOG_LEVELS.WARN, msg, data),
-    info: (msg, data) => log(LOG_LEVELS.INFO, msg, data),
-    debug: (msg, data) => {
-        // Only log debug messages every N frames to prevent spam in animation loops
-        if (frameCounter % LOG_EVERY_N_FRAMES === 0) {
-            log(LOG_LEVELS.DEBUG, msg, data);
-        }
-    },
-    // Special function for frequent updates that should be logged sparingly
-    debugSparse: (msg, data, interval = 120) => {
-        if (frameCounter % interval === 0) {
-            log(LOG_LEVELS.DEBUG, msg, data);
-        }
-    }
-};
+    // Expose frameCounter for animation loop updates
+    window.updateFrameCounter = function() {
+        frameCounter++;
+        window.frameCounter = frameCounter; // Keep global in sync
+    };
+    
+    // Make frameCounter globally accessible for reading
+    window.getFrameCounter = function() {
+        return frameCounter;
+    };
+    
+    // Also expose frameCounter directly for convenience
+    window.frameCounter = frameCounter;
+    
+    // Expose logging constants for external use
+    window.LOG_LEVELS = LOG_LEVELS;
+    window.LOG_EVERY_N_FRAMES = LOG_EVERY_N_FRAMES;
+})();
 
 // Global variables
 let movementDelayActive = true;
@@ -262,7 +286,7 @@ function randomTextColor() {
 
 function toggleDrawingMode() {
   isDrawingMode = !isDrawingMode;
-  logger.info('✏️ Drawing mode:', isDrawingMode ? 'ON' : 'OFF');
+          window.mainLogger.info('✏️ Drawing mode:', isDrawingMode ? 'ON' : 'OFF');
   
   // Get references to elements
   const analysisButton = document.querySelector('[data-icon="analysis"]');
@@ -295,10 +319,10 @@ function toggleDrawingMode() {
     
     canvas.style.cursor = 'url(images/cross.png) 16 16, crosshair';
     canvas.classList.add('drawing-mode');
-    logger.info('🎨 Drawing mode activated - click and drag to draw');
-    logger.info('⌨️ Keyboard shortcuts: D=Toggle Mode, W=Width, C=Color, S=Smooth Last Line, X=Clear (works in any mode), F=Flash Existing Drawings');
-    logger.info('💡 Animation paused, bubble creation disabled');
-    logger.info('⚡ Speed stored as:', previousSpeed, '(current was:', speedMultiplier, ')');
+            window.mainLogger.info('🎨 Drawing mode activated - click and drag to draw');
+        window.mainLogger.info('⌨️ Keyboard shortcuts: D=Toggle Mode, W=Width, C=Color, S=Smooth Last Line, X=Clear (works in any mode), F=Flash Existing Drawings');
+        window.mainLogger.info('💡 Animation paused, bubble creation disabled');
+        window.mainLogger.info('⚡ Speed stored as:', previousSpeed, '(current was:', speedMultiplier, ')');
     
     // Hide Analysis button and show drawing dropdowns
     if (analysisButton) {
@@ -512,7 +536,7 @@ function clearDrawingVisually() {
         try {
           ctx.drawImage(loadedImages[src], -a.radius, -a.radius, a.radius * 2, a.radius * 2);
         } catch (error) {
-          console.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
+          logger.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
           a.image = null;
         }
       } else {
@@ -522,7 +546,7 @@ function clearDrawingVisually() {
             loadedImages[src] = img;
           };
           img.onerror = () => {
-            console.error("❌ Failed to load image:", src);
+            logger.error("❌ Failed to load image:", src);
             a.image = null;
           };
           img.src = src;
@@ -650,7 +674,7 @@ function redrawBackgroundAndBubblesNoEffects() {
         try {
           ctx.drawImage(loadedImages[src], -a.radius, -a.radius, a.radius * 2, a.radius * 2);
         } catch (error) {
-          console.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
+          logger.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
           a.image = null;
         }
       } else {
@@ -660,7 +684,7 @@ function redrawBackgroundAndBubblesNoEffects() {
             loadedImages[src] = img;
           };
           img.onerror = () => {
-            console.error("❌ Failed to load image:", src);
+            logger.error("❌ Failed to load image:", src);
             a.image = null;
           };
           img.src = src;
@@ -781,7 +805,7 @@ function clearDrawingOnly() {
         try {
           ctx.drawImage(loadedImages[src], -a.radius, -a.radius, a.radius * 2, a.radius * 2);
         } catch (error) {
-          console.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
+          logger.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
           a.image = null;
         }
       } else {
@@ -791,7 +815,7 @@ function clearDrawingOnly() {
             loadedImages[src] = img;
           };
           img.onerror = () => {
-            console.error("❌ Failed to load image:", src);
+            logger.error("❌ Failed to load image:", src);
             a.image = null;
           };
           img.src = src;
@@ -1010,7 +1034,7 @@ function startExistingDrawingsFlash() {
           try {
             ctx.drawImage(loadedImages[src], -a.radius, -a.radius, a.radius * 2, a.radius * 2);
           } catch (error) {
-            console.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
+            logger.error("❌ Error drawing image for bubble:", { title: a.title, error: error });
             a.image = null;
           }
         } else {
@@ -1020,7 +1044,7 @@ function startExistingDrawingsFlash() {
               loadedImages[src] = img;
             };
             img.onerror = () => {
-              console.error("❌ Failed to load image:", src);
+              logger.error("❌ Failed to load image:", { src: src });
               a.image = null;
             };
             img.src = src;
@@ -1267,7 +1291,7 @@ function startDrawingGlow() {
           try {
             ctx.drawImage(loadedImages[src], -a.radius, -a.radius, a.radius * 2, a.radius * 2);
           } catch (error) {
-            console.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
+            logger.error("❌ Error drawing image for bubble:", { title: a.title, error: error });
             a.image = null;
           }
         } else {
@@ -1277,7 +1301,7 @@ function startDrawingGlow() {
               loadedImages[src] = img;
             };
             img.onerror = () => {
-              console.error("❌ Failed to load image:", src);
+              logger.error("❌ Failed to load image:", { src: src });
               a.image = null;
             };
             img.src = src;
@@ -1518,7 +1542,7 @@ function smoothLastLine() {
         try {
           ctx.drawImage(loadedImages[src], -a.radius, -a.radius, a.radius * 2, a.radius * 2);
         } catch (error) {
-          console.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
+          logger.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
           a.image = null;
         }
       } else {
@@ -2342,7 +2366,7 @@ function switchTheme(themeName) {
   
   const theme = themePresets[themeName];
   if (!theme) {
-    console.error('❌ Theme not found:', themeName);
+    logger.error('❌ Theme not found:', { themeName: themeName });
     return;
   }
   
@@ -2410,7 +2434,7 @@ function switchPreset(presetKey) {
   
   const preset = theme.presets[presetKey];
   if (!preset) {
-    console.error('❌ Preset not found:', presetKey);
+    logger.error('❌ Preset not found:', { presetKey: presetKey });
     return;
   }
   
@@ -2454,7 +2478,7 @@ function loadBackgroundImage(bgPath) {
     logger.info('🖼️ Background image loaded:', bgPath);
   };
   img.onerror = function() {
-    console.error('❌ Failed to load background image:', bgPath);
+    logger.error('❌ Failed to load background image:', { bgPath: bgPath });
   };
   img.src = bgPath;
 }
@@ -2534,6 +2558,7 @@ function showPanel() {
 function savePanel() {
   if (!selectedIdea) return;
   
+  const oldTitle = selectedIdea.title;
   selectedIdea.title = document.getElementById("title").value;
   selectedIdea.description = document.getElementById("description").value;
   selectedIdea.createdDate = document.getElementById("dateField").value;
@@ -2550,13 +2575,16 @@ function savePanel() {
   }
   
   document.getElementById('panel').style.display = "none";
+  logger.info('💾 Bubble saved:', selectedIdea.title || 'Untitled', oldTitle !== selectedIdea.title ? `(renamed from "${oldTitle}")` : '');
 }
 
 function deleteIdea() {
   if (selectedIdea) {
+    const deletedTitle = selectedIdea.title || 'Untitled';
     ideas = ideas.filter(idea => idea !== selectedIdea);
     selectedIdea = null;
     document.getElementById('panel').style.display = "none";
+    logger.info('🗑️ Bubble deleted:', deletedTitle);
   }
 }
 
@@ -2649,7 +2677,7 @@ function resetPanelTimer() {
 
 function toggleGlow() {
   if (!selectedIdea) {
-    alert("Please select a bubble first");
+    logger.warn("⚠️ Please select a bubble first");
     return;
   }
   selectedIdea.glow = !selectedIdea.glow;
@@ -2658,7 +2686,7 @@ function toggleGlow() {
 
 function toggleFlash() {
   if (!selectedIdea) {
-    alert("Please select a bubble first");
+    logger.warn("⚠️ Please select a bubble first");
     return;
   }
   selectedIdea.flash = !selectedIdea.flash;
@@ -2667,7 +2695,7 @@ function toggleFlash() {
 
 function toggleAnimateColors() {
   if (!selectedIdea) {
-    alert("Please select a bubble first");
+    logger.warn("⚠️ Please select a bubble first");
     return;
   }
   selectedIdea.animateColors = !selectedIdea.animateColors;
@@ -2676,7 +2704,7 @@ function toggleAnimateColors() {
 
 function toggleTransparent() {
   if (!selectedIdea) {
-    alert("Please select a bubble first");
+    logger.warn("⚠️ Please select a bubble first");
     return;
   }
   selectedIdea.transparent = !selectedIdea.transparent;
@@ -2705,16 +2733,16 @@ function changeGlowColor() {
 
 function toggleFixed() {
   if (!selectedIdea) {
-    alert("Please select a bubble first");
+    logger.warn("⚠️ Please select a bubble first");
     return;
   }
   selectedIdea.fixed = !selectedIdea.fixed;
-  logger.info("🛑 Fixed:", selectedIdea.fixed ? "ON" : "OFF");
+    logger.info("🛑 Fixed:", selectedIdea.fixed ? "ON" : "OFF");
 }
 
 function toggleStatic() {
   if (!selectedIdea) {
-    alert("Please select a bubble first");
+    logger.warn("⚠️ Please select a bubble first");
     return;
   }
   selectedIdea.static = !selectedIdea.static;
@@ -2723,7 +2751,7 @@ function toggleStatic() {
 
 function toggleCheckeredBorder() {
   if (!selectedIdea) {
-    alert("Please select a bubble first");
+    logger.warn("⚠️ Please select a bubble first");
     return;
   }
   
@@ -2986,7 +3014,7 @@ function handleImageUpload(event) {
   if (!file) return;
   
   if (!file.type.startsWith('image/')) {
-    alert('Please select an image file (PNG, JPG, etc.)');
+    logger.warn('⚠️ Please select an image file (PNG, JPG, etc.)');
     return;
   }
   
@@ -2996,7 +3024,7 @@ function handleImageUpload(event) {
     document.getElementById('uploadImage').style.border = '2px solid gold';
     document.getElementById('uploadImage').title = "Custom image uploaded";
     document.getElementById("imageSelector").value = "";
-    // Logging removed for performance
+    logger.info('🖼️ Custom image uploaded for bubble:', selectedIdea.title || 'Untitled');
   };
   reader.readAsDataURL(file);
 }
@@ -3038,10 +3066,12 @@ function saveIdeas() {
   a.href = URL.createObjectURL(blob);
   a.download = "ideas.json";
   a.click();
+  logger.info('💾 Ideas saved to file:', dataToSave.length, 'ideas exported');
 }
 
 function deleteAllIdeas() {
   if (confirm("📋CREATE BLANK CANVAS? ✅")) {
+    const deletedCount = ideas.length;
     ideas = [];
     selectedIdea = null;
     document.getElementById('panel').style.display = "none";
@@ -3055,6 +3085,8 @@ function deleteAllIdeas() {
     const iframe = document.getElementById("ytFrame");
     iframe.style.display = "none";
     iframe.src = "";
+    
+    logger.info('🗑️ All ideas deleted:', deletedCount, 'ideas removed, canvas cleared');
   }
 }
 
@@ -3062,7 +3094,13 @@ function deleteAllIdeas() {
 
 function draw() {
   // Performance optimized - removed debug logging
-  frameCounter++; // Increment frame counter for logging control
+  window.frameCounter++; // Increment global frame counter for logging control
+  
+  // Apply enhanced physics and effects
+  if (physicsEnabled) {
+    applyMagneticForces();
+  }
+  updateBubbleTrails();
   
   // Only clear canvas if not in drawing mode
   if (!isDrawingMode) {
@@ -3591,7 +3629,7 @@ function draw() {
         try {
           ctx.drawImage(loadedImages[src], -a.radius, -a.radius, a.radius * 2, a.radius * 2);
         } catch (error) {
-          console.error("❌ Error drawing image for bubble:", a.title, "Error:", error);
+          logger.error("❌ Error drawing image for bubble:", { title: a.title, error: error });
           a.image = null;
         }
       } else {
@@ -3601,7 +3639,7 @@ function draw() {
             loadedImages[src] = img;
           };
           img.onerror = () => {
-            console.error("❌ Failed to load image:", src);
+            logger.error("❌ Failed to load image:", { src: src });
             a.image = null;
           };
           img.src = src;
@@ -3791,6 +3829,25 @@ function draw() {
       ctx.stroke();
       ctx.restore();
     }
+    
+    // Draw trail effect
+    if (a.hasTrail && a.trail && a.trail.length > 1) {
+      ctx.save();
+      ctx.strokeStyle = a.color + '40'; // Semi-transparent
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.6;
+      
+      ctx.beginPath();
+      a.trail.forEach((point, index) => {
+        if (index === 0) {
+          ctx.moveTo(point.x, point.y);
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      });
+      ctx.stroke();
+      ctx.restore();
+    }
     } // Close if (!isDrawingMode) block
   }
 
@@ -3924,6 +3981,9 @@ function init() {
   // Initialize drawing UI elements
   updateDrawingColorUI();
   updateDrawingWidthUI();
+  
+  // Initialize auto-save system
+  initializeAutoSave();
   
   // Start rendering
   draw();
@@ -4344,6 +4404,45 @@ function setupEventListeners() {
         toggleBubblePanel();
         e.preventDefault();
         return;
+      case "s":
+      case "S":
+        // S searches bubbles (when not in text input)
+        if (!e.target.matches('input, textarea')) {
+          const query = prompt('🔍 Search bubbles:');
+          if (query) {
+            const results = searchBubbles(query);
+            if (results.length > 0) {
+              selectedIdea = results[0];
+              showPanel();
+            }
+          }
+        }
+        e.preventDefault();
+        return;
+      case "d":
+      case "D":
+        // D duplicates selected bubble
+        if (selectedIdea && !e.target.matches('input, textarea')) {
+          duplicateBubble(selectedIdea);
+        }
+        e.preventDefault();
+        return;
+      case "m":
+      case "M":
+        // M opens music panel (existing functionality)
+        if (typeof toggleMusicPanel === 'function') {
+          toggleMusicPanel();
+        }
+        e.preventDefault();
+        return;
+      case "p":
+      case "P":
+        // P pauses/plays MP4 video (existing functionality)
+        if (typeof pauseMp4Video === 'function') {
+          pauseMp4Video();
+        }
+        e.preventDefault();
+        return;
       case "-":
         // Minus decreases speed multiplier
         if (speedMultiplier > 0.1) { // Minimum speed limit
@@ -4482,12 +4581,13 @@ function setupEventListeners() {
           ballVelocityDecay: idea.ballVelocityDecay || 0
         }));
 
+        logger.info(`📋 Loaded ${loaded.length} ideas from JSON file:`, file.name);
         movementDelayActive = true;
         setTimeout(() => {
           movementDelayActive = false;
         }, 10000);
       } catch (err) {
-        alert("Invalid JSON file.");
+        logger.error("❌ Invalid JSON file:", err.message);
       }
     };
     reader.readAsText(file);
@@ -4639,6 +4739,7 @@ function toggleSpeed() {
     speedMultiplier = previousSpeed;
     speedSlider.value = previousSpeed;
     speedSlider.classList.remove('paused');
+    logger.info('▶️ Animation resumed at speed:', previousSpeed);
   } else {
     // If currently running, pause and remember current speed
     previousSpeed = speedMultiplier;
@@ -4646,6 +4747,7 @@ function toggleSpeed() {
     speedMultiplier = 0;
     speedSlider.value = 0;
     speedSlider.classList.add('paused');
+    logger.info('⏸️ Animation paused');
   }
 }
 
@@ -4692,12 +4794,12 @@ function togglePauseButton() {
 
 function testImageUpload() {
   logger.debug('🧪 Testing image upload functionality...');
-  alert('🧪 Image upload test - functionality working!');
+  logger.info('🧪 Image upload test - functionality working!');
 }
 
 function testEffects() {
   logger.debug('🎭 Testing effects functionality...');
-  alert('🎭 Effects test - functionality working!');
+  logger.info('🎭 Effects test - functionality working!');
 }
 
 function toggleBubblePanel() {
@@ -4965,3 +5067,425 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ===== MAIN.JS LOADED =====
 // Performance optimized - removed console logging 
+
+// ===== ENHANCED BUBBLE MANAGEMENT =====
+
+function searchBubbles(query) {
+  if (!query || query.trim() === '') {
+    logger.warn('⚠️ Please enter a search term');
+    return [];
+  }
+  
+  const searchTerm = query.toLowerCase().trim();
+  const results = ideas.filter(idea => 
+    (idea.title && idea.title.toLowerCase().includes(searchTerm)) ||
+    (idea.description && idea.description.toLowerCase().includes(searchTerm))
+  );
+  
+  logger.info(`🔍 Search results for "${query}":`, results.length, 'bubbles found');
+  return results;
+}
+
+function groupBubblesByColor() {
+  const colorGroups = {};
+  ideas.forEach(idea => {
+    const color = idea.color || '#000000';
+    if (!colorGroups[color]) {
+      colorGroups[color] = [];
+    }
+    colorGroups[color].push(idea);
+  });
+  
+  logger.info('🎨 Bubbles grouped by color:', Object.keys(colorGroups).length, 'color groups');
+  return colorGroups;
+}
+
+function groupBubblesByShape() {
+  const shapeGroups = {};
+  ideas.forEach(idea => {
+    const shape = idea.shape || 'circle';
+    if (!shapeGroups[shape]) {
+      shapeGroups[shape] = [];
+    }
+    shapeGroups[shape].push(idea);
+  });
+  
+  logger.info('🔷 Bubbles grouped by shape:', Object.keys(shapeGroups).length, 'shape groups');
+  return shapeGroups;
+}
+
+function duplicateBubble(idea) {
+  if (!idea) {
+    logger.warn('⚠️ Please select a bubble to duplicate');
+    return;
+  }
+  
+  const newIdea = {
+    ...idea,
+    x: idea.x + 20,
+    y: idea.y + 20,
+    title: idea.title ? `${idea.title} (Copy)` : 'Copy',
+    vx: idea.vx * 0.8, // Slightly slower velocity
+    vy: idea.vy * 0.8
+  };
+  
+  ideas.push(newIdea);
+  selectedIdea = newIdea;
+  logger.info('📋 Bubble duplicated:', newIdea.title);
+  return newIdea;
+}
+
+function exportBubbleData(idea) {
+  if (!idea) {
+    logger.warn('⚠️ Please select a bubble to export');
+    return;
+  }
+  
+  const data = JSON.stringify(idea, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${idea.title || 'bubble'}_${Date.now()}.json`;
+  a.click();
+  
+  logger.info('📤 Bubble data exported:', idea.title || 'Untitled');
+}
+
+function importBubbleData(jsonData) {
+  try {
+    const bubbleData = JSON.parse(jsonData);
+    if (bubbleData.x !== undefined && bubbleData.y !== undefined) {
+      ideas.push(bubbleData);
+      selectedIdea = bubbleData;
+      logger.info('📥 Bubble data imported successfully:', bubbleData.title || 'Untitled');
+      return bubbleData;
+    } else {
+      throw new Error('Invalid bubble data format');
+    }
+  } catch (err) {
+    logger.error('❌ Error importing bubble data:', err.message);
+    return null;
+  }
+}
+
+// ===== ENHANCED ANIMATION & PHYSICS =====
+
+let physicsEnabled = true;
+let attractionForce = 0.1;
+let repulsionForce = 0.05;
+let magneticBubbles = [];
+
+function togglePhysics() {
+  physicsEnabled = !physicsEnabled;
+  logger.info(physicsEnabled ? '🔬 Physics enabled' : '⏸️ Physics disabled');
+}
+
+function setAttractionForce(force) {
+  attractionForce = Math.max(0, Math.min(1, force));
+  logger.debug('🧲 Attraction force set to:', attractionForce);
+}
+
+function setRepulsionForce(force) {
+  repulsionForce = Math.max(0, Math.min(1, force));
+  logger.debug('⚡ Repulsion force set to:', repulsionForce);
+}
+
+function makeBubbleMagnetic(idea) {
+  if (!idea) {
+    logger.warn('⚠️ Please select a bubble to make magnetic');
+    return;
+  }
+  
+  if (!magneticBubbles.includes(idea)) {
+    magneticBubbles.push(idea);
+    idea.isMagnetic = true;
+    logger.info('🧲 Bubble made magnetic:', idea.title || 'Untitled');
+  } else {
+    magneticBubbles = magneticBubbles.filter(b => b !== idea);
+    idea.isMagnetic = false;
+    logger.info('🔌 Bubble magnetism removed:', idea.title || 'Untitled');
+  }
+}
+
+function applyMagneticForces() {
+  if (!physicsEnabled || magneticBubbles.length === 0) return;
+  
+  magneticBubbles.forEach(magneticBubble => {
+    if (!magneticBubble || magneticBubble.static || magneticBubble.fixed) return;
+    
+    ideas.forEach(otherBubble => {
+      if (otherBubble === magneticBubble || otherBubble.static || otherBubble.fixed) return;
+      
+      const dx = otherBubble.x - magneticBubble.x;
+      const dy = otherBubble.y - magneticBubble.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < 150 && distance > 20) { // Attraction range
+        const force = attractionForce / (distance * 0.01);
+        const normalizedDx = dx / distance;
+        const normalizedDy = dy / distance;
+        
+        // Apply attraction force
+        magneticBubble.vx += normalizedDx * force;
+        magneticBubble.vy += normalizedDy * force;
+        
+        // Apply opposite force to other bubble
+        otherBubble.vx -= normalizedDx * force * 0.5;
+        otherBubble.vy -= normalizedDy * force * 0.5;
+      }
+    });
+  });
+}
+
+function createBubbleCluster(centerX, centerY, count = 5, radius = 100) {
+  const cluster = [];
+  
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2;
+    const distance = Math.random() * radius;
+    const x = centerX + Math.cos(angle) * distance;
+    const y = centerY + Math.sin(angle) * distance;
+    
+    const newBubble = addIdea(x, y, `Cluster ${i + 1}`, '', randomColor());
+    newBubble.clusterId = `cluster_${Date.now()}`;
+    cluster.push(newBubble);
+  }
+  
+  logger.info('🌟 Bubble cluster created:', count, 'bubbles');
+  return cluster;
+}
+
+function addBubbleTrail(idea, trailLength = 10) {
+  if (!idea) {
+    logger.warn('⚠️ Please select a bubble to add trail effect');
+    return;
+  }
+  
+  idea.trail = [];
+  idea.trailLength = trailLength;
+  idea.hasTrail = true;
+  
+  logger.info('✨ Trail effect added to bubble:', idea.title || 'Untitled');
+}
+
+function updateBubbleTrails() {
+  ideas.forEach(idea => {
+    if (idea.hasTrail && idea.trail) {
+      // Add current position to trail
+      idea.trail.push({ x: idea.x, y: idea.y, timestamp: Date.now() });
+      
+      // Remove old trail points
+      while (idea.trail.length > idea.trailLength) {
+        idea.trail.shift();
+      }
+    }
+  });
+}
+
+function drawBubbleTrails(ctx) {
+  ideas.forEach(idea => {
+    if (idea.hasTrail && idea.trail && idea.trail.length > 1) {
+      ctx.beginPath();
+      ctx.strokeStyle = idea.color + '40'; // Semi-transparent
+      ctx.lineWidth = 2;
+      
+      idea.trail.forEach((point, index) => {
+        if (index === 0) {
+          ctx.moveTo(point.x, point.y);
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      });
+      
+      ctx.stroke();
+    }
+  });
+}
+
+// ===== SMART AUTO-SAVE & RECOVERY =====
+
+let autoSaveEnabled = true;
+let autoSaveInterval = 30000; // 30 seconds
+let lastAutoSave = Date.now();
+let autoSaveTimer = null;
+let recoveryData = null;
+
+function enableAutoSave() {
+  autoSaveEnabled = true;
+  startAutoSaveTimer();
+  logger.info('💾 Auto-save enabled');
+}
+
+function disableAutoSave() {
+  autoSaveEnabled = false;
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer);
+    autoSaveTimer = null;
+  }
+  logger.info('⏸️ Auto-save disabled');
+}
+
+function startAutoSaveTimer() {
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer);
+  }
+  
+  autoSaveTimer = setInterval(() => {
+    if (autoSaveEnabled && ideas.length > 0) {
+      autoSaveIdeas();
+    }
+  }, autoSaveInterval);
+}
+
+function autoSaveIdeas() {
+  try {
+    const autoSaveData = {
+      ideas: ideas,
+      timestamp: Date.now(),
+      version: '1.0',
+      checksum: generateChecksum(ideas)
+    };
+    
+    localStorage.setItem('mindsEye_autoSave', JSON.stringify(autoSaveData));
+    lastAutoSave = Date.now();
+    
+    logger.debug('💾 Auto-save completed:', ideas.length, 'ideas saved');
+  } catch (err) {
+    logger.error('❌ Auto-save failed:', err.message);
+  }
+}
+
+function generateChecksum(data) {
+  // Simple checksum for data integrity
+  let checksum = 0;
+  const str = JSON.stringify(data);
+  for (let i = 0; i < str.length; i++) {
+    checksum = ((checksum << 5) - checksum + str.charCodeAt(i)) & 0xffffffff;
+  }
+  return checksum;
+}
+
+function loadAutoSave() {
+  try {
+    const autoSaveData = localStorage.getItem('mindsEye_autoSave');
+    if (autoSaveData) {
+      const parsed = JSON.parse(autoSaveData);
+      
+      // Verify data integrity
+      if (parsed.checksum === generateChecksum(parsed.ideas)) {
+        ideas = parsed.ideas;
+        logger.info('💾 Auto-save recovered:', ideas.length, 'ideas loaded');
+        return true;
+      } else {
+        logger.warn('⚠️ Auto-save data corrupted, using backup');
+        return loadBackup();
+      }
+    }
+  } catch (err) {
+    logger.error('❌ Error loading auto-save:', err.message);
+  }
+  return false;
+}
+
+function createBackup() {
+  try {
+    const backupData = {
+      ideas: ideas,
+      timestamp: Date.now(),
+      version: '1.0',
+      checksum: generateChecksum(ideas),
+      description: 'Manual backup'
+    };
+    
+    const backupKey = `mindsEye_backup_${Date.now()}`;
+    localStorage.setItem(backupKey, JSON.stringify(backupData));
+    
+    // Keep only last 5 backups
+    const backupKeys = Object.keys(localStorage).filter(key => key.startsWith('mindsEye_backup_'));
+    if (backupKeys.length > 5) {
+      backupKeys.sort();
+      localStorage.removeItem(backupKeys[0]); // Remove oldest
+    }
+    
+    logger.info('💾 Manual backup created:', backupKey);
+    return backupKey;
+  } catch (err) {
+    logger.error('❌ Backup creation failed:', err.message);
+    return null;
+  }
+}
+
+function loadBackup() {
+  try {
+    const backupKeys = Object.keys(localStorage).filter(key => key.startsWith('mindsEye_backup_'));
+    if (backupKeys.length === 0) return false;
+    
+    // Load most recent backup
+    backupKeys.sort().reverse();
+    const latestBackup = localStorage.getItem(backupKeys[0]);
+    const parsed = JSON.parse(latestBackup);
+    
+    if (parsed.checksum === generateChecksum(parsed.ideas)) {
+      ideas = parsed.ideas;
+      logger.info('💾 Backup recovered:', ideas.length, 'ideas loaded from', backupKeys[0]);
+      return true;
+    }
+  } catch (err) {
+    logger.error('❌ Error loading backup:', err.message);
+  }
+  return false;
+}
+
+function exportBackup() {
+  try {
+    const backupData = {
+      ideas: ideas,
+      timestamp: Date.now(),
+      version: '1.0',
+      checksum: generateChecksum(ideas),
+      description: 'Exported backup'
+    };
+    
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `mindsEye_backup_${Date.now()}.json`;
+    a.click();
+    
+    logger.info('💾 Backup exported successfully');
+  } catch (err) {
+    logger.error('❌ Backup export failed:', err.message);
+  }
+}
+
+function importBackup(jsonData) {
+  try {
+    const backupData = JSON.parse(jsonData);
+    
+    if (backupData.ideas && Array.isArray(backupData.ideas)) {
+      // Verify data integrity
+      if (backupData.checksum === generateChecksum(backupData.ideas)) {
+        ideas = backupData.ideas;
+        logger.info('💾 Backup imported successfully:', ideas.length, 'ideas loaded');
+        return true;
+      } else {
+        throw new Error('Backup data corrupted');
+      }
+    } else {
+      throw new Error('Invalid backup format');
+    }
+  } catch (err) {
+    logger.error('❌ Error importing backup:', err.message);
+    return false;
+  }
+}
+
+// Initialize auto-save on startup
+function initializeAutoSave() {
+  if (autoSaveEnabled) {
+    startAutoSaveTimer();
+    logger.info('💾 Auto-save initialized');
+  }
+}
+
+// ... existing code ...

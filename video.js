@@ -1,5 +1,67 @@
-// ===== MINDS EYE - VIDEO PLAYER =====
+// ===== MINDS EYE - VIDEO HANDLING =====
 
+// Centralized logging system - OPTIMIZED FOR PERFORMANCE
+(function() {
+    const LOG_LEVELS = {
+        ERROR: 0,
+        WARN: 1,
+        INFO: 2,
+        DEBUG: 3
+    };
+
+    // Set to WARN for video operations - reduces console spam while keeping important video info
+    let currentLogLevel = LOG_LEVELS.WARN;
+    let logCount = 0;
+    const MAX_LOGS_PER_SECOND = 2; // Keep video logs minimal to avoid spam
+    let lastLogTime = 0;
+    const MIN_LOG_INTERVAL = 200; // Same as main.js for consistency
+
+    function log(level, message, data = null) {
+        const now = Date.now();
+
+        // Rate limiting: only log if enough time has passed and we're under the limit
+        if (level <= currentLogLevel &&
+            logCount < MAX_LOGS_PER_SECOND &&
+            (now - lastLogTime) >= MIN_LOG_INTERVAL) {
+
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            const prefix = `[VIDEO:${timestamp}] `;
+
+            switch (level) {
+                case LOG_LEVELS.ERROR:
+                    console.error(prefix + message, data);
+                    break;
+                case LOG_LEVELS.WARN:
+                    console.warn(prefix + message, data);
+                    break;
+                case LOG_LEVELS.INFO:
+                    console.info(prefix + message, data);
+                    break;
+                case LOG_LEVELS.DEBUG:
+                    console.log(prefix + message, data);
+                    break;
+            }
+            logCount++;
+            lastLogTime = now;
+        }
+    }
+
+    // Reset log counter every second
+    setInterval(() => { logCount = 0; }, 1000);
+
+    // Logging utility functions
+    const logger = {
+        error: (msg, data) => log(LOG_LEVELS.ERROR, msg, data),
+        warn: (msg, data) => log(LOG_LEVELS.WARN, msg, data),
+        info: (msg, data) => log(LOG_LEVELS.INFO, msg, data),
+        debug: (msg, data) => log(LOG_LEVELS.DEBUG, msg, data)
+    };
+
+    // Make logger available globally for this file
+    window.videoLogger = logger;
+})();
+
+// ===== VIDEO VARIABLES =====
 // Video Player Variables
 // Note: These variables are defined in main.js to avoid conflicts
 let videoIsPlaying = false;
@@ -28,24 +90,24 @@ function videoPlayVideo(index) {
       videoIframe.style.zIndex = '1';
       videoIsPlaying = true;
       updateVideoPlaylistDisplay();
-      console.log('🎵 Video Playing video:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+      window.videoLogger.info('🎵 Video Playing video:', { index: index + 1, total: videoPlaylist.length, videoId: videoId });
       
       // Add event listener for iframe load to handle autoplay restrictions
       videoIframe.onload = function() {
-        console.log('🎥 Video iframe loaded');
+        window.videoLogger.debug('🎥 Video iframe loaded');
         // Try to force play after load
         setTimeout(() => {
           try {
             videoIframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-            console.log('🎥 Attempted to force play video');
+            window.videoLogger.debug('🎥 Attempted to force play video');
           } catch (error) {
-            console.log('⚠️ Could not force play video (autoplay restriction)');
+            window.videoLogger.warn('⚠️ Could not force play video (autoplay restriction)');
           }
         }, 1000);
       };
     }
   } else {
-    console.error('❌ Invalid YouTube URL:', url);
+    window.videoLogger.error('❌ Invalid YouTube URL:', { url: url });
   }
 }
 
@@ -64,7 +126,7 @@ function extractYouTubeId(url) {
     }
   }
   
-  console.error('❌ Could not extract YouTube ID from URL:', url);
+  window.videoLogger.error('❌ Could not extract YouTube ID from URL:', { url: url });
   return null;
 }
 
@@ -82,13 +144,13 @@ async function fetchVideoTitle(videoId) {
     
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Successfully fetched video title for', videoId, ':', data.title);
+      window.videoLogger.info('✅ Successfully fetched video title for', { videoId: videoId, title: data.title });
       return data.title;
     } else {
-      console.warn('⚠️ YouTube API returned status:', response.status, 'for video', videoId);
+      window.videoLogger.warn('⚠️ YouTube API returned status:', { status: response.status, videoId: videoId });
     }
   } catch (error) {
-    console.warn('⚠️ Network error fetching video title for', videoId, ':', error.message);
+    window.videoLogger.warn('⚠️ Network error fetching video title for', { videoId: videoId, error: error.message });
     // Don't log the full error to avoid console spam
   }
   return null;
@@ -116,7 +178,7 @@ async function fetchVideoTitle(videoId) {
 // Note: videoClose is defined in media.js
 
 function forceCloseVideo() {
-  console.log('🚨 Force closing Video');
+  window.videoLogger.info('🚨 Force closing Video');
   const elements = ['videoPlayer', 'videoControls', 'videoPlaylist', 'videoIframe'];
   elements.forEach(id => {
     const element = document.getElementById(id);
@@ -133,4 +195,4 @@ function forceCloseVideo() {
 // Note: toggleVideoPlayer is defined in media.js
 
 // ===== VIDEO.JS LOADED =====
-console.log('🔧 Video.js loaded successfully'); 
+window.videoLogger.info('🔧 Video.js loaded successfully'); 

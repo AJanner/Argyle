@@ -1,5 +1,119 @@
 // ===== MINDS EYE - MEDIA HANDLING =====
 
+// Centralized logging system - OPTIMIZED FOR PERFORMANCE & ORGANIZATION
+(function() {
+    const LOG_LEVELS = {
+        ERROR: 0,
+        WARN: 1,
+        INFO: 2,
+        DEBUG: 3
+    };
+
+    // Set to WARN for media operations - reduces console spam while keeping important media info
+    let currentLogLevel = LOG_LEVELS.WARN;
+    let logCount = 0;
+    const MAX_LOGS_PER_SECOND = 3; // Allow slightly more logs for media operations
+    let lastLogTime = 0;
+    const MIN_LOG_INTERVAL = 150; // Slightly more frequent than main.js for media feedback
+
+    // Log categorization for better organization
+    const LOG_CATEGORIES = {
+        MEDIA: '🎵',
+        VIDEO: '🎬',
+        AUDIO: '🔊',
+        PLAYLIST: '📋',
+        UPLOAD: '📁',
+        SYSTEM: '⚙️',
+        ERROR: '❌',
+        SUCCESS: '✅',
+        WARNING: '⚠️'
+    };
+
+    function log(level, message, data = null, category = 'SYSTEM') {
+        const now = Date.now();
+
+        // Rate limiting: only log if enough time has passed and we're under the limit
+        if (level <= currentLogLevel &&
+            logCount < MAX_LOGS_PER_SECOND &&
+            (now - lastLogTime) >= MIN_LOG_INTERVAL) {
+
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            const categoryIcon = LOG_CATEGORIES[category] || LOG_CATEGORIES.SYSTEM;
+            const prefix = `[MEDIA:${timestamp}] ${categoryIcon} `;
+
+            switch (level) {
+                case LOG_LEVELS.ERROR:
+                    console.error(prefix + message, data);
+                    break;
+                case LOG_LEVELS.WARN:
+                    console.warn(prefix + message, data);
+                    break;
+                case LOG_LEVELS.INFO:
+                    console.info(prefix + message, data);
+                    break;
+                case LOG_LEVELS.DEBUG:
+                    console.log(prefix + message, data);
+                    break;
+            }
+            logCount++;
+            lastLogTime = now;
+        }
+    }
+
+    // Reset log counter every second
+    setInterval(() => { logCount = 0; }, 1000);
+
+    // Enhanced logging utility functions with categorization
+    const logger = {
+        error: (msg, data, category = 'ERROR') => log(LOG_LEVELS.ERROR, msg, data, category),
+        warn: (msg, data, category = 'WARNING') => log(LOG_LEVELS.WARN, msg, data, category),
+        info: (msg, data, category = 'SYSTEM') => log(LOG_LEVELS.INFO, msg, data, category),
+        debug: (msg, data, category = 'SYSTEM') => {
+            // Only log debug messages every N frames to prevent spam in animation loops
+            if (typeof window.frameCounter !== 'undefined') {
+                if (window.frameCounter % 60 === 0) { // Log every 60 frames (once per second at 60fps)
+                    log(LOG_LEVELS.DEBUG, msg, data, category);
+                }
+            } else {
+                // Fallback to regular debug if frameCounter not available
+                log(LOG_LEVELS.DEBUG, msg, data, category);
+            }
+        },
+        debugSparse: (msg, data, interval = 120, category = 'SYSTEM') => {
+            // Frame-based logging control to prevent spam in animation loops
+            if (typeof window.frameCounter !== 'undefined') {
+                if (window.frameCounter % interval === 0) {
+                    log(LOG_LEVELS.DEBUG, msg, data, category);
+                }
+            } else {
+                // Fallback to regular debug if frameCounter not available
+                log(LOG_LEVELS.DEBUG, msg, data, category);
+            }
+        },
+        // Category-specific logging methods for better organization
+        media: (msg, data) => log(LOG_LEVELS.INFO, msg, data, 'MEDIA'),
+        video: (msg, data) => log(LOG_LEVELS.INFO, msg, data, 'VIDEO'),
+        audio: (msg, data) => log(LOG_LEVELS.INFO, msg, data, 'AUDIO'),
+        playlist: (msg, data) => log(LOG_LEVELS.INFO, msg, data, 'PLAYLIST'),
+        upload: (msg, data) => log(LOG_LEVELS.INFO, msg, data, 'UPLOAD'),
+        success: (msg, data) => log(LOG_LEVELS.INFO, msg, data, 'SUCCESS'),
+        // Performance monitoring
+        performance: (msg, data) => {
+            if (typeof window.frameCounter !== 'undefined' && window.frameCounter % 120 === 0) {
+                log(LOG_LEVELS.DEBUG, `⚡ ${msg}`, data, 'SYSTEM');
+            }
+        }
+    };
+
+    // Make logger available globally for this file
+    window.mediaLogger = logger;
+    window.logger = logger; // Also make it available as 'logger' for consistency with main.js
+    
+    // Expose logging constants for external use
+    window.MEDIA_LOG_LEVELS = LOG_LEVELS;
+    window.MEDIA_LOG_CATEGORIES = LOG_CATEGORIES;
+})();
+
 // ===== VIDEO PLAYLIST VARIABLES =====
 let uploadedPlaylists = [];
 let currentPlaylistIndex = -1;
@@ -287,10 +401,16 @@ function playMusic(filename, event) {
 
   window.currentAudio = audio;
 
+  // Enhance music playback with better controls and monitoring
+  const cleanupEnhancement = enhanceMusicPlayback(audio);
+
   // Add event listeners to detect when music ends naturally
   audio.addEventListener('ended', () => {
     isMusicPlaying = false;
     stopMusicVisualizer();
+    
+    // Clean up enhancement
+    if (cleanupEnhancement) cleanupEnhancement();
     
     // Auto-advance to next track if we're in playlist mode
     if (musicPlaylist.length > 0 && isMusicLooping) {
@@ -333,15 +453,18 @@ function playMusic(filename, event) {
       PNGLoader.applyPNG(musicButton, 'music2.png');
     }
   }).catch(err => {
-    console.error(`❌ Error playing audio: ${err}`);
+    logger.error(`Error playing audio: ${err}`, null, 'AUDIO');
     
     // If OPUS fails, try to provide helpful error message
     if (filename.toLowerCase().endsWith('.opus')) {
-      console.error('❌ OPUS playback failed. This might be due to:');
-      console.error('   - Browser not supporting OPUS format');
-      console.error('   - Missing OPUS codec');
-      console.error('   - File corruption');
-      console.error('   - CORS issues');
+      logger.error('OPUS playback failed. This might be due to:', {
+        reasons: [
+          'Browser not supporting OPUS format',
+          'Missing OPUS codec', 
+          'File corruption',
+          'CORS issues'
+        ]
+      });
     }
     
     if (event && event.target) {
@@ -383,7 +506,7 @@ function stopMusic() {
       }
     }
   } else {
-    console.log("🔇 No music currently loaded");
+    logger.audio("No music currently loaded");
     isMusicPlaying = false;
     stopMusicVisualizer();
     
@@ -505,7 +628,7 @@ function playMusicFromPlaylist(index) {
       }, 1000);
     } else {
       playMusic(track.url);
-      console.log(`🎵 Playing track ${index + 1}/${musicPlaylist.length}: ${track.title}`);
+      logger.audio(`Playing track ${index + 1}/${musicPlaylist.length}: ${track.title}`);
       // Start visualizer for any music playback with 1 second delay
       isMusicPlaying = true;
       setTimeout(() => {
@@ -519,7 +642,7 @@ function playMusicFromPlaylist(index) {
 
 function playRadioStream(radioUrl) {
   try {
-    console.log(`📻 playRadioStream called with URL: ${radioUrl}`);
+    logger.audio(`playRadioStream called with URL: ${radioUrl}`);
     
     // Stop current music
     if (window.currentAudio) {
@@ -532,7 +655,7 @@ function playRadioStream(radioUrl) {
     
     // Find and highlight the radio item in the music panel
     const musicItems = document.querySelectorAll('.music-item');
-    console.log(`📻 Found ${musicItems.length} music items to check for radio`);
+    logger.debug(`Found ${musicItems.length} music items to check for radio`, null, 'AUDIO');
     
     musicItems.forEach((item, index) => {
       item.classList.remove('playing');
@@ -543,7 +666,7 @@ function playRadioStream(radioUrl) {
       if (itemText.includes(radioUrl) || item.getAttribute('onclick')?.includes(radioUrl)) {
         item.classList.add('playing');
         item.style.background = '#35CF3A';
-        console.log(`📻 Highlighted radio item ${index}:`, itemText);
+        logger.debug(`Highlighted radio item ${index}:`, { itemText: itemText }, 'AUDIO');
       }
     });
     
@@ -553,7 +676,7 @@ function playRadioStream(radioUrl) {
     
     // Add event listeners
     audio.addEventListener('ended', () => {
-      console.log('📻 Radio stream ended');
+      logger.audio('Radio stream ended');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music.png');
@@ -561,7 +684,7 @@ function playRadioStream(radioUrl) {
     });
 
     audio.addEventListener('pause', () => {
-      console.log('📻 Radio paused');
+      logger.audio('Radio paused');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music.png');
@@ -569,7 +692,7 @@ function playRadioStream(radioUrl) {
     });
 
     audio.addEventListener('play', () => {
-      console.log('📻 Radio started playing');
+      logger.audio('Radio started playing');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music2.png');
@@ -586,7 +709,7 @@ function playRadioStream(radioUrl) {
     
     window.currentAudio = audio;
     audio.play().then(() => {
-      console.log('📻 Radio station loaded and playing');
+      logger.audio('Radio station loaded and playing');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music2.png');
@@ -600,18 +723,18 @@ function playRadioStream(radioUrl) {
         }
       }, 1000);
     }).catch(err => {
-      console.error('❌ Error loading radio station:', err);
+      logger.error('Error loading radio station', { error: err }, 'AUDIO');
       alert('Failed to load radio station. Please check the URL.');
     });
   } catch (error) {
-    console.error('❌ Error creating radio audio:', error);
+    logger.error('Error creating radio audio', { error: error }, 'AUDIO');
     alert('Failed to load radio station. Please check the URL.');
   }
 }
 
 function playRadioStreamFromPlaylist(radioUrl, index) {
   try {
-    console.log(`📻 playRadioStreamFromPlaylist called with URL: ${radioUrl}, index: ${index}`);
+    logger.audio(`playRadioStreamFromPlaylist called with URL: ${radioUrl}, index: ${index}`);
     
     // Stop current music
     if (window.currentAudio) {
@@ -624,7 +747,7 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
     
     // Update visual indicators using the index
     const musicItems = document.querySelectorAll('.music-item');
-    console.log(`📻 Found ${musicItems.length} music items to highlight`);
+    logger.debug(`Found ${musicItems.length} music items to highlight`, null, 'AUDIO');
     
     musicItems.forEach((item, i) => {
       item.classList.remove('playing');
@@ -632,7 +755,7 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
       if (i === index) {
         item.classList.add('playing');
         item.style.background = '#35CF3A';
-        console.log(`📻 Highlighted radio item ${i}:`, item.textContent);
+        logger.debug(`Highlighted radio item ${i}:`, { itemText: item.textContent }, 'AUDIO');
       }
     });
     
@@ -642,7 +765,7 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
     
     // Add event listeners
     audio.addEventListener('ended', () => {
-      console.log('📻 Radio stream ended');
+      logger.audio('Radio stream ended');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music.png');
@@ -654,7 +777,7 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
     });
 
     audio.addEventListener('pause', () => {
-      console.log('📻 Radio paused');
+      logger.audio('Radio paused');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music.png');
@@ -666,7 +789,7 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
     });
 
     audio.addEventListener('play', () => {
-      console.log('📻 Radio started playing');
+      logger.audio('Radio started playing');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music2.png');
@@ -683,7 +806,7 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
     
     window.currentAudio = audio;
     audio.play().then(() => {
-      console.log('📻 Radio station loaded and playing');
+      logger.audio('Radio station loaded and playing');
       const musicButton = document.querySelector('[data-icon="music"]');
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music2.png');
@@ -697,11 +820,11 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
         }
       }, 1000);
     }).catch(err => {
-      console.error('❌ Error loading radio station:', err);
+      logger.error('Error loading radio station', { error: err }, 'AUDIO');
       alert('Failed to load radio station. Please check the URL.');
     });
   } catch (error) {
-    console.error('❌ Error creating radio audio:', error);
+    logger.error('Error creating radio audio', { error: error }, 'AUDIO');
     alert('Failed to load radio station. Please check the URL.');
   }
 }
@@ -738,7 +861,7 @@ function nextMusicTrack() {
     // Check if there are music items in the DOM but not in the playlists
     const musicItems = document.querySelectorAll('.music-item');
     if (musicItems.length > 0) {
-      console.log('🎵 Found music items in DOM but no playlist arrays populated. Using DOM navigation.');
+      logger.debug('Found music items in DOM but no playlist arrays populated. Using DOM navigation.', null, 'AUDIO');
       
       // Find currently playing item
       let currentIndex = -1;
@@ -754,10 +877,10 @@ function nextMusicTrack() {
       
       // Go to next item (or first if none playing)
       const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % musicItems.length : 0;
-      console.log(`🎵 Clicking next DOM item at index: ${nextIndex}`);
+      logger.debug(`Clicking next DOM item at index: ${nextIndex}`, null, 'AUDIO');
       musicItems[nextIndex].click();
     } else {
-      console.log('🎵 No music tracks or radio stations available');
+      logger.audio('No music tracks or radio stations available');
     }
   }
 }
@@ -794,7 +917,7 @@ function previousMusicTrack() {
     // Check if there are music items in the DOM but not in the playlists
     const musicItems = document.querySelectorAll('.music-item');
     if (musicItems.length > 0) {
-      console.log('🎵 Found music items in DOM but no playlist arrays populated. Using DOM navigation.');
+      logger.debug('Found music items in DOM but no playlist arrays populated. Using DOM navigation.', null, 'AUDIO');
       
       // Find currently playing item
       let currentIndex = -1;
@@ -810,10 +933,10 @@ function previousMusicTrack() {
       
       // Go to previous item (or last if none playing)
       const prevIndex = currentIndex >= 0 ? (currentIndex - 1 + musicItems.length) % musicItems.length : musicItems.length - 1;
-      console.log(`🎵 Clicking previous DOM item at index: ${prevIndex}`);
+      logger.debug(`Clicking previous DOM item at index: ${prevIndex}`, null, 'AUDIO');
       musicItems[prevIndex].click();
     } else {
-      console.log('🎵 No music tracks or radio stations available');
+      logger.audio('No music tracks or radio stations available');
     }
   }
 }
@@ -840,7 +963,7 @@ function handleVideoRightClick() {
     if (isVisible) {
       // Use the same logic as videoClose() to properly close the video
       videoClose();
-      console.log('🎥 Video player closed via right-click');
+      logger.info('🎥 Video player closed via right-click');
     } else {
       // If video player is closed, show Welcome message
       showWelcomeMessage();
@@ -905,7 +1028,7 @@ function showWelcomeMessage() {
     }
     
     readPanel.style.display = 'block';
-    console.log('🎬 Video player welcome message shown');
+    logger.info('🎬 Video player welcome message shown');
   }
 }
 
@@ -913,7 +1036,7 @@ function hideWelcomeMessage() {
   // Use the existing hideReadPanel function
   if (typeof hideReadPanel === 'function') {
     hideReadPanel();
-    console.log('🎬 Video player welcome message hidden');
+    logger.info('🎬 Video player welcome message hidden');
   }
 }
 
@@ -921,7 +1044,7 @@ function showReadPanel() {
   const readPanel = document.getElementById('readPanel');
   if (readPanel) {
     readPanel.style.display = 'block';
-    console.log('📖 Read panel shown');
+    logger.info('📖 Read panel shown');
   }
 }
 
@@ -929,7 +1052,7 @@ function hideReadPanel() {
   const readPanel = document.getElementById('readPanel');
   if (readPanel) {
     readPanel.style.display = 'none';
-    console.log('📖 Read panel hidden');
+    logger.info('📖 Read panel hidden');
   }
 }
 
@@ -979,7 +1102,7 @@ function cancelRadioInput() {
   if (radioPanel) {
     radioPanel.style.display = 'none';
   }
-  console.log('📻 Radio input cancelled');
+      logger.info('📻 Radio input cancelled');
 }
 
 function confirmRadioInput() {
@@ -1003,7 +1126,7 @@ function confirmRadioInput() {
       
       // Add event listeners
       audio.addEventListener('ended', () => {
-        console.log('🎵 Radio stream ended');
+        logger.info('🎵 Radio stream ended');
         const musicButton = document.querySelector('[data-icon="music"]');
         if (musicButton && typeof PNGLoader !== 'undefined') {
           PNGLoader.applyPNG(musicButton, 'music.png');
@@ -1011,7 +1134,7 @@ function confirmRadioInput() {
       });
 
       audio.addEventListener('pause', () => {
-        console.log('🎵 Radio paused');
+        logger.info('🎵 Radio paused');
         const musicButton = document.querySelector('[data-icon="music"]');
         if (musicButton && typeof PNGLoader !== 'undefined') {
           PNGLoader.applyPNG(musicButton, 'music.png');
@@ -1019,7 +1142,7 @@ function confirmRadioInput() {
       });
 
       audio.addEventListener('play', () => {
-        console.log('🎵 Radio started playing');
+        logger.info('🎵 Radio started playing');
         const musicButton = document.querySelector('[data-icon="music"]');
         if (musicButton && typeof PNGLoader !== 'undefined') {
           PNGLoader.applyPNG(musicButton, 'music2.png');
@@ -1033,7 +1156,7 @@ function confirmRadioInput() {
       window.currentRadioTitle = radioUrl; // Use URL as title for now
       
       audio.play().then(() => {
-        console.log('🎵 Radio station loaded and playing');
+        logger.info('🎵 Radio station loaded and playing');
         const musicButton = document.querySelector('[data-icon="music"]');
         if (musicButton && typeof PNGLoader !== 'undefined') {
           PNGLoader.applyPNG(musicButton, 'music2.png');
@@ -1052,12 +1175,12 @@ function confirmRadioInput() {
           }
         }, 1000);
       }).catch(err => {
-        console.error('❌ Error loading radio station:', err);
+        logger.error('❌ Error loading radio station:', err);
         // Show styled error message instead of alert
         showRadioError('Failed to load radio station. Please check the URL and try again.');
       });
     } catch (error) {
-      console.error('❌ Error creating radio audio:', error);
+      logger.error('❌ Error creating radio audio:', error);
       showRadioError('Failed to load radio station. Please check the URL and try again.');
     }
   } else {
@@ -1110,7 +1233,7 @@ function showPlaylistConfirmation(trackCount) {
       }
     }, 5000);
     
-    console.log(`🎵 Showing playlist confirmation for ${trackCount} tracks`);
+    logger.info(`🎵 Showing playlist confirmation for ${trackCount} tracks`);
   }
 }
 
@@ -1118,7 +1241,7 @@ function closePlaylistConfirmation() {
   const confirmationPanel = document.getElementById('playlistConfirmationPanel');
   if (confirmationPanel) {
     confirmationPanel.style.display = 'none';
-    console.log('🎵 Playlist confirmation closed');
+    logger.info('🎵 Playlist confirmation closed');
   }
 }
 
@@ -1132,7 +1255,7 @@ let mp4VideoElement = null;
 function uploadMp4Video(event) {
   const file = event.target.files[0];
   if (!file) {
-    console.log('⚠️ No MP4 file selected');
+    logger.warn('No MP4 file selected', null, 'UPLOAD');
     return;
   }
 
@@ -1143,7 +1266,7 @@ function uploadMp4Video(event) {
     return;
   }
 
-  console.log('🎬 MP4 file selected:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+  logger.video('MP4 file selected', { name: file.name, size: (file.size / 1024 / 1024).toFixed(2) + ' MB' });
 
   // Create object URL for the video file
   if (currentMp4Url) {
@@ -1158,18 +1281,18 @@ function uploadMp4Video(event) {
   // Play the MP4 video
   playMp4Video();
   
-  console.log('🎬 MP4 video uploaded and ready to play');
+  logger.success('MP4 video uploaded and ready to play');
 }
 
 function playMp4Video() {
   if (!currentMp4Url) {
-    console.log('⚠️ No MP4 video uploaded');
+    logger.warn('No MP4 video uploaded', null, 'UPLOAD');
     return;
   }
 
   const iframe = document.getElementById('videoIframe');
   if (!iframe) {
-    console.log('⚠️ Video iframe not found');
+    logger.warn('Video iframe not found', null, 'VIDEO');
     return;
   }
 
@@ -1226,10 +1349,50 @@ function playMp4Video() {
           }
         };
         
-        // Auto-play
+        // Auto-play with better error handling
         video.play().catch(err => {
-          console.log('Autoplay prevented:', err);
+          logger.warn('Autoplay prevented', { error: err.message, code: err.name }, 'VIDEO');
+          
+          // Show user-friendly message
+          const message = document.createElement('div');
+          message.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #ff6b6b; color: white; padding: 10px; border-radius: 5px; z-index: 10000; font-family: Arial, sans-serif;';
+          message.textContent = 'Click the video to start playing (autoplay blocked)';
+          document.body.appendChild(message);
+          
+          // Remove message after 5 seconds
+          setTimeout(() => {
+            if (message.parentNode) {
+              message.parentNode.removeChild(message);
+            }
+          }, 5000);
         });
+        
+        // Add keyboard controls
+        document.addEventListener('keydown', (e) => {
+          switch(e.code) {
+            case 'Space':
+              e.preventDefault();
+              video.paused ? video.play() : video.pause();
+              break;
+            case 'ArrowRight':
+              video.currentTime = Math.min(video.duration, video.currentTime + 10);
+              break;
+            case 'ArrowLeft':
+              video.currentTime = Math.max(0, video.currentTime - 10);
+              break;
+            case 'ArrowUp':
+              video.volume = Math.min(1, video.volume + 0.1);
+              break;
+            case 'ArrowDown':
+              video.volume = Math.max(0, video.volume - 0.1);
+              break;
+          }
+        });
+        
+        // Enhance video with performance monitoring
+        if (window.parent.enhanceMp4Video) {
+          window.parent.enhanceMp4Video(video);
+        }
       </script>
     </body>
     </html>
@@ -1257,14 +1420,14 @@ function playMp4Video() {
     toggleVideoPlayer();
   }
   
-  console.log('🎬 MP4 video started playing in iframe');
+  logger.video('MP4 video started playing in iframe');
 }
 
 function pauseMp4Video() {
   const iframe = document.getElementById('videoIframe');
   if (iframe && iframe.contentWindow && isPlayingMp4) {
     iframe.contentWindow.toggleMp4Playback();
-    console.log('🎬 MP4 video pause/play toggled');
+    logger.video('MP4 video pause/play toggled');
   }
 }
 
@@ -1281,8 +1444,255 @@ function stopMp4Video() {
       PNGLoader.applyPNG(videoButton, 'video.png');
     }
     
-    console.log('🎬 MP4 video stopped');
+    logger.video('MP4 video stopped');
   }
+}
+
+// ===== MEDIA ENHANCEMENTS =====
+
+// Enhanced video controls and performance monitoring
+function enhanceVideo(videoElement) {
+  if (!videoElement) return;
+  
+  // Add performance monitoring
+  let lastTime = 0;
+  let frameCount = 0;
+  let performanceData = {
+    fps: 0,
+    bufferHealth: 0,
+    quality: 'unknown',
+    type: 'video'
+  };
+  
+  // Monitor frame rate and performance
+  const monitorPerformance = () => {
+    const now = performance.now();
+    frameCount++;
+    
+    if (now - lastTime >= 1000) {
+      performanceData.fps = Math.round((frameCount * 1000) / (now - lastTime));
+      frameCount = 0;
+      lastTime = now;
+      
+      // Monitor buffer health
+      if (videoElement.buffered && videoElement.buffered.length > 0) {
+        const bufferedEnd = videoElement.buffered.end(videoElement.buffered.length - 1);
+        const bufferAhead = bufferedEnd - videoElement.currentTime;
+        performanceData.bufferHealth = bufferAhead;
+        
+        if (bufferAhead < 2) {
+          logger.warn('Low video buffer health', { bufferAhead: bufferAhead.toFixed(1) + 's' }, 'VIDEO');
+        }
+      }
+      
+      // Log performance data sparingly
+      logger.performance('Video Performance', performanceData);
+    }
+    
+    // Continue monitoring if video is still playing
+    if (!videoElement.paused) {
+      requestAnimationFrame(monitorPerformance);
+    }
+  };
+  
+  // Start performance monitoring when video starts playing
+  videoElement.addEventListener('play', () => {
+    monitorPerformance();
+  });
+  
+  // Add enhanced keyboard controls for video
+  const handleVideoKeydown = (e) => {
+    if (e.target.tagName === 'INPUT') return; // Don't interfere with input fields
+    
+    switch(e.code) {
+      case 'Space':
+        e.preventDefault();
+        videoElement.paused ? videoElement.play() : videoElement.pause();
+        break;
+      case 'ArrowRight':
+        videoElement.currentTime = Math.min(videoElement.duration, videoElement.currentTime + 10);
+        break;
+      case 'ArrowLeft':
+        videoElement.currentTime = Math.max(0, videoElement.currentTime - 10);
+        break;
+      case 'ArrowUp':
+        videoElement.volume = Math.min(1, videoElement.volume + 0.1);
+        break;
+      case 'ArrowDown':
+        videoElement.volume = Math.max(0, videoElement.volume - 0.1);
+        break;
+      case 'KeyF':
+        e.preventDefault();
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          videoElement.requestFullscreen();
+        }
+        break;
+      case 'KeyM':
+        e.preventDefault();
+        videoElement.muted = !videoElement.muted;
+        logger.video('Video muted', { muted: videoElement.muted });
+        break;
+    }
+  };
+  
+  // Add global video keyboard controls
+  document.addEventListener('keydown', handleVideoKeydown);
+  
+  // Clean up function
+  return () => {
+    document.removeEventListener('keydown', handleVideoKeydown);
+  };
+}
+
+// Enhanced MP4 video controls and performance monitoring
+function enhanceMp4Video(videoElement) {
+  if (!videoElement) return;
+  
+  // Add performance monitoring
+  let lastTime = 0;
+  let frameCount = 0;
+  let performanceData = {
+    fps: 0,
+    bufferHealth: 0,
+    quality: 'unknown'
+  };
+  
+  // Monitor frame rate
+  const monitorPerformance = () => {
+    const now = performance.now();
+    frameCount++;
+    
+    if (now - lastTime >= 1000) {
+      performanceData.fps = Math.round((frameCount * 1000) / (now - lastTime));
+      frameCount = 0;
+      lastTime = now;
+      
+      // Log performance data sparingly
+      logger.performance('MP4 Performance', performanceData);
+    }
+    
+    // Monitor buffer health
+    if (videoElement.buffered.length > 0) {
+      const bufferedEnd = videoElement.buffered.end(videoElement.buffered.length - 1);
+      const currentTime = videoElement.currentTime;
+      const bufferAhead = bufferedEnd - currentTime;
+      
+      if (bufferAhead < 5) {
+        logger.warn('Low buffer health', { bufferAhead: bufferAhead.toFixed(1) + 's' }, 'VIDEO');
+      }
+    }
+    
+    requestAnimationFrame(monitorPerformance);
+  };
+  
+  // Start performance monitoring
+  monitorPerformance();
+  
+  // Add quality detection
+  videoElement.addEventListener('loadedmetadata', () => {
+    const width = videoElement.videoWidth;
+    const height = videoElement.videoHeight;
+    
+    if (width >= 1920 && height >= 1080) {
+      performanceData.quality = '1080p';
+    } else if (width >= 1280 && height >= 720) {
+      performanceData.quality = '720p';
+    } else if (width >= 854 && height >= 480) {
+      performanceData.quality = '480p';
+    } else {
+      performanceData.quality = 'SD';
+    }
+    
+    logger.video('Video quality detected', { quality: performanceData.quality, dimensions: `${width}x${height}` });
+  });
+  
+  return performanceData;
+}
+
+// Enhanced music playback with better controls and monitoring
+function enhanceMusicPlayback(audioElement) {
+  if (!audioElement) return;
+  
+  // Add music-specific performance monitoring
+  let musicPerformanceData = {
+    volume: audioElement.volume,
+    duration: 0,
+    currentTime: 0,
+    bufferHealth: 0,
+    quality: 'unknown'
+  };
+  
+  // Monitor audio performance
+  const monitorMusicPerformance = () => {
+    if (audioElement.duration && !isNaN(audioElement.duration)) {
+      musicPerformanceData.duration = audioElement.duration;
+      musicPerformanceData.currentTime = audioElement.currentTime;
+      musicPerformanceData.volume = audioElement.volume;
+      
+      // Calculate buffer health
+      if (audioElement.buffered.length > 0) {
+        const bufferedEnd = audioElement.buffered.end(audioElement.buffered.length - 1);
+        const bufferAhead = bufferedEnd - audioElement.currentTime;
+        musicPerformanceData.bufferHealth = bufferAhead;
+        
+        if (bufferAhead < 2) {
+          logger.warn('Low audio buffer health', { bufferAhead: bufferAhead.toFixed(1) + 's' }, 'AUDIO');
+        }
+      }
+      
+      // Log performance data sparingly
+      logger.performance('Music Performance', musicPerformanceData);
+    }
+    
+    // Continue monitoring if audio is still playing
+    if (!audioElement.paused) {
+      requestAnimationFrame(monitorMusicPerformance);
+    }
+  };
+  
+  // Start performance monitoring when audio starts playing
+  audioElement.addEventListener('play', () => {
+    monitorMusicPerformance();
+  });
+  
+  // Add enhanced keyboard controls for music
+  const handleMusicKeydown = (e) => {
+    if (e.target.tagName === 'INPUT') return; // Don't interfere with input fields
+    
+    switch(e.code) {
+      case 'Space':
+        e.preventDefault();
+        audioElement.paused ? audioElement.play() : audioElement.pause();
+        break;
+      case 'ArrowRight':
+        audioElement.currentTime = Math.min(audioElement.duration, audioElement.currentTime + 10);
+        break;
+      case 'ArrowLeft':
+        audioElement.currentTime = Math.max(0, audioElement.currentTime - 10);
+        break;
+      case 'ArrowUp':
+        audioElement.volume = Math.min(1, audioElement.volume + 0.1);
+        break;
+      case 'ArrowDown':
+        audioElement.volume = Math.max(0, audioElement.volume - 0.1);
+        break;
+      case 'KeyM':
+        e.preventDefault();
+        audioElement.muted = !audioElement.muted;
+        logger.audio('Music muted', { muted: audioElement.muted });
+        break;
+    }
+  };
+  
+  // Add global music keyboard controls
+  document.addEventListener('keydown', handleMusicKeydown);
+  
+  // Clean up function
+  return () => {
+    document.removeEventListener('keydown', handleMusicKeydown);
+  };
 }
 
 // ===== SINGLE VIDEO STREAM FUNCTIONS =====
@@ -1294,7 +1704,7 @@ let isPlayingSingleVideo = false;
 function playSingleVideoStream() {
   const urlInput = document.getElementById('singleVideoUrl');
   if (!urlInput) {
-    console.log('⚠️ URL input not found');
+    logger.warn('⚠️ URL input not found');
     return;
   }
 
@@ -1310,17 +1720,17 @@ function playSingleVideoStream() {
     return;
   }
 
-  console.log('🌐 Loading content:', url);
+  logger.info('🌐 Loading content:', url);
 
   // Stop any currently playing MP4 video
   if (isPlayingMp4) {
     stopMp4Video();
-    console.log('🎬 Stopped MP4 video to load new content');
+    logger.info('🎬 Stopped MP4 video to load new content');
   }
 
   const iframe = document.getElementById('videoIframe');
   if (!iframe) {
-    console.log('⚠️ Video iframe not found');
+    logger.warn('⚠️ Video iframe not found');
     return;
   }
 
@@ -1332,7 +1742,7 @@ function playSingleVideoStream() {
       // Handle YouTube videos with loop
       const videoId = extractYouTubeId(url);
       embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=1&modestbranding=1&rel=0`;
-      console.log('🎥 Detected YouTube video, using embed URL');
+      logger.info('🎥 Detected YouTube video, using embed URL');
       break;
       
     case 'video':
@@ -1357,14 +1767,14 @@ function playSingleVideoStream() {
           <script>
             const video = document.querySelector('video');
             video.addEventListener('loadstart', () => {
-              console.log('🎥 Video loading started');
+              logger.info('🎥 Video loading started');
             });
             video.addEventListener('error', (e) => {
-              console.error('🎥 Video error:', e);
+              logger.error('🎥 Video error:', e);
               document.body.innerHTML = '<div style="color: white; text-align: center; padding: 20px;">Error loading video stream. Please check the URL and try again.</div>';
             });
             video.addEventListener('canplay', () => {
-              console.log('🎥 Video ready to play');
+              logger.info('🎥 Video ready to play');
             });
           </script>
         </body>
@@ -1373,14 +1783,14 @@ function playSingleVideoStream() {
       
       const blob = new Blob([videoHtml], { type: 'text/html' });
       embedUrl = URL.createObjectURL(blob);
-      console.log('🎥 Created HTML5 video player for video stream');
+      logger.info('🎥 Created HTML5 video player for video stream');
       break;
       
     case 'website':
     default:
       // Handle regular websites by loading them directly in iframe
       embedUrl = url;
-      console.log('🌐 Loading website directly in iframe');
+      logger.info('🌐 Loading website directly in iframe');
       break;
   }
   
@@ -1406,7 +1816,7 @@ function playSingleVideoStream() {
   // Clear the input field
   urlInput.value = '';
   
-  console.log(`🌐 Content loaded: ${contentType} - ${url}`);
+  logger.info(`🌐 Content loaded: ${contentType} - ${url}`);
 }
 
 function stopSingleVideoStream() {
@@ -1428,7 +1838,7 @@ function stopSingleVideoStream() {
       PNGLoader.applyPNG(videoButton, 'video.png');
     }
     
-    console.log('🎥 Single video stream stopped');
+    logger.info('🎥 Single video stream stopped');
   }
 }
 
@@ -1490,11 +1900,11 @@ window.addEventListener('message', function(event) {
       case 'mp4Play':
         isPlayingMp4 = true;
         videoIsPlaying = true;
-        console.log('🎬 MP4 video started playing');
+        logger.info('🎬 MP4 video started playing');
         break;
       case 'mp4Pause':
         // Don't set isPlayingMp4 = false here as user might resume
-        console.log('🎬 MP4 video paused');
+        logger.info('🎬 MP4 video paused');
         break;
     }
   }
@@ -1503,15 +1913,15 @@ window.addEventListener('message', function(event) {
 // ===== MUSIC PLAYLIST UPLOAD FUNCTIONS =====
 
 async function uploadMusicPlaylist(event) {
-  console.log('🎵 Music playlist upload triggered');
+  logger.info('🎵 Music playlist upload triggered');
   
   const file = event.target.files[0];
   if (!file) {
-    console.log('⚠️ No file selected');
+    logger.warn('⚠️ No file selected');
     return;
   }
 
-  console.log('📁 File selected:', file.name, 'Type:', file.type);
+  logger.info('📁 File selected:', file.name, 'Type:', file.type);
 
   if (file.type !== 'text/plain' && !file.name.endsWith('.txt')) {
     alert('Please select a .txt file for the playlist.');
@@ -1519,22 +1929,22 @@ async function uploadMusicPlaylist(event) {
   }
 
   try {
-    console.log('📁 Uploading music playlist:', file.name);
+    logger.info('📁 Uploading music playlist:', file.name);
     
     // Read the file content
     const content = await file.text();
-    console.log('📄 File content length:', content.length);
-    console.log('📄 First 200 characters:', content.substring(0, 200));
+    logger.debug('📄 File content length:', content.length);
+    logger.debug('📄 First 200 characters:', content.substring(0, 200));
     
     const tracks = content.split('\n').filter(line => line.trim() !== '');
-    console.log('🎵 Parsed tracks:', tracks);
+    logger.debug('🎵 Parsed tracks:', tracks);
     
     if (tracks.length === 0) {
       alert('The playlist file is empty or contains no valid tracks.');
       return;
     }
 
-    console.log(`🎵 Loaded ${tracks.length} tracks from uploaded playlist`);
+    logger.info(`🎵 Loaded ${tracks.length} tracks from uploaded playlist`);
     
     // Store the uploaded playlist globally
     window.uploadedMusicPlaylist = tracks;
@@ -1547,7 +1957,7 @@ async function uploadMusicPlaylist(event) {
     }
     
     // Reload the music list to include the uploaded playlist
-    console.log('🔄 Reloading music list...');
+    logger.info('🔄 Reloading music list...');
     await loadMusicList();
     
     // Show success message with styled panel
@@ -1557,7 +1967,7 @@ async function uploadMusicPlaylist(event) {
     event.target.value = '';
     
   } catch (error) {
-    console.error('❌ Error uploading music playlist:', error);
+    logger.error('❌ Error uploading music playlist:', error);
     alert('Failed to upload playlist. Please check the file format.');
   }
 }
@@ -1597,10 +2007,10 @@ function toggleMediaToolbarMinimize() {
     
     if (isMediaToolbarMinimized) {
       bar.classList.add('minimized');
-      console.log("📺 Media toolbar minimized");
+      logger.info("📺 Media toolbar minimized");
     } else {
       bar.classList.remove('minimized');
-      console.log("📺 Media toolbar expanded");
+      logger.info("📺 Media toolbar expanded");
     }
   }
 }
@@ -1688,7 +2098,7 @@ function handleBackgroundUpload(event) {
         iframe.style.display = "none";
         iframe.src = "";
       }
-      console.log("🖼️ Background image uploaded successfully");
+      logger.info("🖼️ Background image uploaded successfully");
     };
     img.src = e.target.result;
   };
@@ -1721,9 +2131,9 @@ function handleVideoUpload(event) {
     video.src = videoURL;
     video.style.display = "block";
     video.play().then(() => {
-      console.log("📀 Video uploaded and playing successfully");
+      logger.info("📀 Video uploaded and playing successfully");
     }).catch(err => {
-      console.error("❌ Error playing uploaded video:", err);
+      logger.error("❌ Error playing uploaded video:", err);
     });
     
     // Clear background image
@@ -1736,21 +2146,21 @@ function handleVideoUpload(event) {
 function captureCanvas() {
   const canvas = document.getElementById("canvas");
   if (!canvas) {
-    console.error("Canvas not found");
+    logger.error("Canvas not found");
     return;
   }
   
   // Ensure canvas is properly sized
   if (canvas.width === 0 || canvas.height === 0) {
-    console.error("Canvas has zero dimensions");
+    logger.error("Canvas has zero dimensions");
     return;
   }
   
-  console.log("Canvas dimensions:", canvas.width, "x", canvas.height);
+  logger.info("Canvas dimensions:", canvas.width, "x", canvas.height);
   
   try {
     const dataURL = canvas.toDataURL("image/png");
-    console.log("Data URL length:", dataURL.length);
+    logger.debug("Data URL length:", dataURL.length);
     
     const link = document.createElement("a");
     link.download = "snapshot.png";
@@ -1759,30 +2169,30 @@ function captureCanvas() {
     link.click();
     document.body.removeChild(link);
     
-    console.log("Snapshot download initiated");
+    logger.info("Snapshot download initiated");
   } catch (error) {
-    console.error("Error capturing snapshot:", error);
+    logger.error("Error capturing snapshot:", error);
   }
 }
 
 function captureCanvasOnly() {
   const canvas = document.getElementById("canvas");
   if (!canvas) {
-    console.error("Canvas not found");
+    logger.error("Canvas not found");
     return;
   }
   
   // Ensure canvas is properly sized
   if (canvas.width === 0 || canvas.height === 0) {
-    console.error("Canvas has zero dimensions");
+    logger.error("Canvas has zero dimensions");
     return;
   }
   
-  console.log("Canvas dimensions:", canvas.width, "x", canvas.height);
+  logger.info("Canvas dimensions:", canvas.width, "x", canvas.height);
   
   try {
     const dataURL = canvas.toDataURL("image/png");
-    console.log("Data URL length:", dataURL.length);
+    logger.debug("Data URL length:", dataURL.length);
     
     const link = document.createElement("a");
     link.download = "canvas_snapshot.png";
@@ -1791,9 +2201,9 @@ function captureCanvasOnly() {
     link.click();
     document.body.removeChild(link);
     
-    console.log("Canvas snapshot download initiated");
+    logger.info("Canvas snapshot download initiated");
   } catch (error) {
-    console.error("Error capturing canvas snapshot:", error);
+    logger.error("Error capturing canvas snapshot:", error);
   }
 }
 
@@ -1824,7 +2234,7 @@ function rollDice() {
     // Different color for consecutive same numbers
     textColor = '#FF8C00'; // Orange text for consecutive numbers
     buttonColor = '#FF8C00'; // Orange text for button
-    console.log(`🎲 Consecutive roll #${consecutiveCount + 1} of ${result}!`);
+    logger.info(`🎲 Consecutive roll #${consecutiveCount + 1} of ${result}!`);
   } else {
     // Normal color for new numbers
     textColor = 'gold'; // Normal gold text
@@ -1846,7 +2256,7 @@ function rollDice() {
     diceButton.classList.add('showing-number');
   }
   
-  console.log("🎲 Dice roll result:", result, "(max:", diceMaxValue, ")");
+      logger.info("🎲 Dice roll result:", result, "(max:", diceMaxValue, ")");
   
   // Hide overlay after 5 seconds
   setTimeout(() => {
@@ -1919,7 +2329,7 @@ function hideDiceSlider() {
 
 // Initialize video player
 function initVideoPlayer() {
-  console.log('🎥 Initializing video player...');
+  logger.info('🎥 Initializing video player...');
   
   // Ensure video elements are properly hidden initially
   const player = document.getElementById('videoPlayer');
@@ -1931,7 +2341,7 @@ function initVideoPlayer() {
     player.style.pointerEvents = 'none';
     player.style.zIndex = '-1';
     player.style.visibility = 'hidden';
-    console.log('🎥 Video player element properly initialized');
+    logger.info('🎥 Video player element properly initialized');
   }
   
   if (controls) {
@@ -1951,7 +2361,7 @@ function initVideoPlayer() {
   // Pre-load playlists from root folder
   setTimeout(async () => {
     await preloadPlaylists();
-    console.log('🎥 Video player initialized with pre-loaded playlists');
+    logger.info('🎥 Video player initialized with pre-loaded playlists');
   }, 100);
   
   // Load video control images
@@ -1961,14 +2371,14 @@ function initVideoPlayer() {
   const opacitySlider = document.getElementById('videoOpacitySlider');
   if (opacitySlider && player) {
     player.style.opacity = opacitySlider.value;
-    console.log('🎥 Initial video opacity set to:', opacitySlider.value);
+    logger.info('🎥 Initial video opacity set to:', opacitySlider.value);
   }
   
   // Set initial size
   const sizeSlider = document.getElementById('videoSizeSlider');
   if (sizeSlider && player) {
     player.style.transform = `translate(-50%, -50%) scale(${sizeSlider.value})`;
-    console.log('🎥 Initial video size set to:', sizeSlider.value);
+    logger.info('🎥 Initial video size set to:', sizeSlider.value);
   }
   
   // Debug video controls after a short delay
@@ -1976,6 +2386,13 @@ function initVideoPlayer() {
     debugVideoControls();
     testPngAccess();
     loadToolbarButtonImages();
+    
+    // Enhance video player with performance monitoring and better controls
+    if (player) {
+      const cleanupEnhancement = enhanceVideo(player);
+      // Store cleanup function for later use
+      window.videoEnhancementCleanup = cleanupEnhancement;
+    }
   }, 1000);
   
   // Add click handler for minimized playlist
@@ -1997,8 +2414,8 @@ async function loadVideoPlaylist() {
     const isLocalFile = window.location.protocol === 'file:';
     
     if (isLocalFile) {
-      console.log('📋 Running from local file - playlist loading may be restricted by CORS');
-      console.log('📋 You can upload your own playlist file using the upload button');
+      logger.warn('📋 Running from local file - playlist loading may be restricted by CORS');
+      logger.info('📋 You can upload your own playlist file using the upload button');
       videoPlaylist = [];
       
       // Update display with empty playlist
@@ -2050,7 +2467,7 @@ async function loadVideoPlaylist() {
       return line.includes('youtube.com') || line.includes('youtu.be');
     });
     
-    console.log(`📋 Video Loaded ${videoPlaylist.length} videos from playlist`);
+    logger.info(`📋 Video Loaded ${videoPlaylist.length} videos from playlist`);
     
     // Update display after loading
     if (typeof updateVideoPlaylistDisplay === 'function') {
@@ -2059,8 +2476,8 @@ async function loadVideoPlaylist() {
     
     return videoPlaylist;
   } catch (error) {
-    console.error('❌ Error loading video playlist:', error);
-    console.log('📋 Creating empty playlist - you can upload your own playlist file');
+    logger.error('❌ Error loading video playlist:', error);
+    logger.info('📋 Creating empty playlist - you can upload your own playlist file');
     
     // Create a default empty playlist
     videoPlaylist = [];
@@ -2135,7 +2552,7 @@ async function uploadPlaylist() {
     // Clear the file input
     fileInput.value = '';
     
-    console.log(`📋 Uploaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
+    logger.info(`📋 Uploaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
     alert(`✅ Uploaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
   };
   
@@ -2144,24 +2561,24 @@ async function uploadPlaylist() {
 
 async function nextPlaylist() {
   if (uploadedPlaylists.length === 0) {
-    console.log('📋 No uploaded playlists available');
+    logger.warn('📋 No uploaded playlists available');
     return;
   }
   
-  console.log(`📋 Before next: currentPlaylistIndex = ${currentPlaylistIndex}, total playlists = ${uploadedPlaylists.length}`);
-  console.log('📊 Available playlists:', uploadedPlaylists.map((p, i) => `${i}: ${p.name} (${p.urls.length} videos)`));
+  logger.debug(`📋 Before next: currentPlaylistIndex = ${currentPlaylistIndex}, total playlists = ${uploadedPlaylists.length}`);
+  logger.debug('📊 Available playlists:', uploadedPlaylists.map((p, i) => `${i}: ${p.name} (${p.urls.length} videos)`));
   
   // Initialize index if it's invalid
   if (currentPlaylistIndex < 0 || currentPlaylistIndex >= uploadedPlaylists.length) {
     currentPlaylistIndex = 0;
-    console.log('📋 Initialized currentPlaylistIndex to 0');
+    logger.debug('📋 Initialized currentPlaylistIndex to 0');
   }
   
   // Loop to next playlist
   const newIndex = (currentPlaylistIndex + 1) % uploadedPlaylists.length;
   currentPlaylistIndex = newIndex;
   
-  console.log(`📋 After next: currentPlaylistIndex = ${currentPlaylistIndex}`);
+  logger.debug(`📋 After next: currentPlaylistIndex = ${currentPlaylistIndex}`);
   
   const playlist = uploadedPlaylists[currentPlaylistIndex];
   
@@ -2173,29 +2590,29 @@ async function nextPlaylist() {
   // Force update display using silent version to avoid flag conflicts
   await updateVideoPlaylistDisplaySilent();
   
-  console.log(`📋 Switched to next playlist: ${playlist.name} (${playlist.urls.length} videos)`);
+  logger.info(`📋 Switched to next playlist: ${playlist.name} (${playlist.urls.length} videos)`);
 }
 
 async function previousPlaylist() {
   if (uploadedPlaylists.length === 0) {
-    console.log('📋 No uploaded playlists available');
+    logger.warn('📋 No uploaded playlists available');
     return;
   }
   
-  console.log(`📋 Before previous: currentPlaylistIndex = ${currentPlaylistIndex}, total playlists = ${uploadedPlaylists.length}`);
-  console.log('📊 Available playlists:', uploadedPlaylists.map((p, i) => `${i}: ${p.name} (${p.urls.length} videos)`));
+  logger.debug(`📋 Before previous: currentPlaylistIndex = ${currentPlaylistIndex}, total playlists = ${uploadedPlaylists.length}`);
+  logger.debug('📊 Available playlists:', uploadedPlaylists.map((p, i) => `${i}: ${p.name} (${p.urls.length} videos)`));
   
   // Initialize index if it's invalid
   if (currentPlaylistIndex < 0 || currentPlaylistIndex >= uploadedPlaylists.length) {
     currentPlaylistIndex = 0;
-    console.log('📋 Initialized currentPlaylistIndex to 0');
+    logger.debug('📋 Initialized currentPlaylistIndex to 0');
   }
   
   // Loop to previous playlist
   const newIndex = currentPlaylistIndex === 0 ? uploadedPlaylists.length - 1 : currentPlaylistIndex - 1;
   currentPlaylistIndex = newIndex;
   
-  console.log(`📋 After previous: currentPlaylistIndex = ${currentPlaylistIndex}`);
+  logger.debug(`📋 After previous: currentPlaylistIndex = ${currentPlaylistIndex}`);
   
   const playlist = uploadedPlaylists[currentPlaylistIndex];
   
@@ -2207,18 +2624,18 @@ async function previousPlaylist() {
   // Force update display using silent version to avoid flag conflicts
   await updateVideoPlaylistDisplaySilent();
   
-  console.log(`📋 Switched to previous playlist: ${playlist.name} (${playlist.urls.length} videos)`);
+  logger.info(`📋 Switched to previous playlist: ${playlist.name} (${playlist.urls.length} videos)`);
 }
 
 async function playRandomVideo() {
   if (videoPlaylist.length === 0) {
-    console.log('📋 No videos in current playlist');
+    logger.warn('📋 No videos in current playlist');
     return;
   }
   
   const randomIndex = Math.floor(Math.random() * videoPlaylist.length);
   videoPlayVideo(randomIndex);
-  console.log(`🎲 Playing random video: ${randomIndex + 1} of ${videoPlaylist.length}`);
+  logger.info(`🎲 Playing random video: ${randomIndex + 1} of ${videoPlaylist.length}`);
 }
 
 function loadUploadedPlaylist(index) {
@@ -2246,7 +2663,7 @@ function loadUploadedPlaylist(index) {
     videoPlayVideo(0);
   }
   
-  console.log(`🔄 Loaded uploaded playlist: ${playlist.name} with ${playlist.urls.length} videos (index: ${index})`);
+          logger.info(`🔄 Loaded uploaded playlist: ${playlist.name} with ${playlist.urls.length} videos (index: ${index})`);
 }
 
 // ===== VIDEO PLAYER FUNCTIONS =====
@@ -2270,13 +2687,13 @@ async function fetchVideoTitle(videoId) {
     
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Successfully fetched video title for', videoId, ':', data.title);
+              logger.info('✅ Successfully fetched video title for', videoId, ':', data.title);
       return data.title;
     } else {
-      console.warn('⚠️ YouTube API returned status:', response.status, 'for video', videoId);
+              logger.warn('⚠️ YouTube API returned status:', response.status, 'for video', videoId);
     }
   } catch (error) {
-    console.warn('⚠️ Network error fetching video title for', videoId, ':', error.message);
+          logger.warn('⚠️ Network error fetching video title for', videoId, ':', error.message);
     // Don't log the full error to avoid console spam
   }
   return null;
@@ -2288,13 +2705,13 @@ function videoPlayVideo(index) {
   // Stop any currently playing MP4 video when switching to YouTube playlist video
   if (isPlayingMp4) {
     stopMp4Video();
-    console.log('🎬 Stopped MP4 video to play YouTube playlist video');
+            logger.info('🎬 Stopped MP4 video to play YouTube playlist video');
   }
   
   // Stop any currently playing single video stream when switching to playlist video
   if (isPlayingSingleVideo) {
     stopSingleVideoStream();
-    console.log('🎥 Stopped single video stream to play playlist video');
+            logger.info('🎥 Stopped single video stream to play playlist video');
   }
   
   videoCurrentIndex = index;
@@ -2302,13 +2719,13 @@ function videoPlayVideo(index) {
   const videoId = extractYouTubeId(url);
   
   if (!videoId) {
-    console.error('❌ Invalid YouTube URL:', url);
+    logger.error('❌ Invalid YouTube URL:', url);
     return;
   }
   
   const iframe = document.getElementById('videoIframe');
   if (iframe) {
-    console.log('🎵 videoPlayVideo debug:', {
+            logger.debug('🎵 videoPlayVideo debug:', {
       index: index,
       videoId: videoId
     });
@@ -2317,7 +2734,7 @@ function videoPlayVideo(index) {
     const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=1&playlist=${videoId}&enablejsapi=1&origin=${window.location.origin}`;
     iframe.src = embedUrl;
     videoIsPlaying = true;
-    console.log('🎵 Video Playing video:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+            logger.info('🎵 Video Playing video:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
     
     // Update the play button icon after a short delay to allow iframe to load
     setTimeout(() => {
@@ -2336,9 +2753,9 @@ function videoPlayVideo(index) {
 
 function videoTogglePlay() {
   const iframe = document.getElementById('videoIframe');
-  console.log('🎥 videoTogglePlay called');
-  console.log('🎥 iframe:', iframe);
-  console.log('🎥 videoIsPlaying before:', videoIsPlaying);
+          logger.debug('🎥 videoTogglePlay called');
+      logger.debug('🎥 iframe:', iframe);
+      logger.debug('🎥 videoIsPlaying before:', videoIsPlaying);
   
   if (iframe) {
     try {
@@ -2348,16 +2765,16 @@ function videoTogglePlay() {
         iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
         iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
         videoIsPlaying = false;
-        console.log('⏸️ Video paused');
+        logger.info('⏸️ Video paused');
       } else {
         // Try multiple methods to play the video
         iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
         iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":[]}', '*');
         videoIsPlaying = true;
-        console.log('▶️ Video playing');
+        logger.info('▶️ Video playing');
       }
       
-      console.log('🎥 videoIsPlaying after:', videoIsPlaying);
+              logger.debug('🎥 videoIsPlaying after:', videoIsPlaying);
       
       // Update the play button icon
       updateVideoPlayButtonIcon();
@@ -2368,7 +2785,7 @@ function videoTogglePlay() {
       // Also try to reload the iframe if postMessage fails
       setTimeout(() => {
         if (videoIsPlaying && iframe.src) {
-          console.log('🔄 Attempting to force play by reloading iframe');
+          logger.info('🔄 Attempting to force play by reloading iframe');
           const currentSrc = iframe.src;
           iframe.src = currentSrc.replace('autoplay=0', 'autoplay=1');
           setTimeout(() => {
@@ -2380,29 +2797,29 @@ function videoTogglePlay() {
       // Alternative approach: try to click the play button inside the iframe
       setTimeout(() => {
         if (videoIsPlaying) {
-          console.log('🎥 Attempting alternative play method');
+          logger.info('🎥 Attempting alternative play method');
           try {
             // Try to find and click the play button inside the iframe
             const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
             const playButton = iframeDoc.querySelector('.ytp-play-button');
             if (playButton) {
               playButton.click();
-              console.log('🎥 Clicked play button inside iframe');
+              logger.info('🎥 Clicked play button inside iframe');
             }
           } catch (error) {
-            console.log('⚠️ Could not access iframe content (CORS restriction)');
+            logger.warn('⚠️ Could not access iframe content (CORS restriction)');
           }
         }
       }, 1000);
       
     } catch (error) {
-      console.error('❌ Error toggling video:', error);
+      logger.error('❌ Error toggling video:', error);
       // Fallback: just toggle the state and update button
       videoIsPlaying = !videoIsPlaying;
       updateVideoPlayButtonIcon();
     }
   } else {
-    console.log('❌ No video iframe found');
+            logger.error('❌ No video iframe found');
   }
 }
 
@@ -2461,7 +2878,7 @@ function videoTogglePlaylist() {
     videoPlaylistTimeout = setTimeout(() => {
       if (videoPlaylistVisible) {
         videoTogglePlaylist(); // This will hide the playlist
-        console.log('📋 Video playlist auto-hidden after 60 seconds');
+        logger.info('📋 Video playlist auto-hidden after 60 seconds');
       }
     }, 60000);
   } else {
@@ -2485,7 +2902,7 @@ function videoTogglePlaylist() {
     }
   }
   
-  console.log('📋 Playlist toggled:', videoPlaylistVisible ? 'ON' : 'OFF');
+          logger.info('📋 Playlist toggled:', videoPlaylistVisible ? 'ON' : 'OFF');
 }
 
 function videoToggleFullscreen() {
@@ -2502,7 +2919,7 @@ function videoToggleFullscreen() {
       } else if (document.msExitFullscreen) {
         document.msExitFullscreen();
       }
-      console.log('🖥️ Exiting fullscreen');
+              logger.info('🖥️ Exiting fullscreen');
     } else {
       // Enter fullscreen
       if (player.requestFullscreen) {
@@ -2514,7 +2931,7 @@ function videoToggleFullscreen() {
       } else if (player.msRequestFullscreen) {
         player.msRequestFullscreen();
       }
-      console.log('🖥️ Entering fullscreen');
+              logger.info('🖥️ Entering fullscreen');
     }
   }
 }
@@ -2523,11 +2940,11 @@ function updateVideoOpacity(value) {
   const player = document.getElementById('videoPlayer');
   if (player) {
     player.style.opacity = value;
-    console.log('🎥 Video opacity updated to:', value);
+            logger.info('🎥 Video opacity updated to:', value);
     
     // If opacity is 0, make sure the player is still functional
     if (parseFloat(value) === 0) {
-      console.log('🎥 Video player is now invisible but still functional');
+              logger.info('🎥 Video player is now invisible but still functional');
     }
   }
 }
@@ -2543,7 +2960,7 @@ function updateVideoSize(value) {
     
     // Apply scale with preserved vertical position
     player.style.transform = `translate(-50%, calc(-50% + ${verticalOffset}px)) scale(${scale})`;
-    console.log('🎥 Video size updated to:', scale);
+            logger.info('🎥 Video size updated to:', scale);
   }
 }
 
@@ -2558,7 +2975,7 @@ function updateVideoVertical(value) {
     
     // Apply vertical position with preserved scale (inverted)
     player.style.transform = `translate(-50%, calc(-50% - ${verticalOffset}px)) scale(${scale})`;
-    console.log('🎥 Video vertical position updated to:', -verticalOffset, 'px');
+            logger.info('🎥 Video vertical position updated to:', -verticalOffset, 'px');
   }
 }
 
@@ -2572,7 +2989,7 @@ function videoClose() {
   if (iframe) {
     iframe.src = '';
     videoIsPlaying = false;
-    console.log('🎥 Video stopped');
+            logger.info('🎥 Video stopped');
   }
   
   // Reset video player state
@@ -2611,29 +3028,36 @@ function videoClose() {
     PNGLoader.applyPNG(videoButton, 'video.png');
   }
   
-  console.log('🎥 Video player closed and video stopped');
+  // Clean up video enhancement
+  if (window.videoEnhancementCleanup) {
+    window.videoEnhancementCleanup();
+    window.videoEnhancementCleanup = null;
+    logger.debug('🎥 Video enhancement cleaned up');
+  }
+  
+  logger.info('🎥 Video player closed and video stopped');
 }
 
 function showVideoControls() {
   const player = document.getElementById('videoPlayer');
   const controls = document.getElementById('videoControls');
   
-  console.log('🎥 showVideoControls called');
-  console.log('🎥 Player:', player);
-  console.log('🎥 Controls:', controls);
-  console.log('🎥 Player display:', player ? player.style.display : 'no player');
+          logger.debug('🎥 showVideoControls called');
+      logger.debug('🎥 Player:', player);
+      logger.debug('🎥 Controls:', controls);
+      logger.debug('🎥 Player display:', player ? player.style.display : 'no player');
   
   // Only show controls if video player is visible
   if (controls && player && player.style.display !== 'none') {
     controls.style.display = 'block';
     controls.style.pointerEvents = 'auto';
     controls.style.zIndex = '20001';
-    console.log('🎥 Video controls shown with z-index:', controls.style.zIndex);
+            logger.info('🎥 Video controls shown with z-index:', controls.style.zIndex);
     
     // Start auto-hide timer when controls are shown
     startVideoControlsAutoHide();
   } else {
-    console.log('🎥 Video controls not shown - conditions not met');
+            logger.debug('🎥 Video controls not shown - conditions not met');
   }
 }
 
@@ -2664,7 +3088,7 @@ function startVideoControlsAutoHide() {
     hideVideoControls();
   }, 30000);
   
-  console.log('⏰ Video controls auto-hide timer started (30s)');
+          logger.info('⏰ Video controls auto-hide timer started (30s)');
 }
 
 function hideVideoControls() {
@@ -2672,7 +3096,7 @@ function hideVideoControls() {
   if (controls && controls.style.display !== 'none') {
     controls.classList.add('fade-out');
     videoControlsVisible = false;
-    console.log('👻 Video controls faded out');
+            logger.info('👻 Video controls faded out');
   }
 }
 
@@ -2688,7 +3112,7 @@ function showVideoControlsOnMouseMove() {
     if (!videoControlsVisible) {
       controls.classList.remove('fade-out');
       videoControlsVisible = true;
-      console.log('👁️ Video controls shown on mouse move');
+              logger.info('👁️ Video controls shown on mouse move');
     }
     
     // Restart auto-hide timer
@@ -2705,7 +3129,7 @@ let videoPlayerInitialized = false;
 async function updateVideoPlaylistDisplay() {
   // Prevent multiple simultaneous updates
   if (isUpdatingPlaylistDisplay) {
-    console.log('📋 Playlist display update already in progress, skipping');
+            logger.debug('📋 Playlist display update already in progress, skipping');
     return;
   }
   
@@ -2713,7 +3137,7 @@ async function updateVideoPlaylistDisplay() {
   
   const playlistContainer = document.getElementById('videoPlaylistItems');
   if (!playlistContainer) {
-    console.error('❌ Video Playlist container not found');
+    logger.error('❌ Video Playlist container not found');
     isUpdatingPlaylistDisplay = false;
     return;
   }
@@ -2739,7 +3163,7 @@ async function updateVideoPlaylistDisplay() {
     }
   }
   
-  console.log('📋 Video Updating playlist display with', videoPlaylist.length, 'videos');
+          logger.info('📋 Video Updating playlist display with', videoPlaylist.length, 'videos');
   playlistContainer.innerHTML = '';
   
   for (let index = 0; index < videoPlaylist.length; index++) {
@@ -2762,7 +3186,7 @@ async function updateVideoPlaylistDisplay() {
           videoTitles[index] = null;
         }
       } catch (error) {
-        console.error('❌ Error fetching video title:', error);
+        logger.error('Error fetching video title for silent playlist display', { error: error.message, videoId, index }, 'VIDEO');
         // Mark as attempted to avoid repeated failed requests
         videoTitles[index] = null;
       }
@@ -2773,7 +3197,7 @@ async function updateVideoPlaylistDisplay() {
     item.textContent = displayText;
     
     item.onclick = () => {
-      console.log('📋 Video Clicked playlist item:', index, 'Title:', title || 'Unknown', 'URL:', url);
+      logger.info('📋 Video Clicked playlist item:', index, 'Title:', title || 'Unknown', 'URL:', url);
       videoPlayVideo(index);
       showVideoPlaylist(); // Show playlist when clicking
     };
@@ -2784,7 +3208,7 @@ async function updateVideoPlaylistDisplay() {
     playlistContainer.appendChild(item);
   }
   
-  console.log('📋 Video Playlist display updated');
+  logger.info('📋 Video Playlist display updated');
   isUpdatingPlaylistDisplay = false;
 }
 
@@ -2792,7 +3216,7 @@ async function updateVideoPlaylistDisplay() {
 async function updateVideoPlaylistDisplaySilent() {
   const playlistContainer = document.getElementById('videoPlaylistItems');
   if (!playlistContainer) {
-    console.error('❌ Video Playlist container not found');
+    logger.error('❌ Video Playlist container not found');
     return;
   }
   
@@ -2818,7 +3242,7 @@ async function updateVideoPlaylistDisplaySilent() {
   }
   
   // Rebuild the entire playlist items list to reflect the current playlist
-  console.log('📋 Video Updating playlist display (silent) with', videoPlaylist.length, 'videos');
+  logger.info('📋 Video Updating playlist display (silent) with', videoPlaylist.length, 'videos');
   playlistContainer.innerHTML = '';
   
   for (let index = 0; index < videoPlaylist.length; index++) {
@@ -2841,7 +3265,7 @@ async function updateVideoPlaylistDisplaySilent() {
           videoTitles[index] = null;
         }
       } catch (error) {
-        console.error('❌ Error fetching video title:', error);
+        logger.error('Error fetching video title for playlist display', { error: error.message, videoId, index }, 'VIDEO');
         // Mark as attempted to avoid repeated failed requests
         videoTitles[index] = null;
       }
@@ -2852,7 +3276,7 @@ async function updateVideoPlaylistDisplaySilent() {
     item.textContent = displayText;
     
     item.onclick = () => {
-      console.log('📋 Video Clicked playlist item:', index, 'Title:', title || 'Unknown', 'URL:', url);
+      logger.info('📋 Video Clicked playlist item:', index, 'Title:', title || 'Unknown', 'URL:', url);
       videoPlayVideo(index);
       showVideoPlaylist(); // Show playlist when clicking
     };
@@ -2863,7 +3287,7 @@ async function updateVideoPlaylistDisplaySilent() {
     playlistContainer.appendChild(item);
   }
   
-  console.log('📋 Video Playlist display updated (silent)');
+  logger.info('📋 Video Playlist display updated (silent)');
 }
 
 async function toggleVideoPlayer() {
@@ -2879,7 +3303,7 @@ async function toggleVideoPlayer() {
                    player.style.visibility !== 'hidden' &&
                    getComputedStyle(player).visibility !== 'hidden';
   
-  console.log('🎥 Toggle video player - Current state:', {
+  logger.debug('🎥 Toggle video player - Current state:', {
     display: player.style.display,
     computedDisplay: getComputedStyle(player).display,
     visibility: player.style.visibility,
@@ -2908,7 +3332,7 @@ async function toggleVideoPlayer() {
       playlist.style.visibility = 'hidden';
     }
     videoPlaylistVisible = false;
-    console.log('🎥 Video player hidden (playback continues)');
+    logger.info('🎥 Video player hidden (playback continues)');
     
     // Update video button to show inactive state (only if not playing)
     if (!videoIsPlaying) {
@@ -2946,13 +3370,13 @@ async function toggleVideoPlayer() {
     
     if (needsInitialization) {
       videoPlayerInitialized = true;
-      console.log('🎥 Video player initialized/reinitialized');
+      logger.info('🎥 Video player initialized/reinitialized');
       
       // Try to load pre-loaded playlists first
       if (uploadedPlaylists.length > 0) {
         currentPlaylistIndex = 0;
         loadUploadedPlaylist(0);
-        console.log('🎥 Video player opened with pre-loaded playlist');
+        logger.info('🎥 Video player opened with pre-loaded playlist');
       } else {
         // If no pre-loaded playlists, wait a moment and try to preload them
         setTimeout(async () => {
@@ -2960,14 +3384,14 @@ async function toggleVideoPlayer() {
           if (uploadedPlaylists.length > 0) {
             currentPlaylistIndex = 0;
             loadUploadedPlaylist(0);
-            console.log('🎥 Video player opened after delayed playlist loading');
+            logger.info('🎥 Video player opened after delayed playlist loading');
           } else {
-            console.log('🎥 No playlists available - video player ready for manual uploads');
+            logger.info('🎥 No playlists available - video player ready for manual uploads');
           }
         }, 100);
       }
     } else {
-      console.log('🎥 Video player toggled (no reinitialization needed)');
+      logger.info('🎥 Video player toggled (no reinitialization needed)');
     }
       
     if (needsInitialization && typeof updateVideoPlaylistDisplay === 'function') {
@@ -3002,7 +3426,7 @@ async function toggleVideoPlayer() {
     }
   }
   
-  console.log('🎥 Video player toggled:', isVisible ? 'hidden' : 'shown');
+  logger.info('🎥 Video player toggled:', isVisible ? 'hidden' : 'shown');
 }
 
 // ===== MODULAR ANIMATION SYSTEM =====
@@ -3038,7 +3462,7 @@ const AnimationState = {
     this.timelineMarkers = [];
     this.data.isRecording = false;
     this.data.isPlaying = false;
-    console.log('🔄 Animation state reset');
+    logger.info('🔄 Animation state reset');
   },
   
   // Get current state
@@ -3049,7 +3473,7 @@ const AnimationState = {
   // Update duration
   updateDuration(duration) {
     this.data.duration = duration;
-    console.log(`⏱️ Animation duration updated: ${duration}ms`);
+    logger.info(`⏱️ Animation duration updated: ${duration}ms`);
   }
 };
 
@@ -3076,7 +3500,7 @@ function recordState(type) {
     AnimationState.data.outPoint = duration / 1000;
     AnimationState.data.isRecording = true;
     
-    console.log('🎬 In point set at 0s, Out point set at', (duration / 1000).toFixed(1), 's');
+    logger.info('🎬 In point set at 0s, Out point set at', (duration / 1000).toFixed(1), 's');
     
     // Capture current bubble positions
     const currentPositions = captureBubblePositions();
@@ -3100,10 +3524,10 @@ function recordState(type) {
     // Update time display
     updatePlaybackTimeDisplay(0, duration / 1000);
     
-    console.log('✅ Animation ready: In and Out points created with current positions');
-    console.log('📊 Keyframes created:', AnimationState.data.keyframes.length);
+    logger.info('✅ Animation ready: In and Out points created with current positions');
+    logger.info('📊 Keyframes created:', AnimationState.data.keyframes.length);
     AnimationState.data.keyframes.forEach((kf, index) => {
-      console.log(`  Keyframe ${index}: time=${kf.time}s, positions=${kf.positions.length}`);
+      logger.debug(`  Keyframe ${index}: time=${kf.time}s, positions=${kf.positions.length}`);
     });
     
   } else if (type === 'end') {
@@ -3119,7 +3543,7 @@ function recordState(type) {
     
     AnimationState.data.outPoint = endTime;
     AnimationState.data.isRecording = false;
-    console.log('🏁 Out point adjusted to', endTime.toFixed(1), 's');
+    logger.info('🏁 Out point adjusted to', endTime.toFixed(1), 's');
     
     // Update out marker position
     updateTimelineMarkers();
@@ -3141,13 +3565,13 @@ function recordState(type) {
     // Update time display
     updatePlaybackTimeDisplay(endTime, duration / 1000);
     
-    console.log('✅ Animation complete: Out point updated with current positions');
+    logger.info('✅ Animation complete: Out point updated with current positions');
     
   } else if (type === 'keyframe') {
     // Pause any current playback
     if (AnimationState.data.isPlaying) {
       stopPlayback();
-      console.log('⏸️ Paused playback to add keyframe');
+      logger.info('⏸️ Paused playback to add keyframe');
     }
     
     // Get current time from timeline slider
@@ -3175,13 +3599,13 @@ function recordState(type) {
       AnimationState.data.inPoint = 0;
       AnimationState.data.outPoint = maxTime;
       AnimationState.data.keyframes = [];
-      console.log('🎬 Started new animation recording');
+      logger.info('🎬 Started new animation recording');
     }
     
     AnimationState.data.keyframes.push(keyframe);
     addTimelineMarker('keyframe', keyframeTime);
     
-    console.log('📍 Keyframe added at:', keyframeTime.toFixed(1), 's with current positions');
+    logger.info('📍 Keyframe added at:', keyframeTime.toFixed(1), 's with current positions');
   }
 }
 
@@ -3192,16 +3616,16 @@ function deepCopyIdeas() {
 
 function captureBubblePositions() {
   // Use the ideas array instead of DOM elements
-  console.log('🎬 Capturing bubble positions from ideas array...');
-  console.log('🔍 Found ideas:', ideas.length);
+  logger.debug('🎬 Capturing bubble positions from ideas array...');
+  logger.debug('🔍 Found ideas:', ideas.length);
   
   const positions = deepCopyIdeas();
   
   positions.forEach((idea, index) => {
-    console.log(`  Idea ${index}: x=${idea.x.toFixed(1)}, y=${idea.y.toFixed(1)}, title="${idea.title}"`);
+    logger.debug(`  Idea ${index}: x=${idea.x.toFixed(1)}, y=${idea.y.toFixed(1)}, title="${idea.title}"`);
   });
   
-  console.log('✅ Captured positions for', positions.length, 'ideas');
+  logger.info('✅ Captured positions for', positions.length, 'ideas');
   return positions;
 }
 
@@ -3269,7 +3693,7 @@ function updatePlaybackTimeDisplay(currentTime, totalTime) {
 }
 
 function startPlayback() {
-  console.log('🎬 Playback check:', {
+  logger.debug('🎬 Playback check:', {
     inPoint: AnimationState.data.inPoint,
     outPoint: AnimationState.data.outPoint,
     keyframes: AnimationState.data.keyframes.length,
@@ -3278,12 +3702,12 @@ function startPlayback() {
   
   // Check if we have at least 2 keyframes (in and out points)
   if (AnimationState.data.keyframes.length < 2) {
-    console.log('❌ Not enough keyframes for playback:', AnimationState.data.keyframes.length);
+    logger.error('❌ Not enough keyframes for playback:', AnimationState.data.keyframes.length);
     alert('Please set in point first to create animation (need at least 2 keyframes)');
     return;
   }
   
-  console.log('✅ Sufficient keyframes for playback:', AnimationState.data.keyframes.length);
+  logger.info('✅ Sufficient keyframes for playback:', AnimationState.data.keyframes.length);
   
   if (AnimationState.data.isPlaying) {
     stopPlayback();
@@ -3296,7 +3720,7 @@ function startPlayback() {
   // Calculate duration from in and out points
   AnimationState.playbackDuration = (AnimationState.data.outPoint - AnimationState.data.inPoint) * 1000; // Convert to milliseconds
   
-  console.log('▶️ Starting animation playback:', AnimationState.playbackDuration, 'ms');
+  logger.info('▶️ Starting animation playback:', AnimationState.playbackDuration, 'ms');
   
   // Start the animation
   animateBubbles(AnimationState.playbackDuration);
@@ -3304,7 +3728,7 @@ function startPlayback() {
 
 function stopPlayback() {
   AnimationState.data.isPlaying = false;
-  console.log('⏹️ Animation playback stopped');
+  logger.info('⏹️ Animation playback stopped');
 }
 
 function animateBubbles(duration) {
@@ -3337,7 +3761,7 @@ function animateBubbles(duration) {
     } else {
       // Animation complete
       AnimationState.data.isPlaying = false;
-      console.log('✅ Animation playback complete');
+      logger.info('✅ Animation playback complete');
     }
   }
   
@@ -3346,14 +3770,14 @@ function animateBubbles(duration) {
 
 function interpolateBubblePositions(progress) {
   if (AnimationState.data.keyframes.length < 2) {
-    console.log('❌ Not enough keyframes for interpolation:', AnimationState.data.keyframes.length);
+    logger.error('❌ Not enough keyframes for interpolation:', AnimationState.data.keyframes.length);
     return;
   }
   
   // Convert progress to time in seconds
   const currentTime = progress * (AnimationState.data.duration / 1000);
   
-  console.log('🎬 Interpolating at progress:', progress, 'time:', currentTime.toFixed(1), 's');
+  logger.debug('🎬 Interpolating at progress:', progress, 'time:', currentTime.toFixed(1), 's');
   
   // Find the two keyframes to interpolate between
   let startKeyframe = AnimationState.data.keyframes[0];
@@ -3370,7 +3794,7 @@ function interpolateBubblePositions(progress) {
   // Calculate interpolation factor
   const segmentProgress = (currentTime - startKeyframe.time) / (endKeyframe.time - startKeyframe.time);
   
-  console.log('🎬 Interpolating between keyframes:', startKeyframe.time.toFixed(1), 's and', endKeyframe.time.toFixed(1), 's, factor:', segmentProgress.toFixed(2));
+  logger.debug('🎬 Interpolating between keyframes:', startKeyframe.time.toFixed(1), 's and', endKeyframe.time.toFixed(1), 's, factor:', segmentProgress.toFixed(2));
   
   // Apply interpolated positions to ideas array (which drives the rendering)
   const startPositions = startKeyframe.positions;
@@ -3400,7 +3824,7 @@ function interpolateBubblePositions(progress) {
       }
     });
     
-    console.log('✅ Applied interpolated positions to ideas array');
+    logger.info('✅ Applied interpolated positions to ideas array');
   }
 }
 
@@ -3426,7 +3850,7 @@ function saveAnimation() {
   link.download = `${animationToSave.name}.json`;
   link.click();
   
-  console.log('💾 Animation saved:', animationToSave.name);
+  logger.info('💾 Animation saved:', animationToSave.name);
 }
 
 function loadAnimation() {
@@ -3475,10 +3899,10 @@ function loadAnimation() {
         addTimelineMarker('in', 0);
         addTimelineMarker('out', animationData.outPoint);
         
-        console.log('📂 Animation loaded:', loadedAnimation.name || 'Unnamed Animation');
+        logger.info('📂 Animation loaded:', loadedAnimation.name || 'Unnamed Animation', 'SYSTEM');
         
       } catch (error) {
-        console.error('❌ Error loading animation:', error);
+        logger.error('Error loading animation file', { error: error.message, fileName: file.name }, 'SYSTEM');
         alert('Error loading animation file');
       }
     };
@@ -3502,11 +3926,11 @@ function loadVideoControlImages() {
     'close': 'stop.png'
   };
   
-  console.log('🎨 Loading video control PNG images...');
+      logger.info('🎨 Loading video control PNG images...', null, 'VIDEO');
   
   // First, let's check if the buttons exist
   const buttons = document.querySelectorAll('.video-control-btn');
-  console.log(`Found ${buttons.length} video control buttons`);
+  logger.info(`Found ${buttons.length} video control buttons`, null, 'VIDEO');
   
   imageNames.forEach(iconName => {
     const fileName = imageFileMap[iconName];
@@ -3515,7 +3939,7 @@ function loadVideoControlImages() {
     img.onload = function() {
       // Image loaded successfully, update button style
       const buttons = document.querySelectorAll(`[data-icon="${iconName}"]`);
-      console.log(`Found ${buttons.length} buttons for ${iconName}`);
+      logger.info(`Found ${buttons.length} buttons for ${iconName}`, null, 'VIDEO');
       
       buttons.forEach(button => {
         // Set the background image directly
@@ -3526,18 +3950,18 @@ function loadVideoControlImages() {
         button.style.backgroundRepeat = 'no-repeat';
         button.style.backgroundPosition = 'center';
         
-        console.log(`✅ Applied ${fileName} to ${iconName} button`);
+        logger.success(`✅ Applied ${fileName} to ${iconName} button`, null, 'VIDEO');
       });
     };
     
     img.onerror = function() {
       // Image failed to load, keep emoji fallback
-      console.log(`⚠️ Video control image not found: ${fileName} for ${iconName} button (using emoji fallback)`);
+      logger.warn(`⚠️ Video control image not found: ${fileName} for ${iconName} button (using emoji fallback)`, null, 'VIDEO');
     };
     
     // Set the source to trigger loading
     img.src = `images/${fileName}`;
-    console.log(`🔄 Attempting to load: images/${fileName}`);
+    logger.info(`🔄 Attempting to load: images/${fileName}`, null, 'VIDEO');
   });
 }
 
@@ -3548,13 +3972,13 @@ function setupMediaEventListeners() {
   const bgLoader = document.getElementById('bgLoader');
   if (bgLoader && typeof handleBackgroundUpload === 'function') {
     bgLoader.addEventListener('change', handleBackgroundUpload);
-    console.log('✅ Background upload listener set up');
+    logger.success('✅ Background upload listener set up', null, 'UPLOAD');
   }
   
   const videoLoader = document.getElementById('videoLoader');
   if (videoLoader && typeof handleVideoUpload === 'function') {
     videoLoader.addEventListener('change', handleVideoUpload);
-    console.log('✅ Video upload listener set up');
+    logger.success('✅ Video upload listener set up', null, 'UPLOAD');
   }
   
   // Set up timeline slider events
@@ -3563,7 +3987,7 @@ function setupMediaEventListeners() {
     timelineSlider.addEventListener('input', (e) => {
       if (!AnimationState.data.isPlaying) {
         const progress = parseFloat(e.target.value);
-        console.log('🎛️ Timeline slider moved to progress:', progress);
+        logger.info('🎛️ Timeline slider moved to progress:', progress, 'SYSTEM');
         
         if (AnimationState.data.keyframes.length >= 2) {
           const currentTime = progress * (AnimationState.data.duration / 1000);
@@ -3571,7 +3995,7 @@ function setupMediaEventListeners() {
           interpolateBubblePositions(progress);
           updatePlaybackTimeDisplay(currentTime, AnimationState.data.duration / 1000);
         } else {
-          console.log('❌ No keyframes available for timeline scrubbing');
+          logger.warn('❌ No keyframes available for timeline scrubbing', null, 'SYSTEM');
         }
       }
     });
@@ -3584,7 +4008,7 @@ function setupMediaEventListeners() {
         
         // If scrubbed to the end (or very close), update the out point
         if (progress >= 0.95) { // Within 5% of the end
-          console.log('🎬 Timeline scrubbed to end - updating out point');
+          logger.info('🎬 Timeline scrubbed to end - updating out point', null, 'SYSTEM');
           
           // Capture current positions
           const endPositions = captureBubblePositions();
@@ -3593,7 +4017,7 @@ function setupMediaEventListeners() {
           const outKeyframeIndex = AnimationState.data.keyframes.findIndex(kf => kf.time === AnimationState.data.outPoint);
           if (outKeyframeIndex !== -1) {
             AnimationState.data.keyframes[outKeyframeIndex].positions = endPositions;
-            console.log('✅ Out point updated with current positions');
+            logger.success('✅ Out point updated with current positions', null, 'SYSTEM');
           }
           
           // Update timeline markers
@@ -3608,7 +4032,7 @@ function setupMediaEventListeners() {
   if (durationSelect) {
     durationSelect.addEventListener('change', (e) => {
       AnimationState.data.duration = parseInt(e.target.value);
-      console.log('⏱️ Animation duration changed to:', AnimationState.data.duration, 'ms');
+      logger.info('⏱️ Animation duration changed to:', AnimationState.data.duration, 'ms', 'SYSTEM');
     });
   }
   
@@ -3617,21 +4041,21 @@ function setupMediaEventListeners() {
   
   // Test PNG loading
   setTimeout(() => {
-    console.log('🧪 Testing PNG loading...');
+    logger.debug('🧪 Testing PNG loading...', null, 'VIDEO');
     const testButtons = document.querySelectorAll('[data-icon]');
     testButtons.forEach((button, index) => {
       const dataIcon = button.getAttribute('data-icon');
       const bgImage = getComputedStyle(button).backgroundImage;
-      console.log(`Button ${index + 1}: data-icon="${dataIcon}", background="${bgImage}"`);
+      logger.debug(`Button ${index + 1}: data-icon="${dataIcon}", background="${bgImage}"`, null, 'VIDEO');
     });
     
     // Test if PNG files exist
-    console.log('🧪 Testing PNG file existence...');
+    logger.debug('🧪 Testing PNG file existence...', null, 'VIDEO');
     const testFiles = ['recordin.png', 'keyframe.png', 'recordout.png', 'play.png', 'save.png', 'load.png', 'snapshot.png'];
     testFiles.forEach(file => {
       const img = new Image();
-      img.onload = () => console.log(`✅ PNG file exists: ${file}`);
-      img.onerror = () => console.log(`❌ PNG file missing: ${file}`);
+      img.onload = () => logger.success(`✅ PNG file exists: ${file}`, null, 'VIDEO');
+      img.onerror = () => logger.warn(`❌ PNG file missing: ${file}`, null, 'VIDEO');
       img.src = `images/${file}`;
     });
   }, 500);
@@ -3647,7 +4071,7 @@ function closePlaylist() {
     playlist.style.zIndex = '-1';
     playlist.style.visibility = 'hidden';
     videoPlaylistVisible = false;
-    console.log('📋 Playlist panel closed');
+    logger.info('📋 Playlist panel closed', null, 'PLAYLIST');
   }
 }
 
@@ -3661,7 +4085,7 @@ function minimizePlaylist() {
       playlist.style.height = '400px';
       playlist.style.overflow = 'auto';
       playlist.style.maxHeight = '400px';
-      console.log('📋 Playlist panel restored');
+      logger.info('📋 Playlist panel restored', null, 'PLAYLIST');
     } else {
       // Minimize playlist
       playlist.classList.add('minimized');
@@ -3669,7 +4093,7 @@ function minimizePlaylist() {
       playlist.style.height = '200px';
       playlist.style.overflow = 'hidden';
       playlist.style.maxHeight = '200px';
-      console.log('📋 Playlist panel minimized');
+      logger.info('📋 Playlist panel minimized', null, 'PLAYLIST');
     }
   }
 }
@@ -3682,37 +4106,37 @@ function restorePlaylist() {
     playlist.style.height = '400px';
     playlist.style.overflow = 'auto';
     playlist.style.maxHeight = '400px';
-    console.log('📋 Playlist panel restored');
+    logger.info('📋 Playlist panel restored', null, 'PLAYLIST');
   }
 }
 
 // ===== DEBUG FUNCTIONS =====
 
 function debugVideoControls() {
-  console.log('🔍 Debugging video controls...');
+  logger.debug('🔍 Debugging video controls...', null, 'VIDEO');
   const buttons = document.querySelectorAll('.video-control-btn');
-  console.log(`Found ${buttons.length} video control buttons`);
+  logger.debug(`Found ${buttons.length} video control buttons`, null, 'VIDEO');
   
   buttons.forEach((button, index) => {
     const icon = button.getAttribute('data-icon');
     const backgroundImage = getComputedStyle(button).backgroundImage;
     const color = getComputedStyle(button).color;
     const fontSize = getComputedStyle(button).fontSize;
-    console.log(`Button ${index + 1}: icon="${icon}", background="${backgroundImage}", color="${color}", fontSize="${fontSize}"`);
+    logger.debug(`Button ${index + 1}: icon="${icon}", background="${backgroundImage}", color="${color}", fontSize="${fontSize}"`, null, 'VIDEO');
   });
 }
 
 function testPngAccess() {
-  console.log('🧪 Testing PNG file access...');
+  logger.debug('🧪 Testing PNG file access...', null, 'VIDEO');
   const testFiles = ['previous.png', 'play.png', 'next.png', 'playlist.png', 'fullscreen.png'];
   
   testFiles.forEach(fileName => {
     const img = new Image();
     img.onload = function() {
-      console.log(`✅ PNG file accessible: ${fileName}`);
+      logger.success(`✅ PNG file accessible: ${fileName}`, null, 'VIDEO');
     };
     img.onerror = function() {
-      console.log(`❌ PNG file not accessible: ${fileName}`);
+              logger.warn(`❌ PNG file not accessible: ${fileName}`, null, 'VIDEO');
     };
     img.src = `images/${fileName}`;
   });
@@ -3790,10 +4214,10 @@ const PNGLoader = {
       button.style.setProperty('--png-url', newPng, 'important');
       button.classList.add('has-png');
       
-      console.log(`✅ PNG applied: ${pngFile} to ${button.getAttribute('data-icon')}`);
+      logger.success(`✅ PNG applied: ${pngFile} to ${button.getAttribute('data-icon')}`, null, 'VIDEO');
       return true;
     } catch (error) {
-      console.log(`❌ Failed to apply PNG: ${pngFile}`, error);
+      logger.error(`❌ Failed to apply PNG: ${pngFile}`, error, 'VIDEO');
       return false;
     }
   },
@@ -3814,7 +4238,7 @@ const PNGLoader = {
   
   // Load PNGs for a specific toolbar
   loadToolbarPNGs(toolbarConfig) {
-    console.log(`🎛️ Loading PNGs for toolbar...`);
+    logger.info(`🎛️ Loading PNGs for toolbar...`, null, 'VIDEO');
     
     let successCount = 0;
     const totalButtons = toolbarConfig.length;
@@ -3826,29 +4250,29 @@ const PNGLoader = {
           successCount++;
         }
       } else {
-        console.log(`⚠️ Button not found: ${dataIcon}`);
+        logger.warn(`⚠️ Button not found: ${dataIcon}`, null, 'VIDEO');
       }
     });
     
-    console.log(`🎛️ PNG loading complete: ${successCount}/${totalButtons} successful`);
+    logger.info(`🎛️ PNG loading complete: ${successCount}/${totalButtons} successful`, null, 'VIDEO');
     return successCount;
   },
   
   // Debug: Show all buttons with data-icon
   debugButtons() {
     const buttons = document.querySelectorAll('[data-icon]');
-    console.log('🔍 Found buttons:');
+    logger.debug('🔍 Found buttons:', null, 'VIDEO');
     buttons.forEach((button, index) => {
       const dataIcon = button.getAttribute('data-icon');
       const text = button.textContent.trim();
-      console.log(`  ${index + 1}: data-icon="${dataIcon}", text="${text}"`);
+      logger.debug(`  ${index + 1}: data-icon="${dataIcon}", text="${text}"`, null, 'VIDEO');
     });
   }
 };
 
 // Main PNG loading function
 function loadToolbarButtonImages() {
-  console.log('🎛️ Starting PNG loading system...');
+  logger.info('🎛️ Starting PNG loading system...', null, 'VIDEO');
   
   // Debug: Show all buttons
   PNGLoader.debugButtons();
@@ -3890,7 +4314,7 @@ function loadToolbarButtonImages() {
   });
   
   const totalCount = mediaCount + mainCount + videoCount + musicCount;
-  console.log(`🎛️ PNG loading system complete: ${totalCount} PNGs loaded (Media: ${mediaCount}, Main: ${mainCount}, Video: ${videoCount}, Music: ${musicCount})`);
+  logger.info(`🎛️ PNG loading system complete: ${totalCount} PNGs loaded (Media: ${mediaCount}, Main: ${mainCount}, Video: ${videoCount}, Music: ${musicCount})`, null, 'VIDEO');
 }
 
 function updatePauseButtonIcon() {
@@ -3899,7 +4323,7 @@ function updatePauseButtonIcon() {
     const filename = speedMultiplier === 0 ? 'play.png' : 'pause.png';
     // Use our PNG system to update the button
     PNGLoader.applyPNG(pauseButton, filename);
-    console.log(`🎛️ Updated pause button to ${filename} (speed: ${speedMultiplier})`);
+    logger.info(`🎛️ Updated pause button to ${filename} (speed: ${speedMultiplier})`, null, 'VIDEO');
   }
 }
 
@@ -3908,7 +4332,7 @@ function updateVideoPlayButtonIcon() {
   if (playButton) {
     const filename = videoIsPlaying ? 'pause.png' : 'play.png';
     PNGLoader.applyPNG(playButton, filename);
-    console.log(`🎥 Updated video play button to ${filename} (playing: ${videoIsPlaying})`);
+    logger.info(`🎥 Updated video play button to ${filename} (playing: ${videoIsPlaying})`, null, 'VIDEO');
   }
 }
 
@@ -3917,7 +4341,7 @@ function updateVideoButtonIcon() {
   if (videoButton && typeof PNGLoader !== 'undefined') {
     const filename = videoIsPlaying ? 'video2.png' : 'video.png';
     PNGLoader.applyPNG(videoButton, filename);
-    console.log(`🎥 Updated video button to ${filename} (playing: ${videoIsPlaying})`);
+    logger.info(`🎥 Updated video button to ${filename} (playing: ${videoIsPlaying})`, null, 'VIDEO');
   }
 }
 
@@ -3927,19 +4351,19 @@ let preloadingInProgress = false; // Flag to prevent race conditions
 
 async function preloadPlaylists() {
   if (playlistsPreloaded) {
-    console.log('📋 Playlists already pre-loaded, skipping');
-    console.log('📊 Current uploadedPlaylists:', uploadedPlaylists.map(p => p.name));
+    logger.info('📋 Playlists already pre-loaded, skipping', null, 'PLAYLIST');
+    logger.info('📊 Current uploadedPlaylists:', uploadedPlaylists.map(p => p.name), 'PLAYLIST');
     return;
   }
   
   if (preloadingInProgress) {
-    console.log('📋 Playlist preloading already in progress, skipping');
+    logger.info('📋 Playlist preloading already in progress, skipping', null, 'PLAYLIST');
     return;
   }
   
   preloadingInProgress = true;
-  console.log('📋 Pre-loading playlists from playlist.txt...');
-  console.log('📊 Before loading - uploadedPlaylists count:', uploadedPlaylists.length);
+  logger.info('📋 Pre-loading playlists from playlist.txt...', null, 'PLAYLIST');
+  logger.info('📊 Before loading - uploadedPlaylists count:', uploadedPlaylists.length, 'PLAYLIST');
   
   // Clear existing playlists to prevent duplication
   uploadedPlaylists.length = 0;
@@ -3951,7 +4375,7 @@ async function preloadPlaylists() {
     // First, read playlist.txt to get the list of playlist files
     const playlistResponse = await fetch('playlist.txt');
     if (!playlistResponse.ok) {
-      console.log('⚠️ Could not load playlist.txt:', playlistResponse.status);
+      logger.warn('⚠️ Could not load playlist.txt:', playlistResponse.status, 'PLAYLIST');
       return;
     }
     
@@ -3960,7 +4384,7 @@ async function preloadPlaylists() {
       .map(line => line.trim())
       .filter(line => line !== '' && line.endsWith('.txt'));
     
-    console.log(`📋 Found ${playlistFiles.length} playlist files in playlist.txt:`, playlistFiles);
+    logger.info(`📋 Found ${playlistFiles.length} playlist files in playlist.txt:`, playlistFiles, 'PLAYLIST');
   
   for (const filename of playlistFiles) {
     try {
@@ -3984,18 +4408,18 @@ async function preloadPlaylists() {
               name: playlistName,
               urls: youtubeUrls
             });
-            console.log(`📋 Pre-loaded playlist "${playlistName}" with ${youtubeUrls.length} videos`);
+            logger.success(`📋 Pre-loaded playlist "${playlistName}" with ${youtubeUrls.length} videos`, null, 'PLAYLIST');
           } else {
-            console.log(`⚠️ Playlist "${playlistName}" already exists, skipping duplicate`);
+            logger.warn(`⚠️ Playlist "${playlistName}" already exists, skipping duplicate`, null, 'PLAYLIST');
           }
         } else {
-          console.log(`⚠️ No YouTube URLs found in ${filename}`);
+          logger.warn(`⚠️ No YouTube URLs found in ${filename}`, null, 'PLAYLIST');
         }
       } else {
-        console.log(`⚠️ Could not load ${filename}: ${response.status}`);
+        logger.warn(`⚠️ Could not load ${filename}: ${response.status}`, null, 'PLAYLIST');
       }
     } catch (error) {
-      console.log(`⚠️ Error loading ${filename}:`, error.message);
+      logger.error(`⚠️ Error loading ${filename}:`, error.message, 'PLAYLIST');
     }
   }
   
@@ -4003,27 +4427,27 @@ async function preloadPlaylists() {
   if (uploadedPlaylists.length > 0) {
     currentPlaylistIndex = 0;
     loadUploadedPlaylist(0);
-    console.log(`📋 Successfully loaded ${uploadedPlaylists.length} playlists from playlist.txt`);
-    console.log('📊 Final playlist names:', uploadedPlaylists.map(p => p.name));
+    logger.success(`📋 Successfully loaded ${uploadedPlaylists.length} playlists from playlist.txt`, null, 'PLAYLIST');
+          logger.info('📊 Final playlist names:', uploadedPlaylists.map(p => p.name), 'PLAYLIST');
   } else {
-    console.log('📋 No playlists found in playlist.txt');
+    logger.warn('📋 No playlists found in playlist.txt', null, 'PLAYLIST');
   }
   
   } catch (error) {
-    console.log('⚠️ Error reading playlist.txt:', error.message);
+    logger.error('⚠️ Error reading playlist.txt:', error.message, 'PLAYLIST');
   }
   
   preloadingInProgress = false;
   playlistsPreloaded = true;
-  console.log('📋 Playlist preloading completed');
+  logger.success('📋 Playlist preloading completed', null, 'PLAYLIST');
 }
 
 // ===== MEDIA.JS LOADED =====
-console.log('🔧 Media.js loaded successfully');
+logger.info('🔧 Media.js loaded successfully', null, 'SYSTEM');
 
 // ===== INITIALIZATION SYSTEM =====
 function initializeMediaSystem() {
-  console.log('🎛️ Initializing media system...');
+  logger.info('🎛️ Initializing media system...', null, 'SYSTEM');
   
   // Wait for DOM to be fully ready
   if (document.readyState === 'loading') {
@@ -4031,7 +4455,7 @@ function initializeMediaSystem() {
       setTimeout(() => {
         loadToolbarButtonImages();
         ensureMobileToolbarVisibility();
-        console.log('🎛️ Media system initialized after DOM load');
+        logger.success('🎛️ Media system initialized after DOM load', null, 'SYSTEM');
       }, 100);
     });
   } else {
@@ -4039,7 +4463,7 @@ function initializeMediaSystem() {
     setTimeout(() => {
       loadToolbarButtonImages();
       ensureMobileToolbarVisibility();
-      console.log('🎛️ Media system initialized immediately');
+      logger.success('🎛️ Media system initialized immediately', null, 'SYSTEM');
     }, 100);
   }
 }
@@ -4051,10 +4475,10 @@ initializeMediaSystem();
 // Call these from browser console to debug PNG loading
 
 function debugPNGLoading() {
-  console.log('🔍 === PNG LOADING DEBUG ===');
+      logger.debug('🔍 === PNG LOADING DEBUG ===', null, 'VIDEO');
   
   // Check if PNG files exist
-  console.log('📁 Checking PNG file existence...');
+      logger.debug('📁 Checking PNG file existence...', null, 'VIDEO');
   const testFiles = [
     // Media toolbar
     'recordin.png', 'keyframe.png', 'recordout.png', 'play.png', 'saveanimation.png', 'loadanimation.png', 'snapshot.png', 'youtube.png',
@@ -4066,25 +4490,25 @@ function debugPNGLoading() {
   
   testFiles.forEach(file => {
     const img = new Image();
-    img.onload = () => console.log(`✅ PNG exists: ${file}`);
-    img.onerror = () => console.log(`❌ PNG missing: ${file}`);
+          img.onload = () => logger.success(`✅ PNG exists: ${file}`, null, 'VIDEO');
+      img.onerror = () => logger.warn(`❌ PNG missing: ${file}`, null, 'VIDEO');
     img.src = `images/${file}`;
   });
   
   // Check buttons
-  console.log('🔘 Checking buttons...');
+      logger.debug('🔘 Checking buttons...', null, 'VIDEO');
   const buttons = document.querySelectorAll('[data-icon]');
-  console.log(`Found ${buttons.length} buttons with data-icon`);
+      logger.debug(`Found ${buttons.length} buttons with data-icon`, null, 'VIDEO');
   
   buttons.forEach((button, index) => {
     const dataIcon = button.getAttribute('data-icon');
     const text = button.textContent.trim();
     const bgImage = getComputedStyle(button).backgroundImage;
-    console.log(`Button ${index + 1}: data-icon="${dataIcon}", text="${text}", background="${bgImage}"`);
+          logger.debug(`Button ${index + 1}: data-icon="${dataIcon}", text="${text}", background="${bgImage}"`, null, 'VIDEO');
   });
   
   // Test PNG loading
-  console.log('🎛️ Testing PNG loading...');
+      logger.debug('🎛️ Testing PNG loading...', null, 'VIDEO');
   loadToolbarButtonImages();
 }
 
@@ -4093,7 +4517,7 @@ window.debugPNGLoading = debugPNGLoading;
 
 // Quick test function to check specific missing buttons
 function testMissingButtons() {
-  console.log('🔍 === TESTING MISSING BUTTONS ===');
+  logger.debug('🔍 === TESTING MISSING BUTTONS ===', null, 'VIDEO');
   
   const missingButtons = [
     { dataIcon: 'pause', file: 'pause.png' },
@@ -4104,19 +4528,19 @@ function testMissingButtons() {
   missingButtons.forEach(({ dataIcon, file }) => {
     const button = document.querySelector(`[data-icon="${dataIcon}"]`);
     if (button) {
-      console.log(`✅ Found button: data-icon="${dataIcon}"`);
+      logger.success(`✅ Found button: data-icon="${dataIcon}"`, null, 'VIDEO');
       
       // Test PNG file
       const img = new Image();
       img.onload = () => {
-        console.log(`✅ PNG exists: ${file}`);
+        logger.success(`✅ PNG exists: ${file}`, null, 'VIDEO');
         // Apply PNG
         PNGLoader.applyPNG(button, file);
       };
-      img.onerror = () => console.log(`❌ PNG missing: ${file}`);
+              img.onerror = () => logger.warn(`❌ PNG missing: ${file}`, null, 'VIDEO');
       img.src = `images/${file}`;
     } else {
-      console.log(`❌ Button not found: data-icon="${dataIcon}"`);
+      logger.warn(`❌ Button not found: data-icon="${dataIcon}"`, null, 'VIDEO');
     }
   });
 }
@@ -4125,23 +4549,23 @@ window.testMissingButtons = testMissingButtons;
 
 // Test function for pause button
 function testPauseButton() {
-  console.log('⏯️ === TESTING PAUSE BUTTON ===');
+  logger.debug('⏯️ === TESTING PAUSE BUTTON ===', null, 'VIDEO');
   
   const pauseButton = document.querySelector('.toolbar-btn[data-icon="pause"]');
   if (pauseButton) {
-    console.log('✅ Found pause button');
-    console.log('Current speedMultiplier:', speedMultiplier);
+    logger.success('✅ Found pause button', null, 'VIDEO');
+          logger.debug('Current speedMultiplier:', speedMultiplier, 'VIDEO');
     
     // Test the toggle
-    console.log('🔄 Testing pause button toggle...');
+          logger.debug('🔄 Testing pause button toggle...', null, 'VIDEO');
     togglePauseButton();
-    console.log('Speed after toggle:', speedMultiplier);
+          logger.debug('Speed after toggle:', speedMultiplier, 'VIDEO');
     
     // Check if PNG updated
     const bgImage = getComputedStyle(pauseButton).backgroundImage;
-    console.log('Background image after toggle:', bgImage);
+          logger.debug('Background image after toggle:', bgImage, 'VIDEO');
   } else {
-    console.log('❌ Pause button not found');
+    logger.warn('❌ Pause button not found', null, 'VIDEO');
   }
 }
 
@@ -4149,31 +4573,31 @@ window.testPauseButton = testPauseButton;
 
 // Test function for bubble capture
 function testBubbleCapture() {
-  console.log('🎬 === TESTING BUBBLE CAPTURE ===');
+  logger.debug('🎬 === TESTING BUBBLE CAPTURE ===', null, 'SYSTEM');
   
   // Check ideas array
-  console.log('🔍 Checking ideas array...');
-  console.log('  Ideas count:', ideas.length);
-  console.log('  Ideas structure:', ideas.length > 0 ? Object.keys(ideas[0]) : 'No ideas');
+      logger.debug('🔍 Checking ideas array...', null, 'SYSTEM');
+      logger.debug('  Ideas count:', ideas.length, 'SYSTEM');
+      logger.debug('  Ideas structure:', ideas.length > 0 ? Object.keys(ideas[0]) : 'No ideas', 'SYSTEM');
   
   if (ideas.length === 0) {
-    console.log('❌ No ideas found! Add some bubbles first.');
+    logger.warn('❌ No ideas found! Add some bubbles first.', null, 'SYSTEM');
     return;
   }
   
   // Show some idea examples
   ideas.slice(0, 3).forEach((idea, index) => {
-    console.log(`  Idea ${index}: x=${idea.x}, y=${idea.y}, title="${idea.title}"`);
+          logger.debug(`  Idea ${index}: x=${idea.x}, y=${idea.y}, title="${idea.title}"`, null, 'SYSTEM');
   });
   
   // Test capturing positions
-  console.log('🎬 Testing position capture...');
+      logger.debug('🎬 Testing position capture...', null, 'SYSTEM');
   const positions = captureBubblePositions();
   
-  console.log('✅ Capture test complete. Positions:', positions);
+      logger.success('✅ Capture test complete. Positions:', positions, 'SYSTEM');
   
   // Test animation state
-  console.log('🎬 Animation state:', {
+      logger.debug('🎬 Animation state:', {
     inPoint: AnimationState.data.inPoint,
     outPoint: AnimationState.data.outPoint,
     keyframes: AnimationState.data.keyframes.length,
@@ -4182,7 +4606,7 @@ function testBubbleCapture() {
   
   // Test if we can create a test animation
   if (positions.length > 0) {
-    console.log('🎬 Testing animation creation...');
+    logger.debug('🎬 Testing animation creation...', null, 'SYSTEM');
     AnimationState.reset();
     AnimationState.data.inPoint = 0;
     AnimationState.data.outPoint = 10;
@@ -4190,7 +4614,7 @@ function testBubbleCapture() {
       { time: 0, positions: positions },
       { time: 10, positions: positions }
     ];
-    console.log('✅ Test animation created with', positions.length, 'ideas');
+    logger.success('✅ Test animation created with', positions.length, 'ideas', 'SYSTEM');
   }
 }
 
@@ -4198,7 +4622,7 @@ window.testBubbleCapture = testBubbleCapture;
 
 // Function to create test bubbles for animation testing
 function createTestBubbles() {
-  console.log('🎬 Creating test bubbles for animation...');
+  logger.debug('🎬 Creating test bubbles for animation...', null, 'SYSTEM');
   
   // Remove existing test bubbles
   const existingTestBubbles = document.querySelectorAll('.test-bubble');
@@ -4235,7 +4659,7 @@ function createTestBubbles() {
     document.body.appendChild(bubble);
   });
   
-  console.log('✅ Created', testPositions.length, 'test bubbles');
+  logger.success('✅ Created', testPositions.length, 'test bubbles', 'SYSTEM');
   return testPositions.length;
 }
 
@@ -4244,11 +4668,11 @@ window.createTestBubbles = createTestBubbles;
 // Function to update keyframes when bubbles are moved
 function updateKeyframesForCurrentPositions() {
   if (!AnimationState.data.isRecording && AnimationState.data.keyframes.length === 0) {
-    console.log('❌ No animation active to update');
+    logger.warn('❌ No animation active to update', null, 'SYSTEM');
     return;
   }
   
-  console.log('🔄 Updating keyframes with current bubble positions...');
+  logger.debug('🔄 Updating keyframes with current bubble positions...', null, 'SYSTEM');
   
   // Capture current positions
   const currentPositions = captureBubblePositions();
@@ -4256,10 +4680,10 @@ function updateKeyframesForCurrentPositions() {
   // Update all keyframes with current positions
   AnimationState.data.keyframes.forEach((keyframe, index) => {
     keyframe.positions = currentPositions;
-    console.log(`  Updated keyframe ${index} at ${keyframe.time}s`);
+    logger.debug(`  Updated keyframe ${index} at ${keyframe.time}s`, null, 'SYSTEM');
   });
   
-  console.log('✅ All keyframes updated with current positions');
+  logger.success('All keyframes updated with current positions', null, 'SYSTEM');
 }
 
 // Function to automatically update keyframes when bubbles are moved during recording
@@ -4287,7 +4711,7 @@ function autoUpdateKeyframes() {
       if (closestKeyframe && minDistance < 0.5) {
         const currentPositions = captureBubblePositions();
         closestKeyframe.positions = currentPositions;
-        console.log(`🔄 Auto-updated keyframe at ${closestKeyframe.time}s`);
+        logger.info(`Auto-updated keyframe at ${closestKeyframe.time}s`, null, 'SYSTEM');
       }
     }
   }
@@ -4445,6 +4869,35 @@ function startMusicVisualizer() {
   if (visualizer1) visualizer1.style.display = 'block';
   if (visualizer2) visualizer2.style.display = 'block';
   
+  // Enhanced visualizer with performance monitoring
+  let frameCount = 0;
+  let lastFrameTime = performance.now();
+  const targetFPS = 30; // Limit to 30 FPS for better performance
+  const frameInterval = 1000 / targetFPS;
+  
+  // Performance monitoring
+  const monitorVisualizerPerformance = () => {
+    const now = performance.now();
+    frameCount++;
+    
+    if (now - lastFrameTime >= 1000) {
+      const actualFPS = Math.round((frameCount * 1000) / (now - lastFrameTime));
+      logger.performance('Visualizer Performance', { 
+        fps: actualFPS, 
+        targetFPS: targetFPS,
+        type: 'music_visualizer'
+      });
+      
+      // Adjust performance if needed
+      if (actualFPS < targetFPS * 0.8) {
+        logger.warn('Visualizer performance below target', { actualFPS, targetFPS }, 'SYSTEM');
+      }
+      
+      frameCount = 0;
+      lastFrameTime = now;
+    }
+  };
+  
   // Generate unique colors for each track/radio URL
   const currentTrackId = getCurrentTrackId();
   
@@ -4452,7 +4905,7 @@ function startMusicVisualizer() {
   if (!window.lastTrackId || window.lastTrackId !== currentTrackId) {
     window.lastTrackId = currentTrackId;
     generateNewVisualizerColors();
-    console.log(`🎨 Generated new visualizer colors for track: ${currentTrackId}`);
+    logger.info(`Generated new visualizer colors for track: ${currentTrackId}`, null, 'AUDIO');
   }
   
   // Generate random colors for this session (backup)

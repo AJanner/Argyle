@@ -29,24 +29,29 @@ function videoPlayVideo(index) {
       videoIframe.style.zIndex = '1';
       videoIsPlaying = true;
       updateVideoPlaylistDisplay();
-      console.log('🎵 Video Playing video:', index + 1, 'of', videoPlaylist.length, 'Video ID:', videoId);
+      // Note: This file is an example - in production, use logger.info() instead
+      // logger.info('Video Playing video:', { index: index + 1, total: videoPlaylist.length, videoId: videoId }, 'VIDEO');
       
       // Add event listener for iframe load to handle autoplay restrictions
       videoIframe.onload = function() {
-        console.log('🎥 Video iframe loaded');
+        // Note: This file is an example - in production, use logger.debug() instead
+        // logger.debug('Video iframe loaded', null, 'VIDEO');
         // Try to force play after load
         setTimeout(() => {
           try {
             videoIframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-            console.log('🎥 Attempted to force play video');
+            // Note: This file is an example - in production, use logger.debug() instead
+            // logger.debug('Attempted to force play video', null, 'VIDEO');
           } catch (error) {
-            console.log('⚠️ Could not force play video (autoplay restriction)');
+            // Note: This file is an example - in production, use logger.warn() instead
+            // logger.warn('Could not force play video (autoplay restriction)', null, 'VIDEO');
           }
         }, 1000);
       };
     }
   } else {
-    console.error('❌ Invalid YouTube URL:', url);
+    // Note: This file is an example - in production, use logger.error() instead
+    // logger.error('Invalid YouTube URL', { url: url }, 'VIDEO');
   }
 }
 
@@ -65,7 +70,8 @@ function extractYouTubeId(url) {
     }
   }
   
-  console.error('❌ Could not extract YouTube ID from URL:', url);
+  // Note: This file is an example - in production, use logger.error() instead
+  // logger.error('Could not extract YouTube ID from URL', { url: url }, 'VIDEO');
   return null;
 }
 
@@ -78,7 +84,8 @@ async function fetchVideoTitle(videoId) {
       return data.title;
     }
   } catch (error) {
-    console.error('❌ Error fetching video title for', videoId, ':', error);
+    // Note: This file is an example - in production, use logger.error() instead
+    // logger.error('Error fetching video title', { videoId: videoId, error: error.message }, 'VIDEO');
   }
   return null;
 }
@@ -105,7 +112,8 @@ async function fetchVideoTitle(videoId) {
 // Note: videoClose is defined in media.js
 
 function forceCloseVideo() {
-  console.log('🚨 Force closing Video');
+  // Note: This file is an example - in production, use logger.info() instead
+  // logger.info('Force closing Video', null, 'VIDEO');
   const elements = ['videoPlayer', 'videoControls', 'videoPlaylist', 'videoIframe'];
   elements.forEach(id => {
     const element = document.getElementById(id);
@@ -122,4 +130,5 @@ function forceCloseVideo() {
 // Note: toggleVideoPlayer is defined in media.js
 
 // ===== VIDEO.JS LOADED =====
-console.log('🔧 Video.js loaded successfully'); 
+// Note: This file is an example - in production, use logger.info() instead
+// logger.info('Video.js loaded successfully', null, 'SYSTEM'); 
