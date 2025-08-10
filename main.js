@@ -2140,6 +2140,27 @@ function openAnalysisIframe(type) {
       iframe.src = 'https://ajanner.com';
     }
     
+    // Add onload event to ensure iframe content fits properly
+    iframe.onload = function() {
+      // Force iframe to respect container dimensions
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      
+      // Try to send a message to the iframe to request proper scaling
+      try {
+        iframe.contentWindow.postMessage({
+          type: 'resize',
+          width: container.offsetWidth - 40, // Account for padding
+          height: container.offsetHeight - 40
+        }, '*');
+      } catch (e) {
+        // Ignore CORS errors
+        logger.debug('Could not send resize message to iframe (CORS restriction)');
+      }
+      
+      logger.info('📊 Analysis iframe loaded and sized for:', type);
+    };
+    
     // Show the container
     container.style.display = 'block';
     

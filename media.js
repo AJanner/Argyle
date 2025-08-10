@@ -2492,6 +2492,14 @@ async function loadVideoPlaylist() {
 }
 
 async function uploadPlaylist() {
+  // Prevent multiple simultaneous uploads
+  if (isUploadingPlaylist) {
+    logger.warn('📋 Playlist upload already in progress, skipping');
+    return;
+  }
+  
+  isUploadingPlaylist = true;
+  
   const fileInput = document.getElementById('playlistUpload');
   const file = fileInput.files[0];
   
@@ -2510,7 +2518,7 @@ async function uploadPlaylist() {
     const content = e.target.result;
     const lines = content.split('\n').filter(line => line.trim() !== '');
     
-    // Extract YouTube URLs from lines
+    // Extract YouTube URLs from lines and remove duplicates
     const youtubeUrls = lines.filter(line => {
       return line.includes('youtube.com') || line.includes('youtu.be');
     });
@@ -2520,8 +2528,14 @@ async function uploadPlaylist() {
       return;
     }
     
-    // Replace current playlist with uploaded one
-    videoPlaylist = youtubeUrls;
+    // Remove duplicate URLs to prevent playlist duplication
+    const uniqueUrls = [...new Set(youtubeUrls)];
+    if (uniqueUrls.length !== youtubeUrls.length) {
+      logger.warn(`📋 Removed ${youtubeUrls.length - uniqueUrls.length} duplicate URLs from playlist`);
+    }
+    
+    // Replace current playlist with uploaded one (using unique URLs)
+    videoPlaylist = uniqueUrls;
     videoCurrentIndex = 0;
     videoTitles = []; // Clear cached titles
     
@@ -2557,6 +2571,9 @@ async function uploadPlaylist() {
   };
   
   reader.readAsText(file);
+  
+  // Reset upload flag
+  isUploadingPlaylist = false;
 }
 
 async function nextPlaylist() {
@@ -2658,10 +2675,10 @@ function loadUploadedPlaylist(index) {
     updateVideoPlaylistDisplay();
   }
   
-  // Play first video
-  if (typeof videoPlayVideo === 'function') {
-    videoPlayVideo(0);
-  }
+  // Don't auto-play first video - let user choose when to start
+  // if (typeof videoPlayVideo === 'function') {
+  //   videoPlayVideo(0);
+  // }
   
           logger.info(`🔄 Loaded uploaded playlist: ${playlist.name} with ${playlist.urls.length} videos (index: ${index})`);
 }
@@ -3129,7 +3146,13 @@ let videoPlayerInitialized = false;
 async function updateVideoPlaylistDisplay() {
   // Prevent multiple simultaneous updates
   if (isUpdatingPlaylistDisplay) {
-            logger.debug('📋 Playlist display update already in progress, skipping');
+    logger.debug('📋 Playlist display update already in progress, skipping');
+    return;
+  }
+  
+  // Additional check to prevent updates if playlist is empty
+  if (!videoPlaylist || videoPlaylist.length === 0) {
+    logger.debug('📋 Playlist is empty, skipping display update');
     return;
   }
   
@@ -3163,8 +3186,18 @@ async function updateVideoPlaylistDisplay() {
     }
   }
   
-          logger.info('📋 Video Updating playlist display with', videoPlaylist.length, 'videos');
+  logger.info('📋 Video Updating playlist display with', videoPlaylist.length, 'videos');
+  
+  // Clear the container completely to prevent duplicates
   playlistContainer.innerHTML = '';
+  
+  // Additional safety check - ensure we have a clean slate
+  if (playlistContainer.children.length > 0) {
+    logger.warn('📋 Container still has children after clearing, forcing removal');
+    while (playlistContainer.firstChild) {
+      playlistContainer.removeChild(playlistContainer.firstChild);
+    }
+  }
   
   for (let index = 0; index < videoPlaylist.length; index++) {
     const url = videoPlaylist[index];
@@ -3372,19 +3405,37 @@ async function toggleVideoPlayer() {
       videoPlayerInitialized = true;
       logger.info('🎥 Video player initialized/reinitialized');
       
-      // Try to load pre-loaded playlists first
+      // Use pre-loaded playlists if available, but don't auto-play the first video
       if (uploadedPlaylists.length > 0) {
         currentPlaylistIndex = 0;
-        loadUploadedPlaylist(0);
-        logger.info('🎥 Video player opened with pre-loaded playlist');
+        // Load playlist without auto-playing first video
+        const playlist = uploadedPlaylists[currentPlaylistIndex];
+        videoPlaylist = playlist.urls;
+        videoCurrentIndex = 0;
+        videoTitles = []; // Clear cached titles for new playlist
+        
+        // Update display without auto-playing
+        if (typeof updateVideoPlaylistDisplaySilent === 'function') {
+          updateVideoPlaylistDisplaySilent();
+        }
+        logger.info('🎥 Video player opened with pre-loaded playlist (no auto-play)');
       } else {
         // If no pre-loaded playlists, wait a moment and try to preload them
         setTimeout(async () => {
           await preloadPlaylists();
           if (uploadedPlaylists.length > 0) {
             currentPlaylistIndex = 0;
-            loadUploadedPlaylist(0);
-            logger.info('🎥 Video player opened after delayed playlist loading');
+            // Load playlist without auto-playing first video
+            const playlist = uploadedPlaylists[currentPlaylistIndex];
+            videoPlaylist = playlist.urls;
+            videoCurrentIndex = 0;
+            videoTitles = []; // Clear cached titles for new playlist
+            
+            // Update display without auto-playing
+            if (typeof updateVideoPlaylistDisplaySilent === 'function') {
+              updateVideoPlaylistDisplaySilent();
+            }
+            logger.info('🎥 Video player opened after delayed playlist loading (no auto-play)');
           } else {
             logger.info('🎥 No playlists available - video player ready for manual uploads');
           }
@@ -4393,6 +4444,7 @@ function updateVideoButtonIcon() {
 // ===== PRE-LOAD PLAYLISTS FROM ROOT FOLDER =====
 let playlistsPreloaded = false; // Flag to prevent double loading
 let preloadingInProgress = false; // Flag to prevent race conditions
+let isUploadingPlaylist = false; // Flag to prevent multiple simultaneous uploads
 
 async function preloadPlaylists() {
   if (playlistsPreloaded) {
@@ -4411,10 +4463,16 @@ async function preloadPlaylists() {
   logger.info('📊 Before loading - uploadedPlaylists count:', uploadedPlaylists.length, 'PLAYLIST');
   
   // Clear existing playlists to prevent duplication
-  uploadedPlaylists.length = 0;
-  videoPlaylist = [];
-  videoTitles = [];
-  videoCurrentIndex = 0;
+  if (uploadedPlaylists.length === 0) {
+    // Only clear if we don't already have playlists loaded
+    videoPlaylist = [];
+    videoTitles = [];
+    videoCurrentIndex = 0;
+  } else {
+    logger.info('📋 Playlists already loaded, skipping preload', null, 'PLAYLIST');
+    preloadingInProgress = false;
+    return;
+  }
   
   try {
     // First, read playlist.txt to get the list of playlist files
@@ -4438,12 +4496,18 @@ async function preloadPlaylists() {
         const content = await response.text();
         const lines = content.split('\n').filter(line => line.trim() !== '');
         
-        // Extract YouTube URLs from lines
+        // Extract YouTube URLs from lines and remove duplicates
         const youtubeUrls = lines.filter(line => {
           return line.includes('youtube.com') || line.includes('youtu.be');
         });
         
         if (youtubeUrls.length > 0) {
+          // Remove duplicate URLs to prevent playlist duplication
+          const uniqueUrls = [...new Set(youtubeUrls)];
+          if (uniqueUrls.length !== youtubeUrls.length) {
+            logger.warn(`📋 Removed ${youtubeUrls.length - uniqueUrls.length} duplicate URLs from preloaded playlist "${filename}"`, null, 'PLAYLIST');
+          }
+          
           const playlistName = filename.replace('.txt', '');
           
           // Check if playlist already exists (additional safety check)
@@ -4451,9 +4515,9 @@ async function preloadPlaylists() {
           if (!existingPlaylist) {
             uploadedPlaylists.push({
               name: playlistName,
-              urls: youtubeUrls
+              urls: uniqueUrls
             });
-            logger.success(`📋 Pre-loaded playlist "${playlistName}" with ${youtubeUrls.length} videos`, null, 'PLAYLIST');
+            logger.success(`📋 Pre-loaded playlist "${playlistName}" with ${uniqueUrls.length} videos`, null, 'PLAYLIST');
           } else {
             logger.warn(`⚠️ Playlist "${playlistName}" already exists, skipping duplicate`, null, 'PLAYLIST');
           }

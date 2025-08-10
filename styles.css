@@ -37,7 +37,7 @@ html, body {
   margin: 0;
   cursor: pointer;
   transition: all 0.3s ease;
-  flex: 1;
+  flex: 0 0 auto;
   height: 100%;
   min-width: 20px;
   max-width: none;
@@ -69,6 +69,36 @@ html, body {
 
 .toolbar-btn.has-png {
   background-image: var(--png-url);
+}
+
+/* Toolbar dropdown section - takes 30% of width */
+#toolbarDropdowns {
+  flex: 0 0 30%;
+  min-width: 200px;
+  max-width: 30%;
+}
+
+/* Ensure dropdowns and motion slider resize properly */
+#toolbarDropdowns select,
+#toolbarDropdowns input[type="range"] {
+  width: 100%;
+  box-sizing: border-box;
+  resize: horizontal;
+  min-width: 80px;
+}
+
+/* First set of 5 buttons - takes 35% of width */
+#toolbar > button:nth-child(-n+5) {
+  flex: 0 0 7%;
+  min-width: 20px;
+  max-width: 7%;
+}
+
+/* Second set of 5 buttons - takes 35% of width */
+#toolbar > button:nth-child(n+6) {
+  flex: 0 0 7%;
+  min-width: 20px;
+  max-width: 7%;
 }
 
 .toolbar-btn[data-icon="dice"] {
@@ -356,11 +386,12 @@ button[data-png="bucheck"].has-png {
 
 .analysis-iframe-container {
   position: fixed;
-  top: 50%;
+  top: 80px; /* Position just below the toolbar */
   left: 50%;
-  transform: translate(-50%, -50%);
-  width: 40vw;
-  height: 80vh;
+  transform: translateX(-50%); /* Center horizontally */
+  height: calc(100vh - 160px); /* Reduced height to create more bottom gap */
+  width: calc((100vh - 160px) * 0.68); /* Height * 0.68 for 1:2.35 ratio with 20% reduced width (0.85 * 0.8 = 0.68) */
+  max-width: calc(100vw - 40px); /* Don't exceed viewport width */
   background: rgba(34, 34, 34, 0.95);
   border-radius: 16px;
   border: 2px solid darkgreen;
@@ -369,6 +400,14 @@ button[data-png="bucheck"].has-png {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   padding: 20px;
   pointer-events: auto;
+  /* Ensure proper sizing and positioning */
+  box-sizing: border-box;
+  overflow: hidden;
+  /* Ensure iframe content fits properly */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .analysis-iframe-container iframe {
@@ -377,11 +416,52 @@ button[data-png="bucheck"].has-png {
   border: none;
   border-radius: 6px;
   pointer-events: none;
+  /* Ensure iframe content fits container dimensions */
+  min-width: 100%;
+  min-height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  /* Force iframe to scale content properly */
+  transform-origin: top left;
+  /* Ensure proper scaling behavior */
+  box-sizing: border-box;
+  /* Additional scaling properties for better fit */
+  scale: 1;
+  /* Ensure iframe respects container boundaries */
+  overflow: hidden;
+  /* Force iframe to fit container exactly */
+  object-fit: contain;
+  /* Ensure proper aspect ratio maintenance */
+  aspect-ratio: auto;
 }
 
 .analysis-iframe-container .panel-close-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  left: auto;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  z-index: 1000;
   pointer-events: auto;
-  z-index: 1;
+}
+
+.analysis-iframe-container .panel-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.9);
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
 /* ===== DRAWING DROPDOWNS STYLES ===== */
@@ -1232,6 +1312,168 @@ button[data-png="bucheck"].has-png {
     display: flex !important;
     opacity: 1 !important;
   }
+  
+  /* Mobile adjustments for Analysis iframe container */
+  .analysis-iframe-container {
+    top: 70px; /* Slightly closer to toolbar on mobile */
+    left: 10px;
+    right: 10px;
+    height: calc(100vh - 140px); /* Maintain bottom gap on mobile */
+    width: calc(100vw - 20px); /* Full width on mobile */
+    max-width: none;
+    transform: none;
+  }
+  
+  /* Mobile toolbar button sizing - ensure consistent sizing without breaking layout */
+  #toolbar button {
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 40px;
+    max-height: 40px;
+    aspect-ratio: 1;
+  }
+  
+  /* Ensure all buttons maintain consistent sizing */
+  #toolbar > button:nth-child(-n+5),
+  #toolbar > button:nth-child(n+6) {
+    min-width: 40px;
+    max-width: 40px;
+  }
+  
+  /* Fix video and music button containers on mobile */
+  #toolbar > div[style*="flex-direction: column"] {
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 40px;
+    max-height: 40px;
+  }
+  
+  /* Override inline styles for video and music buttons on mobile */
+  #toolbar button[data-icon="video"],
+  #toolbar button[data-icon="music"] {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Remove borders from video and music button containers */
+  #toolbar > div[style*="flex-direction: column"] {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Scale visualizations to match button size on mobile */
+  #toolbar #musicVisualizer,
+  #toolbar #musicVisualizer2 {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    border-radius: 6px !important;
+  }
+  
+  /* Scale visualization bars to fit properly */
+  #toolbar #visualizerBars,
+  #toolbar #visualizerBars2 {
+    width: 100% !important;
+    height: 100% !important;
+    padding: 2px !important;
+  }
+  
+  /* Scale individual visualization bars */
+  #toolbar .viz-bar {
+    width: 2px !important;
+    min-width: 2px !important;
+    max-width: 2px !important;
+  }
+  
+  /* Fix Video Player and Music Panel buttons to fit exactly with no gaps */
+  #toolbar button[data-icon="video"],
+  #toolbar button[data-icon="music"] {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    outline: none !important;
+  }
+  
+  /* Fix the container divs that wrap these buttons */
+  #toolbar > div:has(button[data-icon="video"]),
+  #toolbar > div:has(button[data-icon="music"]) {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    outline: none !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+  }
+  
+
+  
+  /* Prevent dropdown section from expanding too much on mobile */
+  #toolbarDropdowns {
+    min-width: 200px;
+    max-width: 200px;
+  }
+  
+  /* Eliminate right-side gap by adjusting toolbar layout on mobile */
+  #toolbar {
+    justify-content: flex-start !important;
+    gap: 0 !important;
+  }
+  
+  /* Ensure buttons are tightly packed with no extra spacing */
+  #toolbar > button,
+  #toolbar > div {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+  }
+  
+  /* Scale entire toolbar proportionally on mobile while maintaining ratios */
+  #toolbar {
+    justify-content: flex-start !important;
+    gap: 0 !important;
+    width: 100% !important;
+  }
+  
+  /* Scale dropdown section proportionally (30% of available space) */
+  #toolbarDropdowns {
+    flex: 0 0 30% !important;
+    min-width: 120px !important;
+    max-width: 30% !important;
+  }
+  
+  /* Scale first 5 buttons proportionally (35% of available space) */
+  #toolbar > button:nth-child(-n+5) {
+    flex: 0 0 7% !important;
+    min-width: 16px !important;
+    max-width: 7% !important;
+  }
+  
+  /* Scale second 5 buttons proportionally (35% of available space) */
+  #toolbar > button:nth-child(n+6) {
+    flex: 0 0 7% !important;
+    min-width: 16px !important;
+    max-width: 7% !important;
+  }
+  
+
 }
 
 #mediaToolbar .timeline-control span,
