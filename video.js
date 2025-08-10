@@ -190,6 +190,11 @@ function forceCloseVideo() {
   });
   videoIsPlaying = false;
   videoPlaylistVisible = false;
+  
+  // Reset first open flag when video is force closed
+  if (typeof window.videoPlayerFirstOpen !== 'undefined') {
+    window.videoPlayerFirstOpen = true;
+  }
 }
 
 // Note: toggleVideoPlayer is defined in media.js

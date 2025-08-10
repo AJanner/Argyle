@@ -3012,6 +3012,8 @@ function videoClose() {
   // Reset video player state
   videoCurrentIndex = 0;
   videoPlayerInitialized = false;
+  videoPlayerFirstOpen = true; // Reset first open flag when video is closed
+  window.videoPlayerFirstOpen = true;
   
   
   // Hide all video elements
@@ -3142,6 +3144,10 @@ function showVideoControlsOnMouseMove() {
 // Flag to prevent multiple simultaneous updates
 let isUpdatingPlaylistDisplay = false;
 let videoPlayerInitialized = false;
+let videoPlayerFirstOpen = true; // Track if this is the first time opening the video player
+
+// Make videoPlayerFirstOpen globally accessible
+window.videoPlayerFirstOpen = videoPlayerFirstOpen;
 
 async function updateVideoPlaylistDisplay() {
   // Prevent multiple simultaneous updates
@@ -3367,6 +3373,10 @@ async function toggleVideoPlayer() {
     videoPlaylistVisible = false;
     logger.info('🎥 Video player hidden (playback continues)');
     
+    // Reset first open flag when video player is closed
+    videoPlayerFirstOpen = true;
+    window.videoPlayerFirstOpen = true;
+    
     // Update video button to show inactive state (only if not playing)
     if (!videoIsPlaying) {
       const videoButton = document.querySelector('[data-icon="video"]');
@@ -3418,6 +3428,17 @@ async function toggleVideoPlayer() {
         if (typeof updateVideoPlaylistDisplaySilent === 'function') {
           updateVideoPlaylistDisplaySilent();
         }
+        
+        // Auto-play first video on first open
+        if (videoPlayerFirstOpen && videoPlaylist.length > 0) {
+          videoPlayerFirstOpen = false;
+          window.videoPlayerFirstOpen = false;
+          setTimeout(() => {
+            videoPlayVideo(0);
+            logger.info('🎥 Auto-playing first video on first open');
+          }, 500); // Small delay to ensure iframe is ready
+        }
+        
         logger.info('🎥 Video player opened with pre-loaded playlist (no auto-play)');
       } else {
         // If no pre-loaded playlists, wait a moment and try to preload them
@@ -3435,6 +3456,17 @@ async function toggleVideoPlayer() {
             if (typeof updateVideoPlaylistDisplaySilent === 'function') {
               updateVideoPlaylistDisplaySilent();
             }
+            
+            // Auto-play first video on first open
+            if (videoPlayerFirstOpen && videoPlaylist.length > 0) {
+              videoPlayerFirstOpen = false;
+              window.videoPlayerFirstOpen = false;
+              setTimeout(() => {
+                videoPlayVideo(0);
+                logger.info('🎥 Auto-playing first video on first open (delayed loading)');
+              }, 500); // Small delay to ensure iframe is ready
+            }
+            
             logger.info('🎥 Video player opened after delayed playlist loading (no auto-play)');
           } else {
             logger.info('🎥 No playlists available - video player ready for manual uploads');
