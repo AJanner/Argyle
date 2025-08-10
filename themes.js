@@ -775,7 +775,7 @@ const themePresets = {
     "rotation": 271
   }
         ],
-        bg: "images/default2.png"
+        bg: "images/default20.png"
       }
     }
   },
