@@ -87,30 +87,24 @@ async function loadMusicList() {
   let loaded = false;
   for (const path of possiblePaths) {
     try {
-      console.log(`🎵 Attempting to load tracklist from ${path} for music panel`);
       const response = await fetch(path);
       if (response.ok) {
         const content = await response.text();
         musicFiles = content.split('\n').filter(line => line.trim() !== '');
-        console.log(`🎵 Loaded ${musicFiles.length} tracks from ${path} for music panel`);
         loaded = true;
         break;
-      } else {
-        console.log(`⚠️ Could not load ${path} for music panel, status:`, response.status);
       }
     } catch (error) {
-      console.log(`⚠️ Error loading ${path} for music panel:`, error);
+      // Error logging removed for performance
     }
   }
   
   if (!loaded) {
-    console.log('⚠️ Could not load tracklist.txt from any path for music panel, using default tracks');
     musicFiles = getDefaultPlaylist();
   }
   
   // Add uploaded playlist if available
   if (window.uploadedMusicPlaylist && window.uploadedMusicPlaylist.length > 0) {
-    console.log('🎵 Adding uploaded playlist to music list');
     const uploadedTracks = window.uploadedMusicPlaylist.map(track => {
       if (typeof track === 'string') {
         // Parse string format (Title|URL or just URL)
@@ -135,14 +129,12 @@ async function loadMusicList() {
     
     // Add uploaded tracks to the beginning of the list
     musicFiles = [...uploadedTracks, ...musicFiles];
-    console.log(`🎵 Combined playlist: ${uploadedTracks.length} uploaded + ${musicFiles.length - uploadedTracks.length} default tracks`);
   }
   
   // Parse tracks into the new object format
   const parsedTracks = musicFiles.map(track => {
     if (typeof track === 'object' && track.title && track.url) {
       // Already in correct format
-      console.log(`🎵 Parsed object track: ${track.title} -> ${track.url}`);
       return track;
     } else if (typeof track === 'string') {
       // Parse string format (Title|URL or just URL)
@@ -152,7 +144,6 @@ async function loadMusicList() {
           title: parts[0].trim(),
           url: parts[1].trim()
         };
-        console.log(`🎵 Parsed string track: ${parsedTrack.title} -> ${parsedTrack.url}`);
         return parsedTrack;
       } else {
         // Fallback for old format - use filename as title
@@ -162,7 +153,6 @@ async function loadMusicList() {
           title: filename,
           url: url
         };
-        console.log(`🎵 Parsed fallback track: ${parsedTrack.title} -> ${parsedTrack.url}`);
         return parsedTrack;
       }
     }
@@ -178,12 +168,8 @@ async function loadMusicList() {
   const canPlayMp3 = audio.canPlayType('audio/mpeg');
   const canPlayOpus = audio.canPlayType('audio/opus');
   
-  console.log('🎵 Browser audio support:');
-  console.log('   MP3:', canPlayMp3);
-  console.log('   OPUS:', canPlayOpus);
-  
   musicFiles.forEach(track => {
-    console.log(`🎵 Processing track: ${track.title} -> ${track.url}`);
+    // Track processing logging removed for performance
     const musicItem = document.createElement('div');
     musicItem.className = 'music-item';
     
@@ -194,7 +180,7 @@ async function loadMusicList() {
       musicItem.textContent = displayName;
       musicItem.style.borderLeft = '3px solid #9C27B0';
       musicItem.title = `Radio Stream: ${track.url}`;
-      console.log(`📻 Created radio item: ${displayName}`);
+      // Radio item created
     } else {
       // Local file
       const filename = track.url.split('/').pop();
@@ -207,7 +193,7 @@ async function loadMusicList() {
         musicItem.style.borderLeft = '3px solid #ff6b6b';
         musicItem.title = 'OPUS format - may not work in all browsers';
       }
-      console.log(`🎵 Created music item: ${displayName}`);
+      // Music item created
     }
     
     musicItem.onclick = (event) => {
@@ -253,11 +239,8 @@ async function loadMusicList() {
 }
 
 function playMusic(filename, event) {
-  console.log(`🎵 playMusic called with filename: ${filename}, event:`, event);
-  
   // Remove playing class from all items and reset background
   const musicItems = document.querySelectorAll('.music-item');
-  console.log(`🎵 Found ${musicItems.length} music items to reset`);
   
   musicItems.forEach(item => {
     item.classList.remove('playing');
@@ -268,10 +251,7 @@ function playMusic(filename, event) {
   if (event && event.target) {
     event.target.classList.add('playing');
     event.target.style.background = '#35CF3A';
-    console.log(`🎵 Highlighted clicked item:`, event.target.textContent);
   }
-
-  console.log(`🎵 Playing: ${filename}`);
   
   // Mark playlist as started when any music is played
   isPlaylistStarted = true;
@@ -280,16 +260,14 @@ function playMusic(filename, event) {
   const isOpus = filename.toLowerCase().endsWith('.opus');
   
   if (isOpus) {
-    console.log('🎵 OPUS file detected, checking browser support...');
-    
     // Check if browser supports OPUS
     const audio = new Audio();
     const canPlayOpus = audio.canPlayType('audio/opus');
     
     if (canPlayOpus === 'probably' || canPlayOpus === 'maybe') {
-      console.log('✅ Browser supports OPUS natively');
+      // Browser supports OPUS natively
     } else {
-      console.warn('⚠️ Browser may not support OPUS natively, trying anyway...');
+      // Browser may not support OPUS natively, trying anyway
     }
   }
 
@@ -311,7 +289,6 @@ function playMusic(filename, event) {
 
   // Add event listeners to detect when music ends naturally
   audio.addEventListener('ended', () => {
-    console.log('🎵 Music track ended naturally');
     isMusicPlaying = false;
     stopMusicVisualizer();
     
@@ -330,7 +307,6 @@ function playMusic(filename, event) {
   });
 
   audio.addEventListener('pause', () => {
-    console.log('🎵 Music paused');
     isMusicPlaying = false;
     stopMusicVisualizer();
     // Update music button to show inactive state
@@ -341,7 +317,6 @@ function playMusic(filename, event) {
   });
 
   audio.addEventListener('play', () => {
-    console.log('🎵 Music started playing');
     isMusicPlaying = true;
     startMusicVisualizer();
     // Update music button to show active state
@@ -352,8 +327,6 @@ function playMusic(filename, event) {
   });
 
   audio.play().then(() => {
-    console.log(`🎵 Successfully started playing: ${filename}`);
-    
     // Update music button to show active state
     const musicButton = document.querySelector('[data-icon="music"]');
     if (musicButton && typeof PNGLoader !== 'undefined') {
@@ -390,7 +363,6 @@ function stopMusic() {
   if (window.currentAudio) {
     if (window.currentAudio.paused) {
       window.currentAudio.play();
-      console.log("▶️ Music resumed");
       isMusicPlaying = true;
       startMusicVisualizer();
       
@@ -401,7 +373,6 @@ function stopMusic() {
       }
     } else {
       window.currentAudio.pause();
-      console.log("⏸️ Music paused");
       isMusicPlaying = false;
       stopMusicVisualizer();
       
@@ -434,13 +405,10 @@ async function loadMusicPlaylist() {
   
   for (const path of possiblePaths) {
     try {
-      console.log(`🎵 Attempting to load tracklist from: ${path}`);
       const response = await fetch(path);
-      console.log(`🎵 Fetch response status for ${path}:`, response.status, response.statusText);
       
       if (response.ok) {
         const content = await response.text();
-        console.log('🎵 File content length:', content.length);
         const lines = content.split('\n').filter(line => line.trim() !== '');
         
         // Parse tracks with titles (format: "Title|URL" or just "URL")
@@ -463,17 +431,13 @@ async function loadMusicPlaylist() {
         });
         
         musicPlaylist = tracks;
-        console.log(`🎵 Loaded ${tracks.length} tracks from ${path}:`, tracks);
         return true;
-      } else {
-        console.log(`⚠️ Could not load ${path}, status:`, response.status);
       }
     } catch (error) {
-      console.log(`⚠️ Error loading ${path}:`, error);
+      // Error logging removed for performance
     }
   }
   
-  console.log('⚠️ Could not load tracklist.txt from any path, using default tracks');
   return false;
 }
 
@@ -515,11 +479,8 @@ function playMusicFromPlaylist(index) {
     currentMusicIndex = index;
     const track = musicPlaylist[index];
     
-    console.log(`🎵 playMusicFromPlaylist called with index: ${index}, track:`, track);
-    
     // Update visual indicators
     const musicItems = document.querySelectorAll('.music-item');
-    console.log(`🎵 Found ${musicItems.length} music items`);
     
     musicItems.forEach((item, i) => {
       item.classList.remove('playing');
@@ -527,7 +488,6 @@ function playMusicFromPlaylist(index) {
       if (i === index) {
         item.classList.add('playing');
         item.style.background = '#35CF3A';
-        console.log(`🎵 Highlighted item ${i}:`, item.textContent);
       }
     });
     
@@ -535,7 +495,7 @@ function playMusicFromPlaylist(index) {
     if (track.url.startsWith('http://') || track.url.startsWith('https://')) {
       // For radio streams, we need to pass the index to maintain highlighting
       playRadioStreamFromPlaylist(track.url, index);
-      console.log(`📻 Playing radio stream ${index + 1}/${musicPlaylist.length}: ${track.title}`);
+      // Radio stream playing
       // Start visualizer for radio streams with 1 second delay
       isMusicPlaying = true;
       setTimeout(() => {

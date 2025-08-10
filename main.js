@@ -1,5 +1,76 @@
 // ===== MINDS EYE - MAIN CORE =====
 
+// Centralized logging system - OPTIMIZED FOR PERFORMANCE
+const LOG_LEVELS = {
+    ERROR: 0,
+    WARN: 1,
+    INFO: 2,
+    DEBUG: 3
+};
+
+// Set to ERROR only for production - reduces console spam significantly
+let currentLogLevel = LOG_LEVELS.ERROR; // Changed from INFO to ERROR for performance
+let logCount = 0;
+const MAX_LOGS_PER_SECOND = 2; // Reduced from 3 to 2 for even less spam
+let lastLogTime = 0;
+const MIN_LOG_INTERVAL = 200; // Increased from 100ms to 200ms for less frequent logging
+
+// Frame-based logging control to prevent spam in animation loops
+let frameCounter = 0;
+const LOG_EVERY_N_FRAMES = 60; // Only log every 60 frames (once per second at 60fps)
+
+function log(level, message, data = null) {
+    const now = Date.now();
+    
+    // Rate limiting: only log if enough time has passed and we're under the limit
+    if (level <= currentLogLevel && 
+        logCount < MAX_LOGS_PER_SECOND && 
+        (now - lastLogTime) >= MIN_LOG_INTERVAL) {
+        
+        const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+        const prefix = `[${timestamp}] `;
+        
+        switch (level) {
+            case LOG_LEVELS.ERROR:
+                console.error(prefix + message, data);
+                break;
+            case LOG_LEVELS.WARN:
+                console.warn(prefix + message, data);
+                break;
+            case LOG_LEVELS.INFO:
+                console.info(prefix + message, data);
+                break;
+            case LOG_LEVELS.DEBUG:
+                console.log(prefix + message, data);
+                break;
+        }
+        logCount++;
+        lastLogTime = now;
+    }
+}
+
+// Reset log counter every second
+setInterval(() => { logCount = 0; }, 1000);
+
+// Logging utility functions with frame-based control
+const logger = {
+    error: (msg, data) => log(LOG_LEVELS.ERROR, msg, data),
+    warn: (msg, data) => log(LOG_LEVELS.WARN, msg, data),
+    info: (msg, data) => log(LOG_LEVELS.INFO, msg, data),
+    debug: (msg, data) => {
+        // Only log debug messages every N frames to prevent spam in animation loops
+        if (frameCounter % LOG_EVERY_N_FRAMES === 0) {
+            log(LOG_LEVELS.DEBUG, msg, data);
+        }
+    },
+    // Special function for frequent updates that should be logged sparingly
+    debugSparse: (msg, data, interval = 120) => {
+        if (frameCounter % interval === 0) {
+            log(LOG_LEVELS.DEBUG, msg, data);
+        }
+    }
+};
+
 // Global variables
 let movementDelayActive = true;
 let backgroundRotation = 0;
@@ -191,7 +262,7 @@ function randomTextColor() {
 
 function toggleDrawingMode() {
   isDrawingMode = !isDrawingMode;
-  console.log('✏️ Drawing mode:', isDrawingMode ? 'ON' : 'OFF');
+  logger.info('✏️ Drawing mode:', isDrawingMode ? 'ON' : 'OFF');
   
   // Get references to elements
   const analysisButton = document.querySelector('[data-icon="analysis"]');
@@ -224,10 +295,10 @@ function toggleDrawingMode() {
     
     canvas.style.cursor = 'url(images/cross.png) 16 16, crosshair';
     canvas.classList.add('drawing-mode');
-    console.log('🎨 Drawing mode activated - click and drag to draw');
-    console.log('⌨️ Keyboard shortcuts: D=Toggle Mode, W=Width, C=Color, S=Smooth Last Line, X=Clear (works in any mode), F=Flash Existing Drawings');
-    console.log('💡 Animation paused, bubble creation disabled');
-    console.log('⚡ Speed stored as:', previousSpeed, '(current was:', speedMultiplier, ')');
+    logger.info('🎨 Drawing mode activated - click and drag to draw');
+    logger.info('⌨️ Keyboard shortcuts: D=Toggle Mode, W=Width, C=Color, S=Smooth Last Line, X=Clear (works in any mode), F=Flash Existing Drawings');
+    logger.info('💡 Animation paused, bubble creation disabled');
+    logger.info('⚡ Speed stored as:', previousSpeed, '(current was:', speedMultiplier, ')');
     
     // Hide Analysis button and show drawing dropdowns
     if (analysisButton) {
@@ -241,7 +312,7 @@ function toggleDrawingMode() {
     }
     
     // Drawings will be automatically redrawn by the draw loop
-    console.log('🎨 Drawing mode activated - drawings will be preserved');
+    logger.info('🎨 Drawing mode activated - drawings will be preserved');
     
     // Update draw button to show active state
     const drawButton = document.querySelector('[data-icon="draw"]');
@@ -267,9 +338,9 @@ function toggleDrawingMode() {
     
     canvas.style.cursor = 'default';
     canvas.classList.remove('drawing-mode');
-    console.log('🎨 Drawing mode deactivated');
-    console.log('💡 Animation resumed, bubble creation re-enabled');
-    console.log('⚡ Speed restored to:', speedMultiplier, '(previousSpeed was:', previousSpeed, ')');
+    logger.info('🎨 Drawing mode deactivated');
+    logger.info('💡 Animation resumed, bubble creation re-enabled');
+    logger.info('⚡ Speed restored to:', speedMultiplier, '(previousSpeed was:', previousSpeed, ')');
     
     // Show Analysis button and hide drawing dropdowns
     if (analysisButton) {
@@ -305,7 +376,7 @@ function startDrawing(e) {
   const y = e.clientY - rect.top;
   
   drawingPath.push({ x, y });
-  console.log('✏️ Started drawing at:', x, y);
+      logger.debug('✏️ Started drawing at:', x, y);
 }
 
 function drawLine(e) {
@@ -343,7 +414,7 @@ function drawLine(e) {
     // Restore context state
     ctx.restore();
     
-    console.log('✏️ Drawing line from', prev.x, prev.y, 'to', curr.x, curr.y, 'color:', drawingColor, 'width:', drawingWidth);
+    logger.debug('✏️ Drawing line from', prev.x, prev.y, 'to', curr.x, curr.y, 'color:', drawingColor, 'width:', drawingWidth);
   }
 }
 
@@ -359,18 +430,18 @@ function stopDrawing() {
     pathWithMetadata.color = drawingColor;
     pathWithMetadata.width = drawingWidth;
     drawingPaths.push(pathWithMetadata);
-    console.log('✏️ Drawing path saved with', drawingPath.length, 'points, color:', drawingColor, 'width:', drawingWidth);
-    console.log('📊 Total paths stored:', drawingPaths.length);
+    logger.info('✏️ Drawing path saved with', drawingPath.length, 'points, color:', drawingColor, 'width:', drawingWidth);
+    logger.info('📊 Total paths stored:', drawingPaths.length);
     
     // Debug: Check all stored paths
     for (let i = 0; i < drawingPaths.length; i++) {
       const path = drawingPaths[i];
-      console.log(`  Path ${i}: color=${path.color}, width=${path.width}, points=${path.length}`);
+      // Debug logging removed for performance
     }
   }
   
   drawingPath = [];
-  console.log('✏️ Stopped drawing');
+      logger.info('✏️ Stopped drawing');
 }
 
 function clearDrawing() {
@@ -386,7 +457,7 @@ function clearDrawing() {
     stopExistingDrawingsFlash();
   }
   
-  console.log('🧹 Drawing cleared and paths array emptied');
+      logger.info('🧹 Drawing cleared and paths array emptied');
 }
 
 function clearDrawingVisually() {
@@ -856,8 +927,8 @@ function clearDrawingOnly() {
     }
   }
   
-  console.log('🧹 Only drawings cleared, bubbles and background preserved');
-  console.log('🎨 Drawings cleared - drawingPaths array reset');
+      logger.info('🧹 Only drawings cleared, bubbles and background preserved');
+    logger.info('🎨 Drawings cleared - drawingPaths array reset');
 }
 
 // ===== DRAWING FLASH AND SMOOTH FUNCTIONS =====
@@ -870,14 +941,14 @@ function toggleDrawingFlash() {
   if (existingDrawingsFlash) {
     flashBtn.style.background = 'linear-gradient(45deg, #FF1493, #FF69B4)';
     flashBtn.textContent = '✨ Flash ON';
-    console.log('✨ Drawing flash activated');
+    logger.info('✨ Drawing flash activated');
     
     // Start flash animation for existing drawings
     startExistingDrawingsFlash();
   } else {
     flashBtn.style.background = 'linear-gradient(45deg, #FFD700, #FFA500)';
     flashBtn.textContent = '✨ Flash Drawing';
-    console.log('✨ Drawing flash deactivated');
+    logger.info('✨ Drawing flash deactivated');
     
     // Stop flash animation
     stopExistingDrawingsFlash();
@@ -1080,7 +1151,7 @@ function stopExistingDrawingsFlash() {
   if (flashAnimationId) {
     clearTimeout(flashAnimationId);
     flashAnimationId = null;
-    console.log('⚡ Existing drawings flash animation stopped');
+    logger.info('⚡ Existing drawings flash animation stopped');
   }
 }
 
@@ -1110,10 +1181,10 @@ function toggleExistingDrawingsFlash() {
   existingDrawingsFlash = !existingDrawingsFlash;
   
   if (existingDrawingsFlash) {
-    console.log('✨ Existing drawings flash activated');
+    logger.info('✨ Existing drawings flash activated');
     startExistingDrawingsFlash();
   } else {
-    console.log('✨ Existing drawings flash deactivated');
+    logger.info('✨ Existing drawings flash deactivated');
     stopExistingDrawingsFlash();
     // Redraw without flash effect
     ctx.clearRect(0, 0, width, height);
@@ -1132,10 +1203,10 @@ function toggleDrawingGlow() {
   drawingGlow = !drawingGlow;
   
   if (drawingGlow) {
-    console.log('✨ Drawing glow activated');
+    logger.info('✨ Drawing glow activated');
     startDrawingGlow();
   } else {
-    console.log('✨ Drawing glow deactivated');
+    logger.info('✨ Drawing glow deactivated');
     stopDrawingGlow();
     // Redraw without glow effect
     clearDrawingVisually();
@@ -1331,28 +1402,28 @@ function stopDrawingGlow() {
   if (drawingGlowAnimationId) {
     clearTimeout(drawingGlowAnimationId);
     drawingGlowAnimationId = null;
-    console.log('✨ Drawing glow animation stopped');
+    logger.info('✨ Drawing glow animation stopped');
   }
 }
 
 function debugDrawingPaths() {
-  console.log('🔍 Debugging drawing paths:');
-  console.log('📊 Total paths:', drawingPaths.length);
+  logger.debug('🔍 Debugging drawing paths:');
+  logger.debug('📊 Total paths:', drawingPaths.length);
   for (let i = 0; i < drawingPaths.length; i++) {
     const path = drawingPaths[i];
-    console.log(`  Path ${i}: color=${path.color}, width=${path.width}, points=${path.length}`);
+    logger.debug(`  Path ${i}: color=${path.color}, width=${path.width}, points=${path.length}`);
   }
 }
 
 function smoothLastLine() {
   if (drawingPaths.length === 0) {
-    console.log('⚠️ No lines to smooth');
+    logger.warn('⚠️ No lines to smooth');
     return;
   }
   
   const lastPath = drawingPaths[drawingPaths.length - 1];
   if (!lastPath || lastPath.length < 3) {
-    console.log('⚠️ Last line too short to smooth');
+    logger.warn('⚠️ Last line too short to smooth');
     return;
   }
   
@@ -1360,8 +1431,8 @@ function smoothLastLine() {
   const originalColor = lastPath.color || drawingColor;
   const originalWidth = lastPath.width || drawingWidth;
   
-  console.log('🔄 Smoothing last line with', lastPath.length, 'points');
-  console.log('🎨 Original color:', originalColor, 'width:', originalWidth);
+  logger.info('🔄 Smoothing last line with', lastPath.length, 'points');
+  logger.info('🎨 Original color:', originalColor, 'width:', originalWidth);
   
   // Create smoothed version of the last path
   const smoothedPath = smoothPath(lastPath);
@@ -1523,7 +1594,7 @@ function smoothLastLine() {
     ctx.stroke();
   }
   
-  console.log('✅ Last line smoothed and immediately visible');
+  logger.info('✅ Last line smoothed and immediately visible');
 }
 
 function smoothPath(path) {
@@ -1594,7 +1665,7 @@ function changeDrawingColor() {
   // Update all UI elements
   updateDrawingColorUI();
   
-  console.log('🎨 Drawing color changed to:', drawingColor);
+  logger.info('🎨 Drawing color changed to:', drawingColor);
 }
 
 function changeDrawingWidth() {
@@ -1606,27 +1677,27 @@ function changeDrawingWidth() {
   // Update all UI elements
   updateDrawingWidthUI();
   
-  console.log('📏 Drawing width changed to:', drawingWidth);
+  logger.info('📏 Drawing width changed to:', drawingWidth);
 }
 
 // Test function to verify drawing is working
 function testDrawing() {
-  console.log('🧪 Testing drawing functionality...');
-  console.log('🎨 Current drawing color:', drawingColor);
-  console.log('📏 Current drawing width:', drawingWidth);
-  console.log('✏️ Drawing mode:', isDrawingMode);
-  console.log('🎯 Canvas context:', ctx);
-  console.log('🎨 Canvas z-index:', canvas.style.zIndex || 'default');
+  logger.info('🧪 Testing drawing functionality...');
+  logger.info('🎨 Current drawing color:', drawingColor);
+  logger.info('📏 Current drawing width:', drawingWidth);
+  logger.info('✏️ Drawing mode:', isDrawingMode);
+  logger.info('🎯 Canvas context:', ctx);
+  logger.info('🎨 Canvas z-index:', canvas.style.zIndex || 'default');
   
   // Check computed z-index
   const computedStyle = window.getComputedStyle(canvas);
-  console.log('🎨 Computed canvas z-index:', computedStyle.zIndex);
+  logger.info('🎨 Computed canvas z-index:', computedStyle.zIndex);
   
   // Check video player z-index
   const videoPlayer = document.getElementById('videoPlayer');
   if (videoPlayer) {
     const videoComputedStyle = window.getComputedStyle(videoPlayer);
-    console.log('🎥 Video player z-index:', videoComputedStyle.zIndex);
+    logger.info('🎥 Video player z-index:', videoComputedStyle.zIndex);
   }
   
   // Draw a test line
@@ -1639,8 +1710,8 @@ function testDrawing() {
   ctx.lineJoin = 'round';
   ctx.stroke();
   
-  console.log('✅ Test line drawn from (100,100) to (200,200)');
-  console.log('🎯 Check if red line appears on screen');
+  logger.info('✅ Test line drawn from (100,100) to (200,200)');
+  logger.info('🎯 Check if red line appears on screen');
 }
 
 // ===== DRAWING SETTINGS PANEL FUNCTIONS =====
@@ -1664,13 +1735,13 @@ function showDrawingSettings(e) {
   panel.style.top = e.clientY + 'px';
   panel.style.display = 'block';
   
-  console.log('🎨 Drawing settings panel opened');
+  logger.info('🎨 Drawing settings panel opened');
 }
 
 function closeDrawingSettings() {
   const panel = document.getElementById('drawingSettingsPanel');
   panel.style.display = 'none';
-  console.log('🎨 Drawing settings panel closed');
+  logger.info('🎨 Drawing settings panel closed');
 }
 
 function setDrawingColor(color) {
@@ -1679,7 +1750,7 @@ function setDrawingColor(color) {
   // Update all UI elements
   updateDrawingColorUI();
   
-  console.log('🎨 Drawing color set to:', color);
+  logger.info('🎨 Drawing color set to:', color);
 }
 
 function setDrawingWidth(width) {
@@ -1688,7 +1759,7 @@ function setDrawingWidth(width) {
   // Update all UI elements
   updateDrawingWidthUI();
   
-  console.log('📏 Drawing width set to:', width);
+  logger.info('📏 Drawing width set to:', width);
 }
 
 function updateDrawingColorUI() {
@@ -1732,7 +1803,7 @@ function clearDrawingFromPanel() {
   }
   
   closeDrawingSettings();
-  console.log('🧹 All drawings cleared from panel and paths array emptied');
+  logger.info('🧹 All drawings cleared from panel and paths array emptied');
 }
 
 function switchToBubbleMode() {
@@ -1762,8 +1833,8 @@ function switchToBubbleMode() {
   }
   
   // Resume normal canvas drawing (bubbles will be drawn again)
-  console.log('🫧 Switched to bubble mode - drawings preserved');
-  console.log('📊 Preserved', drawingPaths.length, 'drawing paths');
+  logger.info('🫧 Switched to bubble mode - drawings preserved');
+  logger.info('📊 Preserved', drawingPaths.length, 'drawing paths');
 }
 
 function clearDrawingsOnRightClick(event) {
@@ -1779,7 +1850,7 @@ function clearDrawingsOnRightClick(event) {
     existingDrawingsFlash = false;
   }
   
-  console.log('🧹 All drawings cleared via right-click on toggle button');
+  logger.info('🧹 All drawings cleared via right-click on toggle button');
   
   // Show a brief visual feedback
   const button = event.target;
@@ -1805,7 +1876,7 @@ function handleDrawButtonRightClick(event) {
   } else {
     // If drawing mode is not active, clear drawings
     clearDrawingOnly();
-    console.log('🎨 Drawings cleared via right-click on draw button');
+    logger.info('🎨 Drawings cleared via right-click on draw button');
   }
   
   return false; // Ensure context menu doesn't show
@@ -1842,7 +1913,7 @@ function showDrawingSettingsOnRightClick(event) {
     panel.style.zIndex = '10000';
     panel.style.opacity = '1';
     
-    console.log('🎨 Drawing settings panel opened at button position');
+    logger.info('🎨 Drawing settings panel opened at button position');
     
     // Clear any existing timeout
     if (drawingSettingsFadeTimeout) {
@@ -1866,7 +1937,7 @@ function hideDrawingSettingsPanel() {
       clearTimeout(drawingSettingsFadeTimeout);
       drawingSettingsFadeTimeout = null;
     }
-    console.log('🎨 Drawing settings panel hidden');
+    logger.info('🎨 Drawing settings panel hidden');
   }
 }
 
@@ -1882,7 +1953,7 @@ function fadeOutDrawingSettingsPanel() {
       panel.style.display = 'none';
       panel.style.transition = '';
       drawingSettingsFadeTimeout = null;
-      console.log('🎨 Drawing settings panel faded out');
+      logger.info('🎨 Drawing settings panel faded out');
     }, 1000);
   }
 }
@@ -1924,7 +1995,7 @@ function showAnalysisPanel() {
     panel.style.opacity = '1';
     panel.style.zIndex = '29999';
     
-    console.log('📊 Analysis panel opened under button');
+    logger.info('📊 Analysis panel opened under button');
     
     // Apply analysis.png to button
     if (typeof PNGLoader !== 'undefined') {
@@ -1953,7 +2024,7 @@ function hideAnalysisPanel() {
       clearTimeout(analysisPanelFadeTimeout);
       analysisPanelFadeTimeout = null;
     }
-    console.log('📊 Analysis panel closed');
+    logger.info('📊 Analysis panel closed');
   }
   
   // Reset button to default state
@@ -1972,7 +2043,7 @@ function fadeOutAnalysisPanel() {
     setTimeout(() => {
       panel.style.display = 'none';
       analysisPanelFadeTimeout = null;
-      console.log('📊 Analysis panel faded out');
+      logger.info('📊 Analysis panel faded out');
     }, 1000);
   }
 }
@@ -2004,7 +2075,7 @@ function setCreditsDropdowns() {
   // Close the analysis panel after setting dropdowns
   closeAnalysisPanel();
   
-  console.log('💚 Credits: Set theme to 💚 and preset to Start');
+  logger.info('💚 Credits: Set theme to 💚 and preset to Start');
 }
 
 function openAnalysisIframe(type) {
@@ -2016,13 +2087,13 @@ function openAnalysisIframe(type) {
   
   // Check for suggestions cooldown
   if (type === 'suggestions' && suggestionsCooldownActive) {
-    console.log('💡 Suggestions button is on cooldown');
+    logger.info('💡 Suggestions button is on cooldown');
     return;
   }
   
   // Check for ideas cooldown
   if (type === 'ideas' && ideasCooldownActive) {
-    console.log('🧠 Ideas button is on cooldown');
+    logger.info('🧠 Ideas button is on cooldown');
     return;
   }
   
@@ -2048,7 +2119,7 @@ function openAnalysisIframe(type) {
     // Show the container
     container.style.display = 'block';
     
-    console.log('📊 Analysis iframe opened for:', type);
+    logger.info('📊 Analysis iframe opened for:', type);
   }
 }
 
@@ -2063,7 +2134,7 @@ function closeAnalysisIframe() {
     // Hide the container
     container.style.display = 'none';
     
-    console.log('📊 Analysis iframe closed');
+    logger.info('📊 Analysis iframe closed');
   }
 }
 
@@ -2101,7 +2172,7 @@ function startSuggestionsCooldown() {
       clearInterval(countdownInterval);
     }, 20000);
     
-    console.log('💡 Suggestions cooldown started (20 seconds)');
+    logger.info('💡 Suggestions cooldown started (20 seconds)');
   }
 }
 
@@ -2124,7 +2195,7 @@ function endSuggestionsCooldown() {
       suggestionsButton.style.boxShadow = '';
     }, 2000);
     
-    console.log('✅ Suggestions cooldown ended');
+    logger.debugSparse('✅ Suggestions cooldown ended', null, 60);
   }
   
   if (suggestionsCooldownTimer) {
@@ -2167,7 +2238,7 @@ function startIdeasCooldown() {
       clearInterval(countdownInterval);
     }, 20000);
     
-    console.log('🧠 Ideas cooldown started (20 seconds)');
+    logger.info('🧠 Ideas cooldown started (20 seconds)');
   }
 }
 
@@ -2196,7 +2267,7 @@ function endIdeasCooldown() {
       }
     }, 2000);
     
-    console.log('✅ Ideas cooldown ended');
+    logger.debugSparse('✅ Ideas cooldown ended', null, 60);
   }
   
   if (ideasCooldownTimer) {
@@ -2259,13 +2330,13 @@ function addIdea(x, y, title = "", description = "", color = randomColor(), text
     ballVelocityDecay: 0
   });
   
-  console.log("🆕 New bubble created with color:", bubbleColor, "at", dateString, timeString);
+  logger.debugSparse("🆕 New bubble created with color:", bubbleColor, "at", dateString, timeString, 120);
 }
 
 // ===== THEME SYSTEM =====
 
 function switchTheme(themeName) {
-  console.log('🎨 Switching theme to:', themeName);
+  logger.debugSparse('🎨 Switching theme to:', themeName, null, 60);
   currentTheme = themeName;
   backgroundIndex = 1;
   
@@ -2287,7 +2358,7 @@ function switchTheme(themeName) {
     }
   } else {
     // Fallback for old theme structure
-    console.log('📋 Loading theme ideas:', theme.ideas?.length || 0);
+    logger.info('📋 Loading theme ideas:', theme.ideas?.length || 0);
     if (theme.ideas) {
       ideas = theme.ideas.map(idea => ({
         ...idea,
@@ -2303,7 +2374,7 @@ function switchTheme(themeName) {
       // Auto-focus on the last (most recently added) bubble
       if (ideas.length > 0) {
         selectedIdea = ideas[ideas.length - 1];
-        console.log('🎯 Auto-focused on last bubble from theme:', selectedIdea.title || 'Untitled');
+        logger.info('🎯 Auto-focused on last bubble from theme:', selectedIdea.title || 'Untitled');
       }
     }
     
@@ -2343,7 +2414,7 @@ function switchPreset(presetKey) {
     return;
   }
   
-  console.log('📋 Loading preset:', preset.name, 'with', preset.ideas.length, 'ideas');
+  logger.info('📋 Loading preset:', preset.name, 'with', preset.ideas.length, 'ideas');
   
   // Load preset ideas
   ideas = preset.ideas.map(idea => ({
@@ -2367,7 +2438,7 @@ function switchPreset(presetKey) {
   // Auto-focus on the last (most recently added) bubble
   if (ideas && ideas.length > 0) {
     selectedIdea = ideas[ideas.length - 1];
-    console.log('🎯 Auto-focused on last bubble from preset:', selectedIdea.title || 'Untitled');
+    logger.info('🎯 Auto-focused on last bubble from preset:', selectedIdea.title || 'Untitled');
   }
   
   // Load preset background
@@ -2380,7 +2451,7 @@ function loadBackgroundImage(bgPath) {
   const img = new Image();
   img.onload = function () {
     backgroundImage = img;
-    console.log('🖼️ Background image loaded:', bgPath);
+    logger.info('🖼️ Background image loaded:', bgPath);
   };
   img.onerror = function() {
     console.error('❌ Failed to load background image:', bgPath);
@@ -2403,7 +2474,7 @@ function cycleBackground() {
 
 function rotateBackground() {
   backgroundRotation = (backgroundRotation + 90) % 360;
-  console.log("🔄 Background rotated to:", backgroundRotation + "°");
+  logger.info("🔄 Background rotated to:", backgroundRotation + "°");
 }
 
 // ===== PANEL MANAGEMENT =====
@@ -2511,7 +2582,7 @@ function minimizePanel() {
         minimizeBtn.textContent = '📋';
         minimizeBtn.title = 'Minimize';
       }
-      console.log('💭 Panel restored');
+      logger.info('💭 Panel restored');
     } else {
       // Minimize panel
       panel.classList.add('minimized');
@@ -2522,7 +2593,7 @@ function minimizePanel() {
         minimizeBtn.textContent = '⬜';
         minimizeBtn.title = 'Restore';
       }
-      console.log('💭 Panel minimized');
+      logger.info('💭 Panel minimized');
     }
   }
 }
@@ -2534,7 +2605,7 @@ function restorePanel() {
     panel.style.width = '300px';
     panel.style.height = 'auto';
     panel.style.overflow = 'visible';
-    console.log('💭 Panel restored');
+    logger.info('💭 Panel restored');
   }
 }
 
@@ -2582,7 +2653,7 @@ function toggleGlow() {
     return;
   }
   selectedIdea.glow = !selectedIdea.glow;
-  console.log("✨ Glow:", selectedIdea.glow ? "ON" : "OFF");
+  logger.info("✨ Glow:", selectedIdea.glow ? "ON" : "OFF");
 }
 
 function toggleFlash() {
@@ -2591,7 +2662,7 @@ function toggleFlash() {
     return;
   }
   selectedIdea.flash = !selectedIdea.flash;
-  console.log("⚡ Flash:", selectedIdea.flash ? "ON" : "OFF");
+  logger.info("⚡ Flash:", selectedIdea.flash ? "ON" : "OFF");
 }
 
 function toggleAnimateColors() {
@@ -2600,7 +2671,7 @@ function toggleAnimateColors() {
     return;
   }
   selectedIdea.animateColors = !selectedIdea.animateColors;
-  console.log("🎨 Animate:", selectedIdea.animateColors ? "ON" : "OFF");
+  logger.info("🎨 Animate:", selectedIdea.animateColors ? "ON" : "OFF");
 }
 
 function toggleTransparent() {
@@ -2609,7 +2680,7 @@ function toggleTransparent() {
     return;
   }
   selectedIdea.transparent = !selectedIdea.transparent;
-  console.log("👻 Transparent:", selectedIdea.transparent ? "ON" : "OFF");
+  logger.info("👻 Transparent:", selectedIdea.transparent ? "ON" : "OFF");
 }
 
 function changeGlowColor() {
@@ -2620,7 +2691,7 @@ function changeGlowColor() {
   
   const glowColor = randomColor();
   selectedIdea.glowColor = glowColor;
-  console.log("🌈 Glow color changed to:", glowColor);
+  logger.info("🌈 Glow color changed to:", glowColor);
   
   const button = event.target;
   button.style.background = `linear-gradient(45deg, ${glowColor}, ${glowColor}80)`;
@@ -2638,7 +2709,7 @@ function toggleFixed() {
     return;
   }
   selectedIdea.fixed = !selectedIdea.fixed;
-  console.log("🛑 Fixed:", selectedIdea.fixed ? "ON" : "OFF");
+  logger.info("🛑 Fixed:", selectedIdea.fixed ? "ON" : "OFF");
 }
 
 function toggleStatic() {
@@ -2647,7 +2718,7 @@ function toggleStatic() {
     return;
   }
   selectedIdea.static = !selectedIdea.static;
-  console.log("🛑 Static:", selectedIdea.static ? "ON" : "OFF");
+  logger.info("🛑 Static:", selectedIdea.static ? "ON" : "OFF");
 }
 
 function toggleCheckeredBorder() {
@@ -2657,7 +2728,7 @@ function toggleCheckeredBorder() {
   }
   
   selectedIdea.showPauseBorder = !selectedIdea.showPauseBorder;
-  console.log("🏁 Checkered border:", selectedIdea.showPauseBorder ? "ON" : "OFF");
+  logger.info("🏁 Checkered border:", selectedIdea.showPauseBorder ? "ON" : "OFF");
 }
 
 // ===== BUBBLE PROPERTIES =====
@@ -2665,7 +2736,7 @@ function toggleCheckeredBorder() {
 function changeColor() { 
   if (!selectedIdea) return;
   selectedIdea.color = randomColor(); 
-  console.log("🎨 Color changed to:", selectedIdea.color);
+  logger.info("🎨 Color changed to:", selectedIdea.color);
 }
 
 function changeTextColor() { 
@@ -2698,7 +2769,7 @@ function updateBubbleRatio(value) {
   }
   
   selectedIdea.heightRatio = actualRatio;
-  console.log('📐 Ratio changed to:', actualRatio, '(slider:', sliderValue, ')');
+  logger.info('📐 Ratio changed to:', actualRatio, '(slider:', sliderValue, ')');
 }
 
 function updateActionSlider(value) {
@@ -2714,7 +2785,7 @@ function updateActionSlider(value) {
   // Store the value based on shape type
   if (selectedIdea.shape === 'striker') {
     selectedIdea.strikerVelocity = sliderValue;
-    console.log('⚡ Striker velocity changed to:', sliderValue);
+    logger.info('⚡ Striker velocity changed to:', sliderValue);
   }
   // Add more shape-specific actions here in the future
 }
@@ -2767,10 +2838,10 @@ function triggerStrikerAttack(bubble) {
     bubble: bubble
   };
   
-  console.log('⚡ Striker attack created with radius:', attack.radius);
+  logger.info('⚡ Striker attack created with radius:', attack.radius);
   
   strikerAttacks.push(attack);
-  console.log('⚡ Striker attack triggered!');
+  logger.info('⚡ Striker attack triggered!');
   
   // Remove attack after duration
   setTimeout(() => {
@@ -2793,16 +2864,16 @@ function triggerStrikerCapture(bubble) {
   collisionDetected = false; // Reset collision flag
   captureModeStartTime = now;
   
-  console.log('🎣 Striker capture mode activated by:', bubble.title || 'Unknown bubble');
-  console.log('🎣 Capture range:', bubble.radius * 1.5, 'pixels');
-  console.log('🎣 Striker position:', bubble.x, bubble.y);
-  console.log('🎣 Capture mode will auto-deactivate in 1 second');
+  logger.info('🎣 Striker capture mode activated by:', bubble.title || 'Unknown bubble');
+  logger.info('🎣 Capture range:', bubble.radius * 1.5, 'pixels');
+  logger.info('🎣 Striker position:', bubble.x, bubble.y);
+  logger.info('🎣 Capture mode will auto-deactivate in 1 second');
   
   // Auto-deactivate capture mode after 1 second
   setTimeout(() => {
     if (strikerCaptureMode && !capturedBubble) {
       strikerCaptureMode = false;
-      console.log('🎣 Capture mode auto-deactivated (no capture made)');
+      logger.info('🎣 Capture mode auto-deactivated (no capture made)');
     }
   }, captureModeDuration);
 }
@@ -2813,7 +2884,7 @@ function endStrikerCapture() {
   // Don't deactivate capture mode if a bubble is captured - let it stay active
   if (!capturedBubble) {
     strikerCaptureMode = false;
-    console.log('🎣 Capture mode deactivated (no bubble captured)');
+    logger.info('🎣 Capture mode deactivated (no bubble captured)');
     return;
   }
   
@@ -2848,21 +2919,20 @@ function endStrikerCapture() {
     if (collisionDetected) {
       const now = Date.now();
       capturedBubble.lastCaptureTime = now;
-      console.log('🎣 Set cooldown on released bubble (collision):', capturedBubble.title || 'Unknown bubble');
+      logger.info('🎣 Set cooldown on released bubble (collision):', capturedBubble.title || 'Unknown bubble');
     } else {
-      console.log('🎣 No cooldown set (normal release):', capturedBubble.title || 'Unknown bubble');
+      logger.info('🎣 No cooldown set (normal release):', capturedBubble.title || 'Unknown bubble');
     }
     
-    console.log('🎣 Released captured bubble (collision):', capturedBubble.title || 'Unknown bubble');
-    console.log('🎣 Release position:', capturedBubble.x, capturedBubble.y);
-    console.log('🎣 Release velocity:', capturedBubble.vx, capturedBubble.vy);
-    console.log('🎣 Striker direction:', strikerLastDirection.x, strikerLastDirection.y);
-    console.log('🎣 Collision flag was:', collisionDetected);
+    logger.info('🎣 Released captured bubble (collision):', capturedBubble.title || 'Unknown bubble');
+    logger.info('🎣 Release position:', capturedBubble.x, capturedBubble.y);
+    logger.info('🎣 Release velocity:', capturedBubble.vx, capturedBubble.vy);
+    logger.info('🎣 Striker direction:', strikerLastDirection.x, strikerLastDirection.y);
+    logger.info('🎣 Collision flag was:', collisionDetected);
   }
   
   capturedBubble = null;
   collisionDetected = false; // Reset collision flag
-  console.log('🎣 Striker capture mode deactivated');
 }
 
 function endStrikerCaptureAtCapturePoint() {
@@ -2899,16 +2969,12 @@ function endStrikerCaptureAtCapturePoint() {
     delete capturedBubble.originalVY;
     
     // No cooldown for normal button release
-    console.log('🎣 No cooldown set (normal button release):', capturedBubble.title || 'Unknown bubble');
-    
-    console.log('🎣 Released captured bubble at capture point:', capturedBubble.title || 'Unknown bubble');
-    console.log('🎣 Release position:', capturedBubble.x, capturedBubble.y);
-    console.log('🎣 Release velocity:', capturedBubble.vx, capturedBubble.vy);
+    // Logging removed for performance
   }
   
   capturedBubble = null;
   collisionDetected = false; // Reset collision flag
-  console.log('🎣 Striker capture mode deactivated');
+  // Logging removed for performance
 }
 
 
@@ -2930,7 +2996,7 @@ function handleImageUpload(event) {
     document.getElementById('uploadImage').style.border = '2px solid gold';
     document.getElementById('uploadImage').title = "Custom image uploaded";
     document.getElementById("imageSelector").value = "";
-    console.log("🖼️ Custom image uploaded to bubble");
+    // Logging removed for performance
   };
   reader.readAsDataURL(file);
 }
@@ -2943,10 +3009,10 @@ function handleImageSelect(event) {
     selectedIdea.image = selectedImage;
     document.getElementById('uploadImage').style.border = '';
     document.getElementById('uploadImage').title = "Upload custom image";
-    console.log("🖼️ Selected image applied:", selectedImage);
+    // Logging removed for performance
   } else {
     selectedIdea.image = null;
-    console.log("🗑️ Image cleared from bubble");
+    // Logging removed for performance
   }
 }
 
@@ -2960,7 +3026,7 @@ function clearUploadedImage() {
   document.getElementById("imageSelector").value = "";
   document.getElementById('uploadImage').style.border = '';
   document.getElementById('uploadImage').title = "Upload custom image";
-  console.log("🗑️ Image cleared from bubble, color set to:", selectedIdea.color);
+  logger.info("🗑️ Image cleared from bubble, color set to:", selectedIdea.color);
 }
 
 // ===== SAVE/LOAD SYSTEM =====
@@ -2995,10 +3061,8 @@ function deleteAllIdeas() {
 // ===== CANVAS RENDERING =====
 
 function draw() {
-  // Debug: Log when draw() is called and speed state
-  if (arguments.callee.caller && arguments.callee.caller.name === 'clearDrawingVisually') {
-    console.log('🔍 draw() called from clearDrawingVisually - speedMultiplier:', speedMultiplier, 'previousSpeed:', previousSpeed);
-  }
+  // Performance optimized - removed debug logging
+  frameCounter++; // Increment frame counter for logging control
   
   // Only clear canvas if not in drawing mode
   if (!isDrawingMode) {
@@ -3099,13 +3163,12 @@ function draw() {
       }
     }
 
-    // Striker capture proximity check (separate from collision detection)
+    // Striker capture proximity check (separate from collision detection) - OPTIMIZED
     if (strikerCaptureMode && !capturedBubble) {
       // Check if capture mode should auto-deactivate (1 second timeout)
       const now = Date.now();
       if (now - captureModeStartTime > captureModeDuration) {
         strikerCaptureMode = false;
-        console.log('🎣 Capture mode auto-deactivated (1 second timeout)');
         continue;
       }
       
@@ -3113,27 +3176,12 @@ function draw() {
       if (striker && a !== striker) {
         // Only check cooldown if this bubble was previously captured and released
         if (a.lastCaptureTime && (now - a.lastCaptureTime) < strikerCaptureCooldown) {
-          const remainingCooldown = strikerCaptureCooldown - (now - a.lastCaptureTime);
-          console.log('🎣 Bubble on cooldown (previously captured):', a.title || 'Unknown bubble', 'Remaining:', Math.ceil(remainingCooldown / 1000), 'seconds');
           continue; // Skip this bubble due to cooldown
-        } else {
-          console.log('🎣 Bubble available for capture:', a.title || 'Unknown bubble');
         }
         
-        console.log('🎣 Checking capture for bubble:', a.title || 'Unknown', 'Striker:', striker.title || 'Unknown');
         const dx = striker.x - a.x;
         const dy = striker.y - a.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        
-        // Debug: Log proximity check
-        if (dist < striker.radius * 2) { // Log if within 2x radius for debugging
-          console.log('🎣 Proximity check - Distance:', dist, 'Capture range:', striker.radius * 1.5, 'Bubble:', a.title || 'Unknown');
-        }
-        
-        // Log when bubble is very close to capture range
-        if (dist <= striker.radius * 1.6 && dist > striker.radius * 1.5) {
-          console.log('🎣 Bubble approaching capture range - Distance:', dist, 'Bubble:', a.title || 'Unknown');
-        }
         
         // Check if bubble touches the capture range (1.5x striker radius)
         if (dist <= striker.radius * 1.5) {
@@ -3161,13 +3209,7 @@ function draw() {
           // Track capture frame to prevent immediate collision release
           captureFrame = Date.now();
           
-          console.log('🎣 Captured bubble:', a.title || 'Unknown bubble');
-          console.log('🎣 Distance was:', dist, 'pixels');
-          console.log('🎣 Capture point:', capturePointX, capturePointY);
-          console.log('🎣 Original velocity stored:', a.originalVX, a.originalVY);
-          console.log('🎣 Capture successful - bubble should now be attached');
-          console.log('🎣 Captured bubble position:', a.x, a.y);
-          console.log('🎣 Striker position:', striker.x, striker.y);
+          logger.debugSparse('🎣 Captured bubble:', a.title || 'Unknown bubble', 'at distance:', Math.round(dist), 180);
         }
       }
     }
@@ -3177,7 +3219,7 @@ function draw() {
       // Prevent immediate collision release (wait at least 100ms after capture)
       const now = Date.now();
       if (now - captureFrame < 100) {
-        console.log('🎣 Preventing immediate collision release (capture too recent)');
+        // Skip logging to reduce spam
       } else {
         // Check collision with any other bubble (but not with the striker)
         const striker = a.attachedTo;
@@ -3189,9 +3231,6 @@ function draw() {
             const dist = Math.sqrt(dx * dx + dy * dy);
             
             if (dist < a.radius + otherBubble.radius) {
-              console.log('🎣 Captured bubble collided with:', otherBubble.title || 'Unknown bubble');
-              console.log('🎣 Collision distance:', dist, 'Sum of radii:', a.radius + otherBubble.radius);
-              console.log('🎣 IMMEDIATE RELEASE DUE TO COLLISION');
               collisionDetected = true; // Set collision flag
               endStrikerCapture();
               break;
@@ -3206,15 +3245,13 @@ function draw() {
       // Prevent immediate collision release (wait at least 100ms after capture)
       const now = Date.now();
       if (now - captureFrame < 100) {
-        console.log('🎣 Preventing immediate collision release (capture too recent)');
+        // Skip logging to reduce spam
       } else {
         const dx = a.x - capturedBubble.x;
         const dy = a.y - capturedBubble.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         
         if (dist < a.radius + capturedBubble.radius) {
-          console.log('🎣 Bubble collided with captured bubble:', a.title || 'Unknown bubble');
-          console.log('🎣 Collision distance:', dist, 'Sum of radii:', a.radius + capturedBubble.radius);
           collisionDetected = true; // Set collision flag
           endStrikerCapture();
         }
@@ -3226,7 +3263,7 @@ function draw() {
       // Prevent immediate collision release (wait at least 100ms after capture)
       const now = Date.now();
       if (now - captureFrame < 100) {
-        console.log('🎣 Preventing immediate striker collision release (capture too recent)');
+        // Skip logging to reduce spam
       } else {
         const striker = capturedBubble.attachedTo;
         if (striker && a !== striker) {
@@ -3235,8 +3272,6 @@ function draw() {
           const dist = Math.sqrt(dx * dx + dy * dy);
           
           if (dist < a.radius + striker.radius) {
-            console.log('🎣 Bubble collided with striker:', a.title || 'Unknown bubble');
-            console.log('🎣 Striker collision distance:', dist, 'Sum of radii:', a.radius + striker.radius);
             collisionDetected = true; // Set collision flag
             endStrikerCapture();
           }
@@ -3278,7 +3313,7 @@ function draw() {
               goal.flashUntil = now + 500; // Flash for 500ms
               goal.goalCooldown = now + 5000; // 5-second cooldown
               
-              console.log(`⚽ GOAL! Ball hit Goal. Total goals: ${goal.goals}`);
+              logger.info(`⚽ GOAL! Ball hit Goal. Total goals: ${goal.goals}`);
             }
             
             // Ball bounces off goal maintaining velocity (regardless of cooldown)
@@ -3337,7 +3372,7 @@ function draw() {
               goal.flashUntil = now + 500; // Flash for 500ms
               goal.goalCooldown = now + 5000; // 5-second cooldown
               
-              console.log(`🏒 GOAL! Puck hit Goal. Total goals: ${goal.goals}`);
+              logger.info(`🏒 GOAL! Puck hit Goal. Total goals: ${goal.goals}`);
             }
             
             // Puck bounces off goal maintaining velocity (regardless of cooldown)
@@ -3380,7 +3415,7 @@ function draw() {
             // Don't release if the collision is with the striker
             const striker = capturedBubble.attachedTo;
             if (a !== striker && b !== striker) {
-              console.log('🎣 Captured bubble released due to collision');
+              logger.debugSparse('🎣 Captured bubble released due to collision', null, 120);
               collisionDetected = true; // Set collision flag
               endStrikerCapture();
             }
@@ -3435,7 +3470,7 @@ function draw() {
                 [a.vy, b.vy] = [b.vy, a.vy];
               }
               
-              console.log('⚽ Ball-to-Ball collision - stronger velocity dominates!');
+              logger.debugSparse('⚽ Ball-to-Ball collision - stronger velocity dominates!', null, 180);
             } else if (a.shape === 'ball' || b.shape === 'ball') {
               // Ball colliding with other shapes - ball takes stronger velocity
               const tx = a.x - Math.cos(angle) * (a.radius + b.radius);
@@ -3510,9 +3545,9 @@ function draw() {
         strikerLastDirection.y = striker.vy;
       }
       
-      console.log('🎣 Updated captured bubble position:', a.x, a.y, 'Striker:', striker.x, striker.y);
+              logger.debugSparse('🎣 Updated captured bubble position:', a.x, a.y, 'Striker:', striker.x, striker.y, 300);
     } else if (a.attachedTo && strikerCaptureMode && collisionDetected) {
-      console.log('🎣 Skipping position update due to collision flag');
+              logger.debugSparse('🎣 Skipping position update due to collision flag', null, 300);
     }
     
     // Draw bubble (skip if in drawing mode)
@@ -3799,7 +3834,7 @@ function draw() {
         
         if (!attack.hitTargets.has(target)) {
           // Collision detected! Apply strike effect
-          console.log('💥 Striker hit:', target.title);
+          logger.debugSparse('💥 Striker hit:', target.title, 120);
           
           // Mark this target as hit by this attack
           attack.hitTargets.add(target);
@@ -3863,7 +3898,7 @@ function draw() {
 // ===== INITIALIZATION =====
 
 function init() {
-  console.log("🚀 Initializing MindsEye...");
+  logger.info("🚀 Initializing MindsEye...");
   
   // Set up canvas
   resize();
@@ -3893,7 +3928,7 @@ function init() {
   // Start rendering
   draw();
   
-  console.log("✅ MindsEye initialized successfully");
+  logger.info("✅ MindsEye initialized successfully");
 }
 
 // ===== EVENT LISTENERS =====
@@ -3963,7 +3998,7 @@ function setupEventListeners() {
             // Panel is not open or for different bubble - show panel
             showPanel();
           }
-          console.log('💭 Bubble panel toggled via right-click on bubble');
+          logger.debug('💭 Bubble panel toggled via right-click on bubble');
           return;
         }
       }
@@ -3971,7 +4006,7 @@ function setupEventListeners() {
     
     // If not clicking on a bubble (or in drawing mode), toggle drawing mode
     toggleDrawingMode();
-    console.log('🎨 Drawing mode toggled via right-click on canvas');
+            logger.debug('🎨 Drawing mode toggled via right-click on canvas');
   });
 
   // Double-click behavior depends on mode
@@ -3980,7 +4015,7 @@ function setupEventListeners() {
       // In drawing mode: clear drawings
       clearDrawingOnly();
       drawingPaths = [];
-      console.log('🧽 Drawings cleared via double-click');
+              logger.debug('🧽 Drawings cleared via double-click');
     } else {
       // In bubble mode: open bubble panel
       const rect = canvas.getBoundingClientRect();
@@ -4003,7 +4038,7 @@ function setupEventListeners() {
             // Panel is not open or for different bubble - show panel
             showPanel();
           }
-          console.log('💭 Bubble panel toggled via double-click');
+          logger.debug('💭 Bubble panel toggled via double-click');
           return;
         }
       }
@@ -4012,7 +4047,7 @@ function setupEventListeners() {
       const panel = document.getElementById('panel');
       if (panel.style.display === 'block') {
         closePanel();
-        console.log('💭 Bubble panel closed via double-click on empty space');
+        logger.debug('💭 Bubble panel closed via double-click on empty space');
       }
     }
   });
@@ -4088,7 +4123,7 @@ function setupEventListeners() {
     }
     
     if (!gamepadConnected) {
-      console.log('🎮 PS5 Controller connected:', gamepad.id);
+      logger.info('🎮 PS5 Controller connected:', gamepad.id);
       gamepadConnected = true;
     }
     
@@ -4109,24 +4144,24 @@ function setupEventListeners() {
     
     // Handle button presses (only on press, not hold)
     if (currentState.L1 && !lastGamepadState.L1) {
-      console.log('🎮 L1 pressed - Previous bubble');
+      logger.debugSparse('🎮 L1 pressed - Previous bubble', null, 60);
       previousBubble();
     }
     
     if (currentState.R1 && !lastGamepadState.R1) {
-      console.log('🎮 R1 pressed - Next bubble');
+      logger.debugSparse('🎮 R1 pressed - Next bubble', null, 60);
       nextBubble();
     }
     
     if (currentState.R2 && !lastGamepadState.R2) {
-      console.log('🎮 R2 pressed - Striker attack');
+      logger.debugSparse('🎮 R2 pressed - Striker attack', null, 60);
       if (selectedIdea && selectedIdea.shape === 'striker') {
         triggerStrikerAttack(selectedIdea);
       }
     }
     
     if (currentState.L2 && !lastGamepadState.L2) {
-      console.log('🎮 L2 pressed - Striker capture start');
+      logger.debugSparse('🎮 L2 pressed - Striker capture start', null, 60);
       if (selectedIdea && selectedIdea.shape === 'striker') {
         triggerStrikerCapture(selectedIdea);
       }
@@ -4134,33 +4169,33 @@ function setupEventListeners() {
     
     // Handle L2 release for striker capture
     if (!currentState.L2 && lastGamepadState.L2) {
-      console.log('🎮 L2 released - Striker capture end');
+      logger.debugSparse('🎮 L2 released - Striker capture end', null, 60);
       if (strikerCaptureMode && capturedBubble) {
         endStrikerCapture(); // Only release if a bubble is captured
       }
     }
     
     if (currentState.Triangle && !lastGamepadState.Triangle) {
-      console.log('🎮 Triangle pressed - Toggle video player');
+      logger.debugSparse('🎮 Triangle pressed - Toggle video player', null, 60);
       if (typeof toggleVideoPlayer === 'function') {
         toggleVideoPlayer();
       }
     }
     
     if (currentState.Circle && !lastGamepadState.Circle) {
-      console.log('🎮 Circle pressed - Toggle music panel');
+      logger.debugSparse('🎮 Circle pressed - Toggle music panel', null, 60);
       if (typeof toggleMusicPanel === 'function') {
         toggleMusicPanel();
       }
     }
     
     if (currentState.X && !lastGamepadState.X) {
-      console.log('🎮 X pressed - Select/scroll music track');
+      logger.debugSparse('🎮 X pressed - Select/scroll music track', null, 60);
       handleMusicTrackSelection();
     }
     
     if (currentState.Square && !lastGamepadState.Square) {
-      console.log('🎮 Square pressed - Close panels');
+      logger.debugSparse('🎮 Square pressed - Close panels', null, 60);
       closeAllPanels();
     }
     
@@ -4204,7 +4239,11 @@ function setupEventListeners() {
       
       // Debug analog stick values (only log occasionally to avoid spam)
       if (Math.abs(leftStickX) > 0.05 || Math.abs(leftStickY) > 0.05) {
-        console.log(`🎮 Analog stick: X=${leftStickX.toFixed(2)}, Y=${leftStickY.toFixed(2)}`);
+        // Only log every 120 frames to reduce spam even more
+        if (!window.analogLogFrame || window.analogLogFrame % 120 === 0) {
+          logger.debugSparse(`🎮 Analog stick: X=${leftStickX.toFixed(2)}, Y=${leftStickY.toFixed(2)}`, null, 180);
+        }
+        window.analogLogFrame = (window.analogLogFrame || 0) + 1;
       }
     }
     
@@ -4217,19 +4256,19 @@ function setupEventListeners() {
   
   // Gamepad connection events
   window.addEventListener("gamepadconnected", (e) => {
-    console.log('🎮 Gamepad connected:', e.gamepad.id);
-    console.log('🎮 Gamepad axes count:', e.gamepad.axes.length);
-    console.log('🎮 Gamepad buttons count:', e.gamepad.buttons.length);
+    logger.debugSparse('🎮 Gamepad connected:', e.gamepad.id, null, 60);
     gamepadConnected = true;
     
-    // Debug gamepad info
-    setTimeout(() => {
-      debugGamepadInfo();
-    }, 1000);
+    // Debug gamepad info (only in debug mode)
+    if (currentLogLevel >= LOG_LEVELS.DEBUG) {
+      setTimeout(() => {
+        debugGamepadInfo();
+      }, 1000);
+    }
   });
   
   window.addEventListener("gamepaddisconnected", (e) => {
-    console.log('🎮 Gamepad disconnected:', e.gamepad.id);
+    logger.debugSparse('🎮 Gamepad disconnected:', e.gamepad.id, null, 60);
     gamepadConnected = false;
   });
   
@@ -4238,12 +4277,11 @@ function setupEventListeners() {
     const gamepad = gamepads[0];
     
     if (gamepad) {
-      console.log('🎮 Gamepad debug info:');
-      console.log('  ID:', gamepad.id);
-      console.log('  Axes:', gamepad.axes.length);
-      console.log('  Buttons:', gamepad.buttons.length);
-      console.log('  Axes values:', gamepad.axes.map((val, i) => `Axis ${i}: ${val.toFixed(3)}`));
-      console.log('  Button states:', gamepad.buttons.map((btn, i) => `Button ${i}: ${btn.pressed ? 'pressed' : 'released'}`));
+      logger.debug('🎮 Gamepad debug info:', {
+        id: gamepad.id,
+        axes: gamepad.axes.length,
+        buttons: gamepad.buttons.length
+      });
     }
   }
   
@@ -4259,7 +4297,7 @@ function setupEventListeners() {
     // Handle general shortcuts that work without selected bubble
     switch(e.key) {
       case "Escape":
-        console.log('🔍 ESC key detected!');
+        logger.debugSparse('🔍 ESC key detected!', null, 60);
         // ESC closes any open panels
         closeAllPanels();
         e.preventDefault();
@@ -4316,7 +4354,7 @@ function setupEventListeners() {
           if (speedSlider) {
             speedSlider.value = speedMultiplier;
           }
-          console.log('⚡ Speed decreased to:', speedMultiplier);
+          logger.debug('⚡ Speed decreased to:', speedMultiplier);
         }
         e.preventDefault();
         return;
@@ -4331,7 +4369,7 @@ function setupEventListeners() {
           if (speedSlider) {
             speedSlider.value = speedMultiplier;
           }
-          console.log('⚡ Speed increased to:', speedMultiplier);
+          logger.debug('⚡ Speed increased to:', speedMultiplier);
         }
         e.preventDefault();
         return;
@@ -4474,11 +4512,11 @@ function setupEventListeners() {
           clearTimeout(panelFadeTimeout);
           panelFadeTimeout = null;
         }
-        console.log('⏰ Panel timeout disabled');
+        logger.debug('⏰ Panel timeout disabled');
       } else {
         // Re-enable timeout - start the timer again
         resetPanelFade();
-        console.log('⏰ Panel timeout enabled');
+        logger.debug('⏰ Panel timeout enabled');
       }
     });
   }
@@ -4501,7 +4539,7 @@ function setupEventListeners() {
     shapeSelector.addEventListener('change', function() {
       if (selectedIdea) {
         selectedIdea.shape = this.value;
-        console.log('🔷 Shape changed to:', this.value);
+        logger.debug('🔷 Shape changed to:', this.value);
         // Update action slider visibility when shape changes
         updateActionSliderVisibility();
       }
@@ -4578,7 +4616,7 @@ function setupEventListeners() {
       case 'F':
         if (isDrawingMode) {
           // DISABLED: toggleExistingDrawingsFlash();
-          console.log('⚠️ Flash function temporarily disabled to prevent bubble interference');
+          logger.warn('⚠️ Flash function temporarily disabled to prevent bubble interference');
           e.preventDefault(); // Prevent browser default behavior
         }
         break;
@@ -4586,7 +4624,7 @@ function setupEventListeners() {
       case 'G':
         if (isDrawingMode) {
           // DISABLED: toggleDrawingGlow();
-          console.log('⚠️ Glow function temporarily disabled to prevent bubble interference');
+          logger.warn('⚠️ Glow function temporarily disabled to prevent bubble interference');
           e.preventDefault(); // Prevent browser default behavior
         }
         break;
@@ -4616,7 +4654,7 @@ function togglePauseButton() {
   
   // If in drawing mode, exit drawing mode instead of toggling pause
   if (isDrawingMode) {
-    console.log('⏯️ Pause button pressed while in drawing mode - exiting drawing mode');
+            logger.debug('⏯️ Pause button pressed while in drawing mode - exiting drawing mode');
     toggleDrawingMode();
     return;
   }
@@ -4653,19 +4691,19 @@ function togglePauseButton() {
 // ===== TEST FUNCTIONS =====
 
 function testImageUpload() {
-  console.log('🧪 Testing image upload functionality...');
+  logger.debug('🧪 Testing image upload functionality...');
   alert('🧪 Image upload test - functionality working!');
 }
 
 function testEffects() {
-  console.log('🎭 Testing effects functionality...');
+  logger.debug('🎭 Testing effects functionality...');
   alert('🎭 Effects test - functionality working!');
 }
 
 function toggleBubblePanel() {
   const panel = document.getElementById('panel');
   if (!panel) {
-    console.log('⚠️ Bubble panel not found');
+    logger.warn('⚠️ Bubble panel not found');
     return;
   }
   
@@ -4673,61 +4711,56 @@ function toggleBubblePanel() {
   if (computedStyle.display !== 'none') {
     // Panel is open, close it
     closePanel();
-    console.log('🫧 Bubble panel closed');
+    logger.debug('🫧 Bubble panel closed');
   } else {
     // Panel is closed, open it
     if (!selectedIdea) {
       // No bubble selected, select the last one (most recently added)
       if (ideas && ideas.length > 0) {
         selectedIdea = ideas[ideas.length - 1];
-        console.log('🫧 Auto-selected last bubble for panel');
+        logger.debug('🫧 Auto-selected last bubble for panel');
       } else {
-        console.log('⚠️ No bubbles available to show panel');
+        logger.warn('⚠️ No bubbles available to show panel');
         return;
       }
     }
     showPanel();
-    console.log('🫧 Bubble panel opened');
+    logger.debug('🫧 Bubble panel opened');
   }
 }
 
 function closeAllPanels() {
-  console.log('🔍 ESC pressed - checking panels...');
+  logger.debug('🔍 ESC pressed - checking panels...');
   
   // Close bubble panel
   const panel = document.getElementById('panel');
   if (panel) {
     const computedStyle = window.getComputedStyle(panel);
-    console.log('🔍 Panel display style:', computedStyle.display);
     if (computedStyle.display !== 'none') {
       closePanel();
-      console.log('🚪 Bubble panel closed via ESC');
-    } else {
-      console.log('🔍 Panel already hidden');
+      logger.debug('🚪 Bubble panel closed via ESC');
     }
-  } else {
-    console.log('🔍 Panel element not found');
   }
   
   // Close drawing settings panel
   const drawingSettingsPanel = document.getElementById('drawingSettingsPanel');
   if (drawingSettingsPanel && drawingSettingsPanel.style.display === 'block') {
     hideDrawingSettingsPanel();
-    console.log('🚪 Drawing settings panel closed via ESC');
+    logger.debug('🚪 Drawing settings panel closed via ESC');
   }
   
   // Close analysis panel
   const analysisPanel = document.getElementById('analysisPanel');
   if (analysisPanel && analysisPanel.style.display === 'block') {
     hideAnalysisPanel();
-    console.log('🚪 Analysis panel closed via ESC');
+    logger.debug('🚪 Analysis panel closed via ESC');
   }
   
   // Close analysis iframe container
   const analysisIframeContainer = document.getElementById('analysisIframeContainer');
   if (analysisIframeContainer && analysisIframeContainer.style.display === 'block') {
     closeAnalysisIframe();
-    console.log('🚪 Analysis iframe closed via ESC');
+    logger.debug('🚪 Analysis iframe closed via ESC');
   }
   
   // Close music panel
@@ -4735,7 +4768,7 @@ function closeAllPanels() {
   if (musicPanel && musicPanel.style.display === 'block') {
     if (typeof toggleMusicPanel === 'function') {
       toggleMusicPanel();
-      console.log('🚪 Music panel closed via ESC');
+      logger.debug('🚪 Music panel closed via ESC');
     }
   }
   
@@ -4744,7 +4777,7 @@ function closeAllPanels() {
   if (videoPlaylist && videoPlaylist.style.display === 'block') {
     if (typeof videoTogglePlaylist === 'function') {
       videoTogglePlaylist();
-      console.log('🚪 Video playlist closed via ESC');
+      logger.debug('🚪 Video playlist closed via ESC');
     }
   }
   
@@ -4753,11 +4786,11 @@ function closeAllPanels() {
   if (readPanel && readPanel.style.display === 'block') {
     if (typeof hideReadPanel === 'function') {
       hideReadPanel();
-      console.log('🚪 Read panel closed via ESC');
+      // Logging removed for performance
     }
   }
   
-  console.log('🔒 All panels closed via ESC key');
+  // Logging removed for performance
 }
 
 // Gamepad helper functions
@@ -4777,7 +4810,7 @@ function previousBubble() {
   
   selectedIdea = ideas[newIndex];
   showPanel();
-  console.log('🎮 Switched to previous bubble:', newIndex + 1, 'of', ideas.length);
+  // Logging removed for performance
 }
 
 function nextBubble() {
@@ -4796,7 +4829,7 @@ function nextBubble() {
   
   selectedIdea = ideas[newIndex];
   showPanel();
-  console.log('🎮 Switched to next bubble:', newIndex + 1, 'of', ideas.length);
+  // Logging removed for performance
 }
 
 function handleMusicTrackSelection() {
@@ -4807,7 +4840,7 @@ function handleMusicTrackSelection() {
     // If music panel is closed, open it
     if (typeof toggleMusicPanel === 'function') {
       toggleMusicPanel();
-      console.log('🎮 Opened music panel');
+      // Logging removed for performance
     }
     return;
   }
@@ -4835,7 +4868,7 @@ function handleMusicTrackSelection() {
     // Simulate click on next track
     if (musicItems[nextIndex]) {
       musicItems[nextIndex].click();
-      console.log('🎮 Selected next music track:', nextIndex + 1, 'of', musicItems.length);
+      // Logging removed for performance
     }
   }
 }
@@ -4847,11 +4880,11 @@ function togglePanelSide() {
     if (currentLeft === '15px' || currentLeft === '') {
       panel.style.left = 'auto';
       panel.style.right = '15px';
-      console.log('↔️ Panel moved to right side');
+      // Logging removed for performance
     } else {
       panel.style.left = '15px';
       panel.style.right = 'auto';
-      console.log('↔️ Panel moved to left side');
+      // Logging removed for performance
     }
   }
 }
@@ -4859,41 +4892,35 @@ function togglePanelSide() {
 // ===== BUBBLE BUTTON PNG LOADER =====
 
 function loadBubbleButtonPNGs() {
-  console.log('🔧 Loading bubble button PNGs...');
+  // Performance optimized - removed console logging
   const bubbleButtons = document.querySelectorAll('.bubble-btn[data-png]');
-  console.log(`🔍 Found ${bubbleButtons.length} bubble buttons with PNG data`);
   
   bubbleButtons.forEach(button => {
     const pngName = button.getAttribute('data-png');
     if (pngName) {
-      console.log(`🔍 Attempting to load: images/${pngName}.png for button "${button.textContent.trim()}"`);
       const img = new Image();
       img.onload = function() {
         // PNG loaded successfully, apply it
         button.style.backgroundImage = `url(images/${pngName}.png)`;
         button.style.setProperty('background-image', `url(images/${pngName}.png)`, 'important');
         button.classList.add('has-png');
-        console.log(`🖼️ Loaded PNG for button: ${pngName}.png`);
-        console.log(`🔍 Button background set to: ${button.style.backgroundImage}`);
         
         // Special handling for bucheck.png
         if (pngName === 'bucheck') {
-          console.log(`🏁 Special bucheck.png loaded successfully!`);
           // Force refresh the background style
           setTimeout(() => {
             button.style.setProperty('background-image', `url(images/${pngName}.png)`, 'important');
             button.style.setProperty('background-size', 'contain', 'important');
             button.style.setProperty('background-repeat', 'no-repeat', 'important');
             button.style.setProperty('background-position', 'center', 'important');
-            console.log(`🔄 Forced refresh for bucheck.png`);
           }, 100);
         }
       };
       img.onerror = function() {
-        // PNG not found, keep text
-        console.log(`📝 No PNG found for button: ${pngName}.png, using text`);
+        // PNG not found, keep text - silent fail for performance
         if (pngName === 'bucheck') {
-          console.log(`❌ ERROR: bucheck.png failed to load despite existing in images/`);
+          // Only log critical errors for bucheck
+          logger.error(`❌ bucheck.png failed to load`);
         }
       };
       img.src = `images/${pngName}.png`;
@@ -4903,10 +4930,9 @@ function loadBubbleButtonPNGs() {
 
 // ===== DEBUGGING FUNCTION FOR PNG LOADING =====
 function forceLoadBucheck() {
-  console.log('🔧 Force loading bucheck.png...');
+  // Performance optimized - removed console logging
   const checkButton = document.querySelector('button[data-png="bucheck"]');
   if (checkButton) {
-    console.log('✅ Found bucheck button:', checkButton);
     const img = new Image();
     img.onload = function() {
       checkButton.style.setProperty('background-image', 'url(images/bucheck.png)', 'important');
@@ -4915,14 +4941,11 @@ function forceLoadBucheck() {
       checkButton.style.setProperty('background-position', 'center', 'important');
       checkButton.style.setProperty('background-color', 'transparent', 'important');
       checkButton.classList.add('has-png');
-      console.log('🏁 Forced bucheck.png to load!');
     };
     img.onerror = function() {
-      console.log('❌ Failed to force load bucheck.png');
+      logger.error('❌ Failed to force load bucheck.png');
     };
     img.src = 'images/bucheck.png';
-  } else {
-    console.log('❌ Could not find bucheck button');
   }
 }
 
@@ -4934,7 +4957,6 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(() => {
     const bucheckButton = document.querySelector('button[data-png="bucheck"]');
     if (bucheckButton) {
-      console.log('🔧 Force-applying has-png class to bucheck button');
       bucheckButton.classList.add('has-png');
       bucheckButton.style.setProperty('background-image', 'url(images/bucheck.png)', 'important');
     }
@@ -4942,4 +4964,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ===== MAIN.JS LOADED =====
-console.log('🔧 Main.js loaded successfully'); 
+// Performance optimized - removed console logging 
