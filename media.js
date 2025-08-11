@@ -4587,6 +4587,13 @@ function initializeMediaSystem() {
       setTimeout(() => {
         loadToolbarButtonImages();
         ensureMobileToolbarVisibility();
+        // Set media toolbar to minimized by default
+        const mediaToolbar = document.getElementById('mediaToolbar');
+        if (mediaToolbar) {
+          mediaToolbar.classList.add('minimized');
+          isMediaToolbarMinimized = true;
+          logger.info('📺 Media toolbar set to minimized by default');
+        }
         logger.success('🎛️ Media system initialized after DOM load', null, 'SYSTEM');
       }, 100);
     });
@@ -4595,6 +4602,13 @@ function initializeMediaSystem() {
     setTimeout(() => {
       loadToolbarButtonImages();
       ensureMobileToolbarVisibility();
+      // Set media toolbar to minimized by default
+      const mediaToolbar = document.getElementById('mediaToolbar');
+      if (mediaToolbar) {
+        mediaToolbar.classList.add('minimized');
+        isMediaToolbarMinimized = true;
+        logger.info('📺 Media toolbar set to minimized by default');
+      }
       logger.success('🎛️ Media system initialized immediately', null, 'SYSTEM');
     }, 100);
   }

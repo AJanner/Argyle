@@ -1726,7 +1726,7 @@ function drawPath(path) {
 
 function changeDrawingColor() {
   const colors = [
-    '#FF3131', '#178236', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', 
+    '#FF3131', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', 
     '#FFA500', '#800080', '#008000', '#000080', '#FFD700', '#FF69B4',
     '#32CD32', '#FF4500', '#8A2BE2', '#00CED1', '#FF1493', '#32CD32',
     '#FF6347', '#9370DB', '#20B2AA', '#FFB6C1', '#DDA0DD', '#98FB98',
@@ -4542,14 +4542,21 @@ function setupEventListeners() {
         toggleBubblePanel();
         e.preventDefault();
         return;
+      case "u":
+      case "U":
+        // U duplicates selected bubble
+        if (selectedIdea && !e.target.matches('input, textarea')) {
+          duplicateBubble(selectedIdea);
+        }
+        e.preventDefault();
+        return;
       // S key shortcut removed - conflicts with smooth drawing shortcut
       // Search functionality available through bubble panel instead
       case "d":
       case "D":
-        // D duplicates selected bubble
-        if (selectedIdea && !e.target.matches('input, textarea')) {
-          duplicateBubble(selectedIdea);
-        }
+        // D toggles drawing mode
+        logger.info('🎨 D key pressed - toggling drawing mode');
+        toggleDrawingMode();
         e.preventDefault();
         return;
       case "m":
@@ -4809,10 +4816,6 @@ function setupEventListeners() {
     
     // Drawing shortcuts work regardless of drawing mode state
     switch(e.key) {
-      case 'd':
-      case 'D':
-        toggleDrawingMode();
-        break;
       case 'w':
       case 'W':
         if (isDrawingMode) {
