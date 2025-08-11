@@ -91,7 +91,7 @@ class OrbitalSystem {
 
   render(ctx, width, height) {
     // Clear with fade effect
-    // Light fade for smooth motion trails
+    // Original fade for spirograph trails
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.fillRect(0, 0, width, height);
     

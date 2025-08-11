@@ -337,7 +337,7 @@ function render2DFallback(ctx, time, audioData, width, height) {
   PARTICLE_SYSTEM.update(deltaTime, audioData);
   
   // Clear with fade effect
-      // Light fade for smooth motion trails
+      // Original fade for storm effects
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.fillRect(0, 0, width, height);
   

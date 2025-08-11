@@ -238,8 +238,10 @@ function render2DFallback(ctx, time, audio, width, height) {
   const centerY = height / 2;
   
   // Clear with fade effect
-      // Light fade for smooth motion trails
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      // Audio-reactive fade for MilkDrop-style effects
+    const audioIntensity = audioData ? (audioData.volume + audioData.bass) / 255 : 0.5;
+    const fadeIntensity = 0.05 + audioIntensity * 0.15;
+    ctx.fillStyle = `rgba(0, 0, 0, ${fadeIntensity})`;
     ctx.fillRect(0, 0, width, height);
   
   // Audio-reactive parameters

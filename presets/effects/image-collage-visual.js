@@ -239,7 +239,7 @@ export function renderImageCollage(ctx, time, audioData, width, height){
       console.log('[collage] Images loaded asynchronously');
     });
     // Show loading state
-    // Light fade for smooth motion trails
+    // Original fade for image transitions
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.fillRect(0, 0, width, height);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';

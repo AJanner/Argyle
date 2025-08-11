@@ -6274,25 +6274,15 @@ function connectLocalVisualizerToAudio(audioElement) {
     try {
         if (!audioElement || typeof LocalVisualizer === 'undefined') return;
         
-        // Create audio context for visualization
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!window.localAudioContext) {
-            window.localAudioContext = new AudioContext();
+        // Connect the LocalVisualizer to the audio element
+        if (LocalVisualizer.connectToAudio) {
+            LocalVisualizer.connectToAudio(audioElement);
         }
         
-        // Create analyser node
-        if (!window.localAnalyser) {
-            window.localAnalyser = window.localAudioContext.createAnalyser();
-            window.localAnalyser.fftSize = 2048;
-            window.localAnalyser.smoothingTimeConstant = 0.8;
-        }
-        
-        // Connect audio to analyser
-        if (!window.localAudioSource) {
-            window.localAudioSource = window.localAudioContext.createMediaElementSource(audioElement);
-            window.localAudioSource.connect(window.localAnalyser);
-            window.localAnalyser.connect(window.localAudioContext.destination);
-        }
+        // Dispatch audio connected event for other systems
+        document.dispatchEvent(new CustomEvent('audioConnected', {
+            detail: { audioElement: audioElement }
+        }));
         
         logger.info('🎵 Local visualizer connected to audio');
         

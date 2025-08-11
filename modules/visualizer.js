@@ -261,6 +261,17 @@ class LocalVisualizer {
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 256;
       this.analyser.smoothingTimeConstant = 0.8;
+      
+      // Try to connect to existing global audio
+      if (window.currentAudio) {
+        this.connectToAudio(window.currentAudio);
+      }
+      
+      // Listen for audio connection events
+      document.addEventListener('audioConnected', (event) => {
+        this.connectToAudio(event.detail.audioElement);
+      });
+      
       console.log('✅ Audio reactivity setup complete');
     } catch (error) {
       console.warn('⚠️ Audio reactivity setup failed:', error);
@@ -275,7 +286,12 @@ class LocalVisualizer {
       this.audioSource = this.audioContext.createMediaElementSource(audioElement);
       this.audioSource.connect(this.analyser);
       this.analyser.connect(this.audioContext.destination);
-      console.log('✅ Audio connected to visualizer');
+      
+      // Also make audio data available globally for other systems
+      this.updateAudioData();
+      window.globalAudioData = this.audioData;
+      
+      console.log('✅ Audio connected to visualizer and made globally available');
     } catch (error) {
       console.warn('⚠️ Audio connection failed:', error);
     }
@@ -299,6 +315,10 @@ class LocalVisualizer {
       const volume = this.calculateVolume(timeData);
       
       this.audioData = { bass, mid, treble, volume };
+      
+      // Make audio data globally available
+      window.globalAudioData = this.audioData;
+      
     } catch (error) {
       // Silent fail for audio updates
     }

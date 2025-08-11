@@ -254,9 +254,11 @@ function renderMatrixRainFallback(ctx, time, audioData, width, height) {
   const centerY = height / 2;
   const t = time * 0.001;
   
-  // Light fade for smooth motion trails
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-  ctx.fillRect(0, 0, width, height);
+      // Audio-reactive fade for Matrix rain trails
+    const audioIntensity = audioData ? (audioData.volume + audioData.bass) / 255 : 0.5;
+    const fadeIntensity = 0.05 + audioIntensity * 0.15;
+    ctx.fillStyle = `rgba(0, 0, 0, ${fadeIntensity})`;
+    ctx.fillRect(0, 0, width, height);
   
   // Audio-reactive parameters
   const volume = (audioData && audioData.volume) ? audioData.volume / 255 : 0.5;

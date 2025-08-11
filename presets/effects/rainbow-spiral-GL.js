@@ -203,7 +203,7 @@ function renderGL(ctx2d, time, audioData, width, height){
 function render2DFallback(ctx, time, audioData, width, height){
   const cx = width/2, cy = height/2;
   ctx.globalCompositeOperation = 'source-over';
-  // Light fade for smooth motion trails
+  // Original fade for kaleidoscope effects
   ctx.fillStyle = 'rgba(0,0,0,0.18)';
   ctx.fillRect(0,0,width,height);
   ctx.globalCompositeOperation = 'lighter';
