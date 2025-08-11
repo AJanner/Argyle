@@ -5,23 +5,79 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <link href="favicon.ico" rel="icon" type="image/x-icon"/>
   
-  <!-- Butterchurn visualization library -->
-  <!-- Primary CDN -->
-  <script src="https://unpkg.com/butterchurn@2.6.7/butterchurn.min.js"></script>
-  <script src="https://unpkg.com/butterchurn-presets@2.4.7/dist/butterchurn-presets.min.js"></script>
-  
-  <!-- Fallback CDN -->
+  <!-- Butterchurn visualization library - Loaded dynamically to avoid CDN issues -->
   <script>
-    if (typeof butterchurn === 'undefined') {
-      const script1 = document.createElement('script');
-      script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/butterchurn/2.6.7/butterchurn.min.js';
-      document.head.appendChild(script1);
-    }
-    if (typeof butterchurnPresets === 'undefined') {
-      const script2 = document.createElement('script');
-      script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/butterchurn-presets/2.4.7/butterchurn-presets.min.js';
-      document.head.appendChild(script2);
-    }
+    // Dynamic loading system to avoid CDN security blocks
+    window.loadButterchurnDynamically = function() {
+      return new Promise((resolve, reject) => {
+        // Try multiple CDN sources with better error handling
+        const sources = [
+          'https://unpkg.com/butterchurn@2.6.7/butterchurn.min.js',
+          'https://cdnjs.cloudflare.com/ajax/libs/butterchurn/2.6.7/butterchurn.min.js',
+          'https://fastly.jsdelivr.net/npm/butterchurn@2.6.7/butterchurn.min.js'
+        ];
+        
+        let currentSource = 0;
+        
+        function tryNextSource() {
+          if (currentSource >= sources.length) {
+            reject(new Error('All CDN sources failed'));
+            return;
+          }
+          
+          const script = document.createElement('script');
+          script.src = sources[currentSource];
+          script.onload = () => {
+            console.log(`✅ Butterchurn loaded from: ${sources[currentSource]}`);
+            resolve();
+          };
+          script.onerror = () => {
+            console.warn(`⚠️ Failed to load from: ${sources[currentSource]}`);
+            currentSource++;
+            tryNextSource();
+          };
+          
+          document.head.appendChild(script);
+        }
+        
+        tryNextSource();
+      });
+    };
+    
+    window.loadButterchurnPresetsDynamically = function() {
+      return new Promise((resolve, reject) => {
+        const sources = [
+          'https://unpkg.com/butterchurn-presets@2.4.7/dist/butterchurn-presets.min.js',
+          'https://cdnjs.cloudflare.com/ajax/libs/butterchurn-presets/2.4.7/butterchurn-presets.min.js',
+          'https://fastly.jsdelivr.net/npm/butterchurn-presets@2.4.7/dist/butterchurn-presets.min.js'
+        ];
+        
+        let currentSource = 0;
+        
+        function tryNextSource() {
+          if (currentSource >= sources.length) {
+            reject(new Error('All preset CDN sources failed'));
+            return;
+          }
+          
+          const script = document.createElement('script');
+          script.src = sources[currentSource];
+          script.onload = () => {
+            console.log(`✅ Butterchurn presets loaded from: ${sources[currentSource]}`);
+            resolve();
+          };
+          script.onerror = () => {
+            console.warn(`⚠️ Failed to load presets from: ${sources[currentSource]}`);
+            currentSource++;
+            tryNextSource();
+          };
+          
+          document.head.appendChild(script);
+        }
+        
+        tryNextSource();
+      });
+    };
   </script>
   
   <title>💭MindsEye💬~Ideas</title>
@@ -396,6 +452,7 @@
     <div class="projectm-controls">
       <button onclick="startButterchurn()">🎵 Start Visualizer</button>
       <button onclick="retryButterchurn()" id="retryBtn" style="display: none;">🔄 Retry Loading</button>
+      <button onclick="nextLocalEffect()" id="nextLocalEffectBtn" style="display: none;">🎨 Next Effect</button>
       <button onclick="previousPreset()">⏮️ Previous</button>
       <button onclick="nextPreset()">⏭️ Next</button>
       <button onclick="randomPreset()">🎲 Random</button>

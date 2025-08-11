@@ -5405,12 +5405,46 @@ function startButterchurn() {
 
 function initializeButterchurn() {
     try {
-        // Check if Butterchurn is available
-        if (typeof butterchurn === 'undefined') {
-            loadButterchurnScripts();
+        // Check if Butterchurn is already available
+        if (typeof butterchurn !== 'undefined') {
+            createButterchurnVisualizer();
             return;
         }
         
+        // Use dynamic loading system
+        console.log('🔄 Loading Butterchurn dynamically...');
+        document.getElementById('presetStatus').textContent = 'Loading Butterchurn...';
+        
+        // Load Butterchurn core first
+        window.loadButterchurnDynamically()
+            .then(() => {
+                console.log('✅ Butterchurn core loaded successfully');
+                // Then load presets
+                return window.loadButterchurnPresetsDynamically();
+            })
+            .then(() => {
+                console.log('✅ Butterchurn presets loaded successfully');
+                document.getElementById('presetStatus').textContent = 'Butterchurn loaded';
+                // Create visualizer
+                createButterchurnVisualizer();
+            })
+            .catch((error) => {
+                console.error('❌ Failed to load Butterchurn:', error);
+                document.getElementById('presetStatus').textContent = 'CDN loading failed';
+                showRetryButton();
+                // Fallback to local visualization system
+                initializeLocalFallback();
+            });
+        
+    } catch (error) {
+        console.error('Failed to initialize Butterchurn:', error);
+        document.getElementById('presetStatus').textContent = 'Initialization failed';
+        initializeLocalFallback();
+    }
+}
+
+function createButterchurnVisualizer() {
+    try {
         const canvas = document.getElementById('butterchurnCanvas');
         if (!canvas) {
             throw new Error('Canvas not found');
@@ -5435,21 +5469,25 @@ function initializeButterchurn() {
         // Connect to current audio if playing
         connectCurrentAudio();
         
-        logger.info('🎨 Butterchurn initialized successfully');
+        logger.info('🎨 Butterchurn visualizer created successfully');
+        
+        // Load presets
+        loadAllPresets();
+        
+        // Hide local effect button since Butterchurn is working
+        hideLocalEffectButton();
         
     } catch (error) {
-        console.error('Failed to initialize Butterchurn:', error);
-        document.getElementById('presetStatus').textContent = 'Initialization failed';
-        
-        // Fallback to local visualization system
+        console.error('Failed to create Butterchurn visualizer:', error);
+        document.getElementById('presetStatus').textContent = 'Visualizer creation failed';
         initializeLocalFallback();
     }
 }
 
 function initializeLocalFallback() {
     try {
-        console.log('🔄 Initializing local fallback visualization system');
-        document.getElementById('presetStatus').textContent = 'Using local fallback';
+        console.log('🔄 Initializing enhanced local fallback visualization system');
+        document.getElementById('presetStatus').textContent = 'Using enhanced local fallback';
         
         const canvas = document.getElementById('butterchurnCanvas');
         if (!canvas) return;
@@ -5457,12 +5495,20 @@ function initializeLocalFallback() {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
         
-        // Create local fallback visualizer
+        // Create enhanced local fallback visualizer with multiple preset-like effects
         const localViz = {
             canvas: canvas,
             ctx: ctx,
             isRunning: false,
             time: 0,
+            currentEffect: 0,
+            effects: [
+                'wavePattern',
+                'particleSystem', 
+                'circularRings',
+                'spectrumBars',
+                'geometricShapes'
+            ],
             
             start: function() {
                 this.isRunning = true;
@@ -5473,17 +5519,53 @@ function initializeLocalFallback() {
                 this.isRunning = false;
             },
             
+            nextEffect: function() {
+                this.currentEffect = (this.currentEffect + 1) % this.effects.length;
+                this.time = 0; // Reset time for new effect
+                console.log(`🎨 Local effect: ${this.effects[this.currentEffect]}`);
+            },
+            
             render: function() {
                 if (!this.isRunning) return;
                 
                 const width = this.canvas.width;
                 const height = this.canvas.height;
                 
-                // Clear canvas
+                // Clear canvas with fade effect
                 this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
                 this.ctx.fillRect(0, 0, width, height);
                 
-                // Create wave pattern
+                // Render current effect
+                switch(this.effects[this.currentEffect]) {
+                    case 'wavePattern':
+                        this.renderWavePattern(width, height);
+                        break;
+                    case 'particleSystem':
+                        this.renderParticleSystem(width, height);
+                        break;
+                    case 'circularRings':
+                        this.renderCircularRings(width, height);
+                        break;
+                    case 'spectrumBars':
+                        this.renderSpectrumBars(width, height);
+                        break;
+                    case 'geometricShapes':
+                        this.renderGeometricShapes(width, height);
+                        break;
+                }
+                
+                this.time += 0.02;
+                
+                // Auto-switch effects every 10 seconds
+                if (Math.floor(this.time * 50) % 500 === 0) {
+                    this.nextEffect();
+                }
+                
+                requestAnimationFrame(() => this.render());
+            },
+            
+            renderWavePattern: function(width, height) {
+                // Complex wave pattern with multiple frequencies
                 this.ctx.strokeStyle = `hsl(${(this.time * 50) % 360}, 70%, 60%)`;
                 this.ctx.lineWidth = 3;
                 this.ctx.beginPath();
@@ -5493,8 +5575,9 @@ function initializeLocalFallback() {
                     const wave1 = Math.sin(this.time + progress * Math.PI * 4) * 50;
                     const wave2 = Math.sin(this.time * 0.7 + progress * Math.PI * 8) * 30;
                     const wave3 = Math.sin(this.time * 0.5 + progress * Math.PI * 2) * 20;
+                    const wave4 = Math.sin(this.time * 0.3 + progress * Math.PI * 12) * 15;
                     
-                    const y = height / 2 + wave1 + wave2 + wave3;
+                    const y = height / 2 + wave1 + wave2 + wave3 + wave4;
                     if (x === 0) {
                         this.ctx.moveTo(x, y);
                     } else {
@@ -5503,40 +5586,116 @@ function initializeLocalFallback() {
                 }
                 
                 this.ctx.stroke();
-                
-                // Add particles
-                for (let i = 0; i < 20; i++) {
-                    const angle = (i / 20) * Math.PI * 2 + this.time * 0.5;
-                    const radius = 100 + Math.sin(this.time * 2 + i * 0.5) * 50;
+            },
+            
+            renderParticleSystem: function(width, height) {
+                // Dynamic particle system with physics-like behavior
+                for (let i = 0; i < 30; i++) {
+                    const angle = (i / 30) * Math.PI * 2 + this.time * 0.5;
+                    const radius = 80 + Math.sin(this.time * 2 + i * 0.5) * 60;
                     const x = width / 2 + Math.cos(angle) * radius;
                     const y = height / 2 + Math.sin(angle) * radius;
-                    const size = 5 + Math.sin(this.time * 3 + i * 0.3) * 3;
+                    const size = 4 + Math.sin(this.time * 3 + i * 0.3) * 4;
                     
-                    this.ctx.fillStyle = `hsl(${(i * 18 + this.time * 30) % 360}, 80%, 70%)`;
+                    // Add velocity effect
+                    const velocityX = Math.sin(this.time + i * 0.2) * 2;
+                    const velocityY = Math.cos(this.time + i * 0.2) * 2;
+                    
+                    this.ctx.fillStyle = `hsl(${(i * 12 + this.time * 30) % 360}, 80%, 70%)`;
                     this.ctx.beginPath();
-                    this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                    this.ctx.arc(x + velocityX, y + velocityY, size, 0, Math.PI * 2);
                     this.ctx.fill();
                 }
+            },
+            
+            renderCircularRings: function(width, height) {
+                // Expanding circular rings with ripple effects
+                const centerX = width / 2;
+                const centerY = height / 2;
                 
-                this.time += 0.02;
-                requestAnimationFrame(() => this.render());
+                for (let ring = 0; ring < 5; ring++) {
+                    const ringRadius = (this.time * 20 + ring * 40) % (Math.max(width, height) / 2);
+                    const ringOpacity = Math.max(0, 1 - (ringRadius / (Math.max(width, height) / 2)));
+                    const ringWidth = 3 + Math.sin(this.time * 2 + ring) * 2;
+                    
+                    this.ctx.strokeStyle = `hsla(${(this.time * 100 + ring * 60) % 360}, 80%, 60%, ${ringOpacity})`;
+                    this.ctx.lineWidth = ringWidth;
+                    this.ctx.beginPath();
+                    this.ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
+            },
+            
+            renderSpectrumBars: function(width, height) {
+                // Audio spectrum-like bars with wave motion
+                const barCount = 20;
+                const barWidth = width / barCount;
+                
+                for (let i = 0; i < barCount; i++) {
+                    const x = i * barWidth;
+                    const progress = i / barCount;
+                    
+                    const barHeight = 20 + Math.sin(this.time * 2 + progress * Math.PI * 4) * 80;
+                    const barY = height - barHeight;
+                    
+                    this.ctx.fillStyle = `hsl(${(progress * 360 + this.time * 100) % 360}, 80%, 60%)`;
+                    this.ctx.fillRect(x + 2, barY, barWidth - 4, barHeight);
+                }
+            },
+            
+            renderGeometricShapes: function(width, height) {
+                // Rotating geometric shapes with color evolution
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const shapeCount = 6;
+                
+                for (let i = 0; i < shapeCount; i++) {
+                    const angle = (i / shapeCount) * Math.PI * 2 + this.time;
+                    const radius = 60 + Math.sin(this.time * 1.5 + i * 0.5) * 20;
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+                    const size = 15 + Math.sin(this.time * 2 + i * 0.3) * 8;
+                    
+                    this.ctx.fillStyle = `hsl(${(i * 60 + this.time * 80) % 360}, 80%, 60%)`;
+                    this.ctx.beginPath();
+                    
+                    // Draw different shapes
+                    if (i % 3 === 0) {
+                        // Circle
+                        this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                    } else if (i % 3 === 1) {
+                        // Square
+                        this.ctx.rect(x - size, y - size, size * 2, size * 2);
+                    } else {
+                        // Triangle
+                        this.ctx.moveTo(x, y - size);
+                        this.ctx.lineTo(x - size, y + size);
+                        this.ctx.lineTo(x + size, y + size);
+                        this.ctx.closePath();
+                    }
+                    
+                    this.ctx.fill();
+                }
             }
         };
         
         // Store local visualizer
         window.localVisualizer = localViz;
         
-        // Update UI to show fallback mode
-        document.getElementById('currentPreset').textContent = 'Local Fallback';
-        document.getElementById('totalPresets').textContent = '1';
+        // Update UI to show enhanced fallback mode
+        document.getElementById('currentPreset').textContent = 'Enhanced Local Fallback';
+        document.getElementById('totalPreset').textContent = '5 Effects';
+        
+        // Show local effect button
+        showLocalEffectButton();
         
         // Start local visualizer
         localViz.start();
         
-        logger.info('🎨 Local fallback visualization system initialized');
+        logger.info('🎨 Enhanced local fallback visualization system initialized');
         
     } catch (error) {
-        console.error('Failed to initialize local fallback:', error);
+        console.error('Failed to initialize enhanced local fallback:', error);
         document.getElementById('presetStatus').textContent = 'All systems failed';
     }
 }
@@ -5969,6 +6128,9 @@ function retryButterchurn() {
         const retryBtn = document.getElementById('retryBtn');
         if (retryBtn) retryBtn.style.display = 'none';
         
+        // Hide local effect button
+        hideLocalEffectButton();
+        
         // Update status
         document.getElementById('presetStatus').textContent = 'Retrying...';
         document.getElementById('currentPreset').textContent = 'None';
@@ -6006,5 +6168,26 @@ function showRetryButton() {
     const retryBtn = document.getElementById('retryBtn');
     if (retryBtn) {
         retryBtn.style.display = 'inline-block';
+    }
+}
+
+function nextLocalEffect() {
+    if (window.localVisualizer) {
+        window.localVisualizer.nextEffect();
+        logger.info('🎨 Switched to next local effect');
+    }
+}
+
+function showLocalEffectButton() {
+    const nextLocalEffectBtn = document.getElementById('nextLocalEffectBtn');
+    if (nextLocalEffectBtn) {
+        nextLocalEffectBtn.style.display = 'inline-block';
+    }
+}
+
+function hideLocalEffectButton() {
+    const nextLocalEffectBtn = document.getElementById('nextLocalEffectBtn');
+    if (nextLocalEffectBtn) {
+        nextLocalEffectBtn.style.display = 'none';
     }
 }
