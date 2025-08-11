@@ -1240,7 +1240,7 @@ button[data-png="bucheck"].has-png {
   padding: 15px;
   border-radius: 10px;
   border: 2px solid #4CAF50;
-  z-index: 60000;
+  z-index: 60000 !important;
   display: none;
   overflow-y: auto;
   transition: all 0.3s ease;
