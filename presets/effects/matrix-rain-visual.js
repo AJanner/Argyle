@@ -145,7 +145,7 @@ function tickColumns(dt, energy01, bass01, mid01, treb01, height){
 }
 
 function drawRain(ctx, width, height){
-  // Trail fade
+  // Trail fade for smooth motion trails
   ctx.save();
   ctx.globalCompositeOperation = 'source-over';
   ctx.fillStyle = `rgba(0,0,0,${MATRIX.fade})`;
@@ -254,7 +254,7 @@ function renderMatrixRainFallback(ctx, time, audioData, width, height) {
   const centerY = height / 2;
   const t = time * 0.001;
   
-  // Clear with fade
+  // Light fade for smooth motion trails
   ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
   ctx.fillRect(0, 0, width, height);
   

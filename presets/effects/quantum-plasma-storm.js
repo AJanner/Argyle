@@ -337,8 +337,9 @@ function render2DFallback(ctx, time, audioData, width, height) {
   PARTICLE_SYSTEM.update(deltaTime, audioData);
   
   // Clear with fade effect
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-  ctx.fillRect(0, 0, width, height);
+      // Light fade for smooth motion trails
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillRect(0, 0, width, height);
   
   // Add dynamic emitters based on audio
   const centerX = width / 2;

@@ -238,8 +238,9 @@ function render2DFallback(ctx, time, audio, width, height) {
   const centerY = height / 2;
   
   // Clear with fade effect
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-  ctx.fillRect(0, 0, width, height);
+      // Light fade for smooth motion trails
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillRect(0, 0, width, height);
   
   // Audio-reactive parameters
   const bass = (audio && audio.bass) || 0;

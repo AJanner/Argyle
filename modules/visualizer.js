@@ -361,10 +361,6 @@ class LocalVisualizer {
     const centerY = height / 2;
     const time = this.time * 0.001;
     
-    // Clear with fade
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-    this.ctx.fillRect(0, 0, width, height);
-    
     // Draw pulsing circle
     const pulse = Math.sin(time * 3) * 0.5 + 0.5;
     const radius = 50 + pulse * 30;
@@ -391,6 +387,10 @@ class LocalVisualizer {
     try {
       // Update audio data
       this.updateAudioData();
+      
+      // Clear with a very light fade for smooth motion trails
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      this.ctx.fillRect(0, 0, width, height);
       
       // Get current preset
       const preset = this.presets[this.currentPreset];
