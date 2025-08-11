@@ -5283,19 +5283,13 @@ function toggleProjectMPanel() {
             // Show the panel
             panel.style.display = 'block';
             
-            // Clear analysis panel timeout to prevent it from closing
-            if (window.analysisPanelFadeTimeout) {
-                clearTimeout(window.analysisPanelFadeTimeout);
-                window.analysisPanelFadeTimeout = null;
+            // Initialize local visualizer if not already done
+            if (typeof window.LocalVisualizer !== 'undefined' && !window.LocalVisualizer.canvas) {
+                // Module system handles initialization
+                console.log('🎨 Module-based visualizer ready');
             }
             
-                    // Initialize local visualizer if not already done
-        if (typeof window.LocalVisualizer !== 'undefined' && !window.LocalVisualizer.canvas) {
-            // Module system handles initialization
-            console.log('🎨 Module-based visualizer ready');
-        }
-            
-            logger.info('🎨 Local visualization panel opened - analysis panel timeout cleared');
+            logger.info('🎨 Local visualization panel opened');
         }
         
     } catch (error) {
@@ -5321,22 +5315,7 @@ function closeProjectMPanel() {
         hideRetryButton();
         hideLocalEffectButton();
         
-        // Restart the analysis panel fade-out timeout since visualization panel is closed
-        if (window.analysisPanelFadeTimeout === null) {
-            window.analysisPanelFadeTimeout = setTimeout(() => {
-                const analysisPanel = document.getElementById('analysisPanel');
-                if (analysisPanel && analysisPanel.style.display === 'block') {
-                    // Fade out the analysis panel
-                    analysisPanel.style.opacity = '0';
-                    setTimeout(() => {
-                        analysisPanel.style.display = 'none';
-                        window.analysisPanelFadeTimeout = null;
-                    }, 1000);
-                }
-            }, 30000);
-            
-            logger.info('🎨 Visualization panel closed - analysis panel timeout restarted (30s)');
-        }
+        logger.info('🎨 Visualization panel closed');
         
     } catch (error) {
         console.error('Failed to close ProjectM panel:', error);
