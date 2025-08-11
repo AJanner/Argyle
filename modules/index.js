@@ -108,13 +108,21 @@ function attachEffects(visualizer) {
   visualizer.renderSupernova = (width, height) => Effects.renderSupernova(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
   
   // Attach custom effects from presets
-  if (typeof window.customEffects !== 'undefined') {
-    Object.entries(window.customEffects).forEach(([type, renderFunc]) => {
-      const methodName = `render${type.charAt(0).toUpperCase() + type.slice(1)}`;
-      visualizer[methodName] = (width, height) => renderFunc(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
-      console.log(`✅ Custom effect attached: ${methodName}`);
-    });
-  }
+  const attachCustomEffects = () => {
+    if (typeof window.customEffects !== 'undefined') {
+      Object.entries(window.customEffects).forEach(([type, renderFunc]) => {
+        const methodName = `render${type.charAt(0).toUpperCase() + type.slice(1)}`;
+        visualizer[methodName] = (width, height) => renderFunc(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
+        console.log(`✅ Custom effect attached: ${methodName}`);
+      });
+    } else {
+      // Wait for customEffects to be available
+      setTimeout(attachCustomEffects, 100);
+    }
+  };
+  
+  // Start attaching custom effects
+  attachCustomEffects();
   
   console.log('✅ All effects attached to visualizer');
 }

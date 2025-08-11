@@ -1,6 +1,6 @@
 /**
- * Local Visualizer - Core visualization system
- * Handles canvas creation, audio reactivity, and preset management
+ * LocalVisualizer - Advanced Music Visualization Module
+ * Provides 37+ high-quality visualization effects with audio reactivity
  */
 
 class LocalVisualizer {
@@ -8,13 +8,20 @@ class LocalVisualizer {
     this.canvas = null;
     this.ctx = null;
     this.isRunning = false;
-    this.animationId = null;
     this.time = 0;
-    this.audioData = { bass: 0, mid: 0, treble: 0, volume: 0 };
-    this.presets = [];
     this.currentPreset = 0;
-    this.audioContext = null;
+    this.presets = [];
+    this.effects = {};
+    this.audioData = {
+      frequency: new Uint8Array(256),
+      waveform: new Uint8Array(256),
+      volume: 0,
+      bass: 0,
+      mid: 0,
+      treble: 0
+    };
     this.analyser = null;
+    this.audioContext = null;
     this.audioSource = null;
   }
 
@@ -81,25 +88,7 @@ class LocalVisualizer {
   }
 
   // Load local preset definitions
-  async loadLocalPresets() {
-    try {
-      // Try to import and load custom presets
-      const customPresets = await import('../presets/index.js');
-      if (customPresets && customPresets.presets) {
-        this.presets = customPresets.presets;
-        console.log(`✅ Loaded ${this.presets.length} presets (including ${customPresets.presets.filter(p => p.custom).length} custom)`);
-      } else {
-        // Fallback to built-in presets
-        this.loadBuiltInPresets();
-      }
-    } catch (error) {
-      console.warn('⚠️ Failed to load custom presets, using built-in:', error);
-      this.loadBuiltInPresets();
-    }
-  }
-
-  // Load built-in presets as fallback
-  loadBuiltInPresets() {
+  loadLocalPresets() {
     this.presets = [
       {
         name: 'Wave Symphony',
@@ -252,99 +241,76 @@ class LocalVisualizer {
         description: 'Explosive supernova simulation'
       }
     ];
+
+    this.updatePresetInfo();
+    console.log(`✅ Loaded ${this.presets.length} local presets`);
   }
 
   // Setup audio reactivity
   setupAudioReactivity() {
+    // Listen for audio connection events
+    document.addEventListener('audioConnected', (event) => {
+      this.connectToAudio(event.detail.audioElement);
+    });
+
+    // Try to connect to existing audio
+    if (window.currentAudio) {
+      this.connectToAudio(window.currentAudio);
+    }
+  }
+
+  // Connect to audio element for reactivity
+  connectToAudio(audioElement) {
+    if (!audioElement || this.audioContext) return;
+
     try {
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
       this.analyser = this.audioContext.createAnalyser();
-      this.analyser.fftSize = 256;
+      this.analyser.fftSize = 512;
       this.analyser.smoothingTimeConstant = 0.8;
-      console.log('✅ Audio reactivity setup complete');
-    } catch (error) {
-      console.warn('⚠️ Audio reactivity setup failed:', error);
-    }
-  }
 
-  // Connect to audio element
-  connectToAudio(audioElement) {
-    if (!this.audioContext || !this.analyser || !audioElement) return;
-    
-    try {
       this.audioSource = this.audioContext.createMediaElementSource(audioElement);
       this.audioSource.connect(this.analyser);
       this.analyser.connect(this.audioContext.destination);
-      console.log('✅ Audio connected to visualizer');
+
+      console.log('🎵 Audio connected for visualization reactivity');
     } catch (error) {
-      console.warn('⚠️ Audio connection failed:', error);
+      console.error('Failed to connect audio:', error);
     }
   }
 
-  // Update audio data
+  // Update audio data for reactivity
   updateAudioData() {
-    if (!this.analyser) return;
-    
-    try {
-      const frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
-      const timeData = new Uint8Array(this.analyser.frequencyBinCount);
+    if (this.analyser) {
+      this.analyser.getByteFrequencyData(this.audioData.frequency);
+      this.analyser.getByteTimeDomainData(this.audioData.waveform);
       
-      this.analyser.getByteFrequencyData(frequencyData);
-      this.analyser.getByteTimeDomainData(timeData);
+      // Calculate volume, bass, mid, treble
+      let totalVolume = 0;
+      let bassSum = 0;
+      let midSum = 0;
+      let trebleSum = 0;
       
-      // Calculate audio metrics
-      const bass = this.calculateBass(frequencyData);
-      const mid = this.calculateMid(frequencyData);
-      const treble = this.calculateTreble(frequencyData);
-      const volume = this.calculateVolume(timeData);
+      for (let i = 0; i < this.audioData.frequency.length; i++) {
+        totalVolume += this.audioData.frequency[i];
+        
+        if (i < 8) { // Bass frequencies
+          bassSum += this.audioData.frequency[i];
+        } else if (i < 32) { // Mid frequencies
+          midSum += this.audioData.frequency[i];
+        } else { // Treble frequencies
+          trebleSum += this.audioData.frequency[i];
+        }
+      }
       
-      this.audioData = { bass, mid, treble, volume };
-    } catch (error) {
-      // Silent fail for audio updates
+      this.audioData.volume = totalVolume / this.audioData.frequency.length;
+      this.audioData.bass = bassSum / 8;
+      this.audioData.mid = midSum / 24;
+      this.audioData.treble = trebleSum / 96;
     }
   }
 
-  // Calculate bass frequencies (0-60Hz)
-  calculateBass(frequencyData) {
-    const bassRange = Math.floor(frequencyData.length * 0.1);
-    let sum = 0;
-    for (let i = 0; i < bassRange; i++) {
-      sum += frequencyData[i];
-    }
-    return sum / bassRange;
-  }
-
-  // Calculate mid frequencies (60-250Hz)
-  calculateMid(frequencyData) {
-    const start = Math.floor(frequencyData.length * 0.1);
-    const end = Math.floor(frequencyData.length * 0.4);
-    let sum = 0;
-    for (let i = start; i < end; i++) {
-      sum += frequencyData[i];
-    }
-    return sum / (end - start);
-  }
-
-  // Calculate treble frequencies (250Hz+)
-  calculateTreble(frequencyData) {
-    const start = Math.floor(frequencyData.length * 0.4);
-    let sum = 0;
-    for (let i = start; i < frequencyData.length; i++) {
-      sum += frequencyData[i];
-    }
-    return sum / (frequencyData.length - start);
-  }
-
-  // Calculate overall volume
-  calculateVolume(timeData) {
-    let sum = 0;
-    for (let i = 0; i < timeData.length; i++) {
-      sum += Math.abs(timeData[i] - 128);
-    }
-    return sum / timeData.length;
-  }
-
-  // Safety functions for radius and size
+  // Safety function to ensure positive values for rendering
   safeRadius(radius) {
     return Math.max(1, radius);
   }
@@ -353,130 +319,202 @@ class LocalVisualizer {
     return Math.max(1, size);
   }
 
-  // Fallback render function
+  // Fallback render function if main rendering fails
   renderFallback(width, height) {
-    if (!this.ctx) return;
-    
     const centerX = width / 2;
     const centerY = height / 2;
-    const time = this.time * 0.001;
     
-    // Clear with fade
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-    this.ctx.fillRect(0, 0, width, height);
-    
-    // Draw pulsing circle
-    const pulse = Math.sin(time * 3) * 0.5 + 0.5;
+    // Simple pulsing circle as fallback
+    const pulse = Math.sin(this.time * 2) * 0.5 + 0.5;
     const radius = 50 + pulse * 30;
     
-    this.ctx.fillStyle = `hsl(${time * 50 % 360}, 70%, 60%)`;
+    this.ctx.fillStyle = `rgba(76, 175, 80, ${0.3 + pulse * 0.4})`;
     this.ctx.beginPath();
     this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
     this.ctx.fill();
     
-    // Add glow effect
-    this.ctx.shadowColor = this.ctx.fillStyle;
-    this.ctx.shadowBlur = 20;
-    this.ctx.fill();
-    this.ctx.shadowBlur = 0;
+    // Add some simple particles
+    for (let i = 0; i < 10; i++) {
+      const angle = (i / 10) * Math.PI * 2 + this.time;
+      const x = centerX + Math.cos(angle) * (radius + 20);
+      const y = centerY + Math.sin(angle) * (radius + 20);
+      const size = 2 + pulse * 3;
+      
+      this.ctx.fillStyle = `rgba(255, 255, 255, ${0.5 + pulse * 0.5})`;
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, size, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
   }
 
   // Main render loop
   render() {
-    if (!this.ctx || !this.canvas) return;
+    if (!this.isRunning) return;
     
     const width = this.canvas.width;
     const height = this.canvas.height;
     
+    // Update audio data for reactivity
+    this.updateAudioData();
+    
+    // Clear canvas with fade effect
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    this.ctx.fillRect(0, 0, width, height);
+    
+    // Render current preset with error handling
     try {
-      // Update audio data
-      this.updateAudioData();
-      
-      // Get current preset
       const preset = this.presets[this.currentPreset];
-      if (!preset) {
-        this.renderFallback(width, height);
-        return;
+      switch(preset.type) {
+        case 'waveform':
+          this.renderWaveform(width, height);
+          break;
+        case 'particles':
+          this.renderParticles(width, height);
+          break;
+        case 'rings':
+          this.renderRings(width, height);
+          break;
+        case 'spectrum':
+          this.renderSpectrum(width, height);
+          break;
+        case 'shapes':
+          this.renderShapes(width, height);
+          break;
+        case 'spiral':
+          this.renderSpiral(width, height);
+          break;
+        case 'matrix':
+          this.renderMatrix(width, height);
+          break;
+        case 'fireworks':
+          this.renderFireworks(width, height);
+          break;
+        case 'neonGrid':
+          this.renderNeonGrid(width, height);
+          break;
+        case 'cosmicDust':
+          this.renderCosmicDust(width, height);
+          break;
+        case 'liquidMetal':
+          this.renderLiquidMetal(width, height);
+          break;
+        case 'energyField':
+          this.renderEnergyField(width, height);
+          break;
+        case 'crystalFormation':
+          this.renderCrystalFormation(width, height);
+          break;
+        case 'plasmaStorm':
+          this.renderPlasmaStorm(width, height);
+          break;
+        case 'quantumWaves':
+          this.renderQuantumWaves(width, height);
+          break;
+        case 'stellarNebula':
+          this.renderStellarNebula(width, height);
+          break;
+        case 'digitalVortex':
+          this.renderDigitalVortex(width, height);
+          break;
+        case 'holographic':
+          this.renderHolographic(width, height);
+          break;
+        case 'neuralNetwork':
+          this.renderNeuralNetwork(width, height);
+          break;
+        case 'fractalUniverse':
+          this.renderFractalUniverse(width, height);
+          break;
+        case 'solarFlare':
+          this.renderSolarFlare(width, height);
+          break;
+        case 'auroraBorealis':
+          this.renderAuroraBorealis(width, height);
+          break;
+        case 'magneticField':
+          this.renderMagneticField(width, height);
+          break;
+        case 'temporalRift':
+          this.renderTemporalRift(width, height);
+          break;
+        case 'gravityWell':
+          this.renderGravityWell(width, height);
+          break;
+        case 'quantumTunnel':
+          this.renderQuantumTunnel(width, height);
+          break;
+        case 'darkMatter':
+          this.renderDarkMatter(width, height);
+          break;
+        case 'lightSpeed':
+          this.renderLightSpeed(width, height);
+          break;
+        case 'wormhole':
+          this.renderWormhole(width, height);
+          break;
+        case 'supernova':
+          this.renderSupernova(width, height);
+          break;
       }
-      
-      // Call the appropriate render function
-      const renderMethod = `render${preset.type.charAt(0).toUpperCase() + preset.type.slice(1)}`;
-      if (typeof this[renderMethod] === 'function') {
-        this[renderMethod](width, height);
-      } else {
-        console.warn(`⚠️ Render method ${renderMethod} not found for preset: ${preset.name}`);
-        this.renderFallback(width, height);
-      }
-      
     } catch (error) {
-      console.error('❌ Render error:', error);
+      console.error('🎨 Visualization render error:', error);
+      // Fallback to simple effect if rendering fails
       this.renderFallback(width, height);
     }
+    
+    this.time += 0.02;
+    requestAnimationFrame(() => this.render());
   }
 
-  // Update preset information
+  // Update preset information display
   updatePresetInfo() {
-    const preset = this.presets[this.currentPreset];
-    if (preset) {
-      // Update UI elements if they exist
-      const presetName = document.getElementById('presetName');
-      const presetDescription = document.getElementById('presetDescription');
-      
-      if (presetName) presetName.textContent = preset.name;
-      if (presetDescription) presetDescription.textContent = preset.description;
-    }
+    const currentPreset = document.getElementById('currentPreset');
+    const totalPresets = document.getElementById('totalPresets');
+    const presetStatus = document.getElementById('presetStatus');
+    
+    if (currentPreset) currentPreset.textContent = this.presets[this.currentPreset].name;
+    if (totalPresets) totalPresets.textContent = this.presets.length + ' Effects';
+    if (presetStatus) presetStatus.textContent = 'Local system ready';
   }
 
-  // Start the visualizer
+  // Start visualization
   start() {
     if (this.isRunning) return;
     
     this.isRunning = true;
-    this.time = 0;
-    
-    const animate = () => {
-      if (!this.isRunning) return;
-      
-      this.time += 16; // Assume 60fps
-      this.render();
-      this.animationId = requestAnimationFrame(animate);
-    };
-    
-    animate();
-    console.log('🎬 Visualizer started');
+    this.render();
+    console.log('🎬 Local visualizer started');
   }
 
-  // Stop the visualizer
+  // Stop visualization
   stop() {
     this.isRunning = false;
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
-      this.animationId = null;
-    }
-    console.log('⏹️ Visualizer stopped');
+    console.log('⏹️ Local visualizer stopped');
   }
 
   // Next preset
   next() {
     this.currentPreset = (this.currentPreset + 1) % this.presets.length;
     this.updatePresetInfo();
-    console.log(`⏭️ Next preset: ${this.presets[this.currentPreset].name}`);
+    console.log(`⏭️ Switched to: ${this.presets[this.currentPreset].name}`);
   }
 
   // Previous preset
   previous() {
     this.currentPreset = (this.currentPreset - 1 + this.presets.length) % this.presets.length;
     this.updatePresetInfo();
-    console.log(`⏮️ Previous preset: ${this.presets[this.currentPreset].name}`);
+    console.log(`⏮️ Switched to: ${this.presets[this.currentPreset].name}`);
   }
 
   // Random preset
   random() {
-    const newIndex = Math.floor(Math.random() * this.presets.length);
-    if (newIndex !== this.currentPreset) {
-      this.currentPreset = newIndex;
+    const newPreset = Math.floor(Math.random() * this.presets.length);
+    if (newPreset !== this.currentPreset) {
+      this.currentPreset = newPreset;
       this.updatePresetInfo();
       console.log(`🎲 Random preset: ${this.presets[this.currentPreset].name}`);
+    } else {
+      this.random(); // Try again if same preset
     }
   }
 
@@ -485,24 +523,36 @@ class LocalVisualizer {
     if (index >= 0 && index < this.presets.length) {
       this.currentPreset = index;
       this.updatePresetInfo();
-      console.log(`🎯 Selected preset: ${this.presets[this.currentPreset].name}`);
+      console.log(`🎯 Selected: ${this.presets[this.currentPreset].name}`);
     }
   }
 
-  // Toggle fullscreen
+  // Toggle fullscreen for canvas
   toggleFullscreen() {
-    if (!this.canvas) return;
-    
-    try {
-      if (!document.fullscreenElement) {
-        this.canvas.requestFullscreen();
-      } else {
-        document.exitFullscreen();
+    const canvas = this.canvas;
+    if (!canvas) return;
+
+    if (!document.fullscreenElement) {
+      if (canvas.requestFullscreen) {
+        canvas.requestFullscreen();
+      } else if (canvas.webkitRequestFullscreen) {
+        canvas.webkitRequestFullscreen();
+      } else if (canvas.msRequestFullscreen) {
+        canvas.msRequestFullscreen();
       }
-    } catch (error) {
-      console.warn('⚠️ Fullscreen not supported:', error);
+      console.log('🎬 Visualization entered fullscreen');
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+      console.log('🎬 Visualization exited fullscreen');
     }
   }
 }
 
+// Export for use in other modules
 export default LocalVisualizer;
