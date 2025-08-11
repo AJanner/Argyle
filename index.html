@@ -6,8 +6,23 @@
   <link href="favicon.ico" rel="icon" type="image/x-icon"/>
   
   <!-- Butterchurn visualization library -->
-  <script src="https://cdn.jsdelivr.net/npm/butterchurn@2.6.7/butterchurn.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/butterchurn-presets@2.4.7/dist/butterchurn-presets.min.js"></script>
+  <!-- Primary CDN -->
+  <script src="https://unpkg.com/butterchurn@2.6.7/butterchurn.min.js"></script>
+  <script src="https://unpkg.com/butterchurn-presets@2.4.7/dist/butterchurn-presets.min.js"></script>
+  
+  <!-- Fallback CDN -->
+  <script>
+    if (typeof butterchurn === 'undefined') {
+      const script1 = document.createElement('script');
+      script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/butterchurn/2.6.7/butterchurn.min.js';
+      document.head.appendChild(script1);
+    }
+    if (typeof butterchurnPresets === 'undefined') {
+      const script2 = document.createElement('script');
+      script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/butterchurn-presets/2.4.7/butterchurn-presets.min.js';
+      document.head.appendChild(script2);
+    }
+  </script>
   
   <title>💭MindsEye💬~Ideas</title>
   <link rel="stylesheet" href="styles.css"/>
@@ -380,6 +395,7 @@
     </h3>
     <div class="projectm-controls">
       <button onclick="startButterchurn()">🎵 Start Visualizer</button>
+      <button onclick="retryButterchurn()" id="retryBtn" style="display: none;">🔄 Retry Loading</button>
       <button onclick="previousPreset()">⏮️ Previous</button>
       <button onclick="nextPreset()">⏭️ Next</button>
       <button onclick="randomPreset()">🎲 Random</button>

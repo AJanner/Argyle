@@ -5440,26 +5440,176 @@ function initializeButterchurn() {
     } catch (error) {
         console.error('Failed to initialize Butterchurn:', error);
         document.getElementById('presetStatus').textContent = 'Initialization failed';
+        
+        // Fallback to local visualization system
+        initializeLocalFallback();
+    }
+}
+
+function initializeLocalFallback() {
+    try {
+        console.log('🔄 Initializing local fallback visualization system');
+        document.getElementById('presetStatus').textContent = 'Using local fallback';
+        
+        const canvas = document.getElementById('butterchurnCanvas');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        // Create local fallback visualizer
+        const localViz = {
+            canvas: canvas,
+            ctx: ctx,
+            isRunning: false,
+            time: 0,
+            
+            start: function() {
+                this.isRunning = true;
+                this.render();
+            },
+            
+            stop: function() {
+                this.isRunning = false;
+            },
+            
+            render: function() {
+                if (!this.isRunning) return;
+                
+                const width = this.canvas.width;
+                const height = this.canvas.height;
+                
+                // Clear canvas
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                this.ctx.fillRect(0, 0, width, height);
+                
+                // Create wave pattern
+                this.ctx.strokeStyle = `hsl(${(this.time * 50) % 360}, 70%, 60%)`;
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                
+                for (let x = 0; x < width; x += 2) {
+                    const progress = x / width;
+                    const wave1 = Math.sin(this.time + progress * Math.PI * 4) * 50;
+                    const wave2 = Math.sin(this.time * 0.7 + progress * Math.PI * 8) * 30;
+                    const wave3 = Math.sin(this.time * 0.5 + progress * Math.PI * 2) * 20;
+                    
+                    const y = height / 2 + wave1 + wave2 + wave3;
+                    if (x === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+                
+                this.ctx.stroke();
+                
+                // Add particles
+                for (let i = 0; i < 20; i++) {
+                    const angle = (i / 20) * Math.PI * 2 + this.time * 0.5;
+                    const radius = 100 + Math.sin(this.time * 2 + i * 0.5) * 50;
+                    const x = width / 2 + Math.cos(angle) * radius;
+                    const y = height / 2 + Math.sin(angle) * radius;
+                    const size = 5 + Math.sin(this.time * 3 + i * 0.3) * 3;
+                    
+                    this.ctx.fillStyle = `hsl(${(i * 18 + this.time * 30) % 360}, 80%, 70%)`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                
+                this.time += 0.02;
+                requestAnimationFrame(() => this.render());
+            }
+        };
+        
+        // Store local visualizer
+        window.localVisualizer = localViz;
+        
+        // Update UI to show fallback mode
+        document.getElementById('currentPreset').textContent = 'Local Fallback';
+        document.getElementById('totalPresets').textContent = '1';
+        
+        // Start local visualizer
+        localViz.start();
+        
+        logger.info('🎨 Local fallback visualization system initialized');
+        
+    } catch (error) {
+        console.error('Failed to initialize local fallback:', error);
+        document.getElementById('presetStatus').textContent = 'All systems failed';
     }
 }
 
 function loadButterchurnScripts() {
-    // Load Butterchurn scripts if not already loaded
+    // Check if scripts are already loaded
     if (document.querySelector('script[src*="butterchurn"]')) {
         return;
     }
     
-    const butterchurnScript = document.createElement('script');
-    butterchurnScript.src = 'https://cdn.jsdelivr.net/npm/butterchurn@2.6.7/butterchurn.min.js';
-    butterchurnScript.onload = () => {
-        const presetsScript = document.createElement('script');
-        presetsScript.src = 'https://cdn.jsdelivr.net/npm/butterchurn-presets@2.4.7/dist/butterchurn-presets.min.js';
-        presetsScript.onload = () => {
-            setTimeout(initializeButterchurn, 100);
-        };
-        document.head.appendChild(presetsScript);
-    };
-    document.head.appendChild(butterchurnScript);
+    // Try multiple CDN sources
+    const cdnSources = [
+        'https://unpkg.com/butterchurn@2.6.7/butterchurn.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/butterchurn/2.6.7/butterchurn.min.js',
+        'https://cdn.jsdelivr.net/npm/butterchurn@2.6.7/butterchurn.min.js'
+    ];
+    
+    const presetSources = [
+        'https://unpkg.com/butterchurn-presets@2.4.7/dist/butterchurn-presets.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/butterchurn-presets/2.4.7/butterchurn-presets.min.js',
+        'https://cdn.jsdelivr.net/npm/butterchurn-presets@2.4.7/dist/butterchurn-presets.min.js'
+    ];
+    
+    function tryLoadScript(url, onSuccess, onError) {
+        const script = document.createElement('script');
+        script.src = url;
+        script.onload = onSuccess;
+        script.onerror = onError;
+        document.head.appendChild(script);
+    }
+    
+    function loadButterchurnCore(index = 0) {
+        if (index >= cdnSources.length) {
+            console.error('Failed to load Butterchurn from all CDN sources');
+            document.getElementById('presetStatus').textContent = 'Failed to load Butterchurn';
+            showRetryButton();
+            return;
+        }
+        
+        tryLoadScript(cdnSources[index], 
+            () => {
+                console.log(`✅ Butterchurn loaded from: ${cdnSources[index]}`);
+                loadButterchurnPresets(0);
+            },
+            () => {
+                console.warn(`⚠️ Failed to load from: ${cdnSources[index]}`);
+                loadButterchurnCore(index + 1);
+            }
+        );
+    }
+    
+    function loadButterchurnPresets(index = 0) {
+        if (index >= presetSources.length) {
+            console.error('Failed to load Butterchurn presets from all CDN sources');
+            document.getElementById('presetStatus').textContent = 'Failed to load presets';
+            showRetryButton();
+            return;
+        }
+        
+        tryLoadScript(presetSources[index],
+            () => {
+                console.log(`✅ Butterchurn presets loaded from: ${presetSources[index]}`);
+                setTimeout(initializeButterchurn, 100);
+            },
+            () => {
+                console.warn(`⚠️ Failed to load presets from: ${presetSources[index]}`);
+                loadButterchurnPresets(index + 1);
+            }
+        );
+    }
+    
+    // Start loading process
+    loadButterchurnCore(0);
 }
 
 function connectCurrentAudio() {
@@ -5804,3 +5954,57 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(projectmPanel, { attributes: true });
     }
 });
+
+function retryButterchurn() {
+    try {
+        // Reset state
+        butterchurnViz = null;
+        butterchurnCtx = null;
+        butterchurnAnalyser = null;
+        butterchurnPresets = [];
+        currentPresetIndex = 0;
+        isVisualizerRunning = false;
+        
+        // Hide retry button
+        const retryBtn = document.getElementById('retryBtn');
+        if (retryBtn) retryBtn.style.display = 'none';
+        
+        // Update status
+        document.getElementById('presetStatus').textContent = 'Retrying...';
+        document.getElementById('currentPreset').textContent = 'None';
+        document.getElementById('totalPresets').textContent = '0';
+        
+        // Clear canvas
+        const canvas = document.getElementById('butterchurnCanvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+        
+        // Stop local visualizer if running
+        if (window.localVisualizer) {
+            window.localVisualizer.stop();
+            window.localVisualizer = null;
+        }
+        
+        // Try to initialize again
+        setTimeout(() => {
+            initializeButterchurn();
+        }, 500);
+        
+        logger.info('🔄 Retrying Butterchurn initialization');
+        
+    } catch (error) {
+        console.error('Failed to retry Butterchurn:', error);
+        document.getElementById('presetStatus').textContent = 'Retry failed';
+    }
+}
+
+function showRetryButton() {
+    const retryBtn = document.getElementById('retryBtn');
+    if (retryBtn) {
+        retryBtn.style.display = 'inline-block';
+    }
+}
