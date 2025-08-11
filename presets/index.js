@@ -8,6 +8,8 @@ import { renderRainbowSpiral } from './effects/rainbow-spiral-GL.js';
 import { renderNeonPulse } from './effects/neon-pulse.js';
 import { renderMyCoolEffect } from './effects/my-cool-effect.js';
 import { renderQuantumPlasmaStorm } from './effects/quantum-plasma-storm.js';
+import { renderSpirographOrbital } from './effects/spirograph-orbital.js';
+import { renderMilkLike } from './effects/milklike-elephant.js';
 
 // Preset definitions
 export const presets = [
@@ -221,6 +223,20 @@ export const presets = [
     description: 'Advanced WebGL2 plasma storm with particle systems and fluid dynamics',
     category: 'Custom',
     custom: true
+  },
+  {
+    name: 'Spirograph Orbital',
+    type: 'spirographOrbital',
+    description: 'Central core with 7 orbiting balls creating complex spirograph patterns',
+    category: 'Custom',
+    custom: true
+  },
+  {
+    name: 'MilkLike Elephant',
+    type: 'milkLike',
+    description: 'Advanced MilkDrop-style domain-warped noise flow with kaleidoscope patterns',
+    category: 'Custom',
+    custom: true
   }
 ];
 
@@ -229,7 +245,9 @@ export const customEffects = {
   rainbowSpiral: renderRainbowSpiral,
   neonPulse: renderNeonPulse,
   myCoolEffect: renderMyCoolEffect,
-  quantumPlasmaStorm: renderQuantumPlasmaStorm
+  quantumPlasmaStorm: renderQuantumPlasmaStorm,
+  spirographOrbital: renderSpirographOrbital,
+  milkLike: renderMilkLike
 };
 
 // Make customEffects available globally
