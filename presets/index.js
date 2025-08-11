@@ -4,8 +4,9 @@
  */
 
 // Import custom presets
-import { renderRainbowSpiral } from './effects/rainbow-spiral.js';
+import { renderRainbowSpiral } from './effects/rainbow-spiral-GL.js';
 import { renderNeonPulse } from './effects/neon-pulse.js';
+import { renderMyCoolEffect } from './effects/my-cool-effect.js';
 
 // Preset definitions
 export const presets = [
@@ -193,9 +194,9 @@ export const presets = [
   
   // Custom presets
   {
-    name: 'Rainbow Spiral',
+    name: 'Rainbow Spiral GL',
     type: 'rainbowSpiral',
-    description: 'Colorful spiral with rainbow effects',
+    description: 'High-performance WebGL2 kaleidoscopic spiral with audio reactivity',
     category: 'Custom',
     custom: true
   },
@@ -205,14 +206,27 @@ export const presets = [
     description: 'Pulsing neon effects with audio reactivity',
     category: 'Custom',
     custom: true
+  },
+  {
+    name: 'My Cool Effect',
+    type: 'myCoolEffect',
+    description: 'Custom audio-reactive circles with connecting lines',
+    category: 'Custom',
+    custom: true
   }
 ];
 
 // Export custom render functions
 export const customEffects = {
   rainbowSpiral: renderRainbowSpiral,
-  neonPulse: renderNeonPulse
+  neonPulse: renderNeonPulse,
+  myCoolEffect: renderMyCoolEffect
 };
+
+// Make customEffects available globally
+if (typeof window !== 'undefined') {
+  window.customEffects = customEffects;
+}
 
 // Get presets by category
 export function getPresetsByCategory(category) {

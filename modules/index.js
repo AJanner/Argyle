@@ -107,6 +107,15 @@ function attachEffects(visualizer) {
   visualizer.renderWormhole = (width, height) => Effects.renderWormhole(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
   visualizer.renderSupernova = (width, height) => Effects.renderSupernova(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
   
+  // Attach custom effects from presets
+  if (typeof window.customEffects !== 'undefined') {
+    Object.entries(window.customEffects).forEach(([type, renderFunc]) => {
+      const methodName = `render${type.charAt(0).toUpperCase() + type.slice(1)}`;
+      visualizer[methodName] = (width, height) => renderFunc(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
+      console.log(`✅ Custom effect attached: ${methodName}`);
+    });
+  }
+  
   console.log('✅ All effects attached to visualizer');
 }
 
