@@ -5270,44 +5270,63 @@ function stopMusicVisualizer() {
 // ===== PROJECTM VISUALIZATION FUNCTIONS =====
 
 function toggleProjectMPanel() {
-  const projectmPanel = document.getElementById('projectmPanel');
-  if (projectmPanel.style.display === 'none' || projectmPanel.style.display === '') {
-    projectmPanel.style.display = 'block';
-    
-    // Clear the analysis panel fade-out timeout to prevent it from closing
-    if (window.analysisPanelFadeTimeout) {
-      clearTimeout(window.analysisPanelFadeTimeout);
-      window.analysisPanelFadeTimeout = null;
+    try {
+        const panel = document.getElementById('projectmPanel');
+        if (!panel) return;
+        
+        if (panel.style.display === 'block') {
+            closeProjectMPanel();
+        } else {
+            // Show the panel
+            panel.style.display = 'block';
+            
+            // Clear analysis panel timeout
+            if (window.analysisPanelFadeTimeout) {
+                clearTimeout(window.analysisPanelFadeTimeout);
+            }
+            
+            // Initialize local visualizer if not already done
+            if (typeof LocalVisualizer !== 'undefined' && !LocalVisualizer.canvas) {
+                LocalVisualizer.init();
+            }
+            
+            logger.info('🎨 Local visualization panel opened');
+        }
+        
+    } catch (error) {
+        console.error('Failed to toggle ProjectM panel:', error);
     }
-    
-    logger.info('🎨 ProjectM panel opened - no timeout');
-  } else {
-    projectmPanel.style.display = 'none';
-  }
 }
 
 function closeProjectMPanel() {
-  const projectmPanel = document.getElementById('projectmPanel');
-  if (projectmPanel) {
-    projectmPanel.style.display = 'none';
-    
-    // Restart the analysis panel fade-out timeout since ProjectM panel is closed
-    if (window.analysisPanelFadeTimeout === null) {
-      window.analysisPanelFadeTimeout = setTimeout(() => {
-        const analysisPanel = document.getElementById('analysisPanel');
-        if (analysisPanel && analysisPanel.style.display === 'block') {
-          // Fade out the analysis panel
-          analysisPanel.style.opacity = '0';
-          setTimeout(() => {
-            analysisPanel.style.display = 'none';
-            window.analysisPanelFadeTimeout = null;
-          }, 1000);
+    try {
+        // Stop local visualizer if running
+        if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.isRunning) {
+            LocalVisualizer.stop();
+            isVisualizerRunning = false;
         }
-      }, 10000);
+        
+        // Hide the panel
+        const panel = document.getElementById('projectmPanel');
+        if (panel) {
+            panel.style.display = 'none';
+        }
+        
+        // Hide control buttons
+        hideRetryButton();
+        hideLocalEffectButton();
+        
+        // Restart analysis panel timeout
+        if (window.analysisPanelFadeTimeout) {
+            clearTimeout(window.analysisPanelFadeTimeout);
+            window.analysisPanelFadeTimeout = null;
+        }
+        
+        logger.info('🎨 ProjectM panel closed');
+        
+    } catch (error) {
+        console.error('Failed to close ProjectM panel:', error);
     }
-    
-    logger.info('🎨 ProjectM panel closed - analysis panel timeout restarted');
-  }
 }
 
 function toggleProjectM() {
@@ -5386,20 +5405,35 @@ let isVisualizerRunning = false;
 
 function startButterchurn() {
     try {
-        if (!butterchurnViz) {
-            initializeButterchurn();
+        // Check if local visualizer is available
+        if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.isRunning === false) {
+            LocalVisualizer.start();
+            isVisualizerRunning = true;
+            logger.info('🎬 Local visualizer started');
+            return;
         }
         
-        if (butterchurnViz && !isVisualizerRunning) {
-            isVisualizerRunning = true;
-            document.getElementById('presetStatus').textContent = 'Running';
-            loadAllPresets();
-            startRenderLoop();
-            logger.info('🎨 Butterchurn visualizer started');
+        // If local visualizer is already running, stop it
+        if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.isRunning) {
+            LocalVisualizer.stop();
+            isVisualizerRunning = false;
+            logger.info('⏹️ Local visualizer stopped');
+            return;
         }
+        
+        // Initialize local visualizer if not available
+        if (typeof LocalVisualizer !== 'undefined') {
+            LocalVisualizer.init();
+            LocalVisualizer.start();
+            isVisualizerRunning = true;
+            logger.info('🎬 Local visualizer initialized and started');
+        } else {
+            logger.error('Local visualizer not available');
+        }
+        
     } catch (error) {
-        console.error('Failed to start Butterchurn:', error);
-        document.getElementById('presetStatus').textContent = 'Error starting';
+        console.error('Failed to start local visualizer:', error);
+        logger.error('Failed to start local visualizer: ' + error.message);
     }
 }
 
@@ -5413,7 +5447,9 @@ function initializeButterchurn() {
         
         // Use dynamic loading system
         console.log('🔄 Loading Butterchurn dynamically...');
-        document.getElementById('presetStatus').textContent = 'Loading Butterchurn...';
+        
+        const presetStatus = document.getElementById('presetStatus');
+        if (presetStatus) presetStatus.textContent = 'Loading Butterchurn...';
         
         // Load Butterchurn core first
         window.loadButterchurnDynamically()
@@ -5424,13 +5460,13 @@ function initializeButterchurn() {
             })
             .then(() => {
                 console.log('✅ Butterchurn presets loaded successfully');
-                document.getElementById('presetStatus').textContent = 'Butterchurn loaded';
+                if (presetStatus) presetStatus.textContent = 'Butterchurn loaded';
                 // Create visualizer
                 createButterchurnVisualizer();
             })
             .catch((error) => {
                 console.error('❌ Failed to load Butterchurn:', error);
-                document.getElementById('presetStatus').textContent = 'CDN loading failed';
+                if (presetStatus) presetStatus.textContent = 'CDN loading failed';
                 showRetryButton();
                 // Fallback to local visualization system
                 initializeLocalFallback();
@@ -5438,7 +5474,8 @@ function initializeButterchurn() {
         
     } catch (error) {
         console.error('Failed to initialize Butterchurn:', error);
-        document.getElementById('presetStatus').textContent = 'Initialization failed';
+        const presetStatus = document.getElementById('presetStatus');
+        if (presetStatus) presetStatus.textContent = 'Initialization failed';
         initializeLocalFallback();
     }
 }
@@ -5487,13 +5524,27 @@ function createButterchurnVisualizer() {
 function initializeLocalFallback() {
     try {
         console.log('🔄 Initializing enhanced local fallback visualization system');
-        document.getElementById('presetStatus').textContent = 'Using enhanced local fallback';
         
         const canvas = document.getElementById('butterchurnCanvas');
-        if (!canvas) return;
+        if (!canvas) {
+            console.error('Canvas element not found');
+            return;
+        }
         
         const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        if (!ctx) {
+            console.error('Canvas 2D context not available');
+            return;
+        }
+        
+        // Safely update UI elements if they exist
+        const presetStatus = document.getElementById('presetStatus');
+        const currentPreset = document.getElementById('currentPreset');
+        const totalPresets = document.getElementById('totalPresets');
+        
+        if (presetStatus) presetStatus.textContent = 'Using enhanced local fallback';
+        if (currentPreset) currentPreset.textContent = 'Enhanced Local Fallback';
+        if (totalPresets) totalPresets.textContent = '5 Effects';
         
         // Create enhanced local fallback visualizer with multiple preset-like effects
         const localViz = {
@@ -5682,10 +5733,6 @@ function initializeLocalFallback() {
         // Store local visualizer
         window.localVisualizer = localViz;
         
-        // Update UI to show enhanced fallback mode
-        document.getElementById('currentPreset').textContent = 'Enhanced Local Fallback';
-        document.getElementById('totalPreset').textContent = '5 Effects';
-        
         // Show local effect button
         showLocalEffectButton();
         
@@ -5696,7 +5743,8 @@ function initializeLocalFallback() {
         
     } catch (error) {
         console.error('Failed to initialize enhanced local fallback:', error);
-        document.getElementById('presetStatus').textContent = 'All systems failed';
+        const presetStatus = document.getElementById('presetStatus');
+        if (presetStatus) presetStatus.textContent = 'All systems failed';
     }
 }
 
@@ -5730,7 +5778,8 @@ function loadButterchurnScripts() {
     function loadButterchurnCore(index = 0) {
         if (index >= cdnSources.length) {
             console.error('Failed to load Butterchurn from all CDN sources');
-            document.getElementById('presetStatus').textContent = 'Failed to load Butterchurn';
+            const presetStatus = document.getElementById('presetStatus');
+            if (presetStatus) presetStatus.textContent = 'Failed to load Butterchurn';
             showRetryButton();
             return;
         }
@@ -5750,7 +5799,8 @@ function loadButterchurnScripts() {
     function loadButterchurnPresets(index = 0) {
         if (index >= presetSources.length) {
             console.error('Failed to load Butterchurn presets from all CDN sources');
-            document.getElementById('presetStatus').textContent = 'Failed to load presets';
+            const presetStatus = document.getElementById('presetStatus');
+            if (presetStatus) presetStatus.textContent = 'Failed to load presets';
             showRetryButton();
             return;
         }
@@ -5766,9 +5816,6 @@ function loadButterchurnScripts() {
             }
         );
     }
-    
-    // Start loading process
-    loadButterchurnCore(0);
 }
 
 function connectCurrentAudio() {
@@ -5844,79 +5891,73 @@ function loadAllPresets() {
 }
 
 function updatePresetSelect() {
-    const select = document.getElementById('presetSelect');
-    if (!select) return;
+    const presetSelect = document.getElementById('presetSelect');
+    if (!presetSelect) return;
     
-    select.innerHTML = '';
-    butterchurnPresets.forEach((preset, index) => {
-        const option = document.createElement('option');
-        option.value = String(index);
-        option.textContent = preset.name;
-        select.appendChild(option);
-    });
+    // Clear existing options
+    presetSelect.innerHTML = '';
+    
+    // Add local preset options
+    if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.presets) {
+        LocalVisualizer.presets.forEach((preset, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = preset.name;
+            presetSelect.appendChild(option);
+        });
+        
+        // Set current selection
+        presetSelect.value = LocalVisualizer.currentPreset;
+    }
 }
 
 function updatePresetInfo() {
-    document.getElementById('totalPresets').textContent = butterchurnPresets.length;
+    if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.presets) {
+        const totalPresets = document.getElementById('totalPresets');
+        if (totalPresets) {
+            totalPresets.textContent = LocalVisualizer.presets.length;
+        }
+    }
 }
 
 function updateCurrentPreset() {
-    if (butterchurnPresets[currentPresetIndex]) {
-        document.getElementById('currentPreset').textContent = butterchurnPresets[currentPresetIndex].name;
-        document.getElementById('presetSelect').value = String(currentPresetIndex);
+    if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.presets) {
+        const currentPreset = document.getElementById('currentPreset');
+        if (currentPreset) {
+            currentPreset.textContent = LocalVisualizer.presets[LocalVisualizer.currentPreset].name;
+        }
     }
 }
 
 function nextPreset() {
-    if (!butterchurnViz || !butterchurnPresets.length) return;
-    
-    currentPresetIndex = (currentPresetIndex + 1) % butterchurnPresets.length;
-    const blendTime = Number(document.getElementById('blendSec').value || 2);
-    
-    butterchurnViz.loadPreset(butterchurnPresets[currentPresetIndex].obj, blendTime);
-    updateCurrentPreset();
-    logger.info(`⏭️ Next preset: ${butterchurnPresets[currentPresetIndex].name}`);
+    if (typeof LocalVisualizer !== 'undefined') {
+        LocalVisualizer.next();
+        logger.info('⏭️ Next local preset');
+    }
 }
 
 function previousPreset() {
-    if (!butterchurnViz || !butterchurnPresets.length) return;
-    
-    currentPresetIndex = currentPresetIndex === 0 ? 
-        butterchurnPresets.length - 1 : currentPresetIndex - 1;
-    const blendTime = Number(document.getElementById('blendSec').value || 2);
-    
-    butterchurnViz.loadPreset(butterchurnPresets[currentPresetIndex].obj, blendTime);
-    updateCurrentPreset();
-    logger.info(`⏮️ Previous preset: ${butterchurnPresets[currentPresetIndex].name}`);
+    if (typeof LocalVisualizer !== 'undefined') {
+        LocalVisualizer.previous();
+        logger.info('⏮️ Previous local preset');
+    }
 }
 
 function randomPreset() {
-    if (!butterchurnViz || !butterchurnPresets.length) return;
-    
-    let newIndex;
-    do {
-        newIndex = Math.floor(Math.random() * butterchurnPresets.length);
-    } while (newIndex === currentPresetIndex && butterchurnPresets.length > 1);
-    
-    currentPresetIndex = newIndex;
-    const blendTime = Number(document.getElementById('blendSec').value || 2);
-    
-    butterchurnViz.loadPreset(butterchurnPresets[currentPresetIndex].obj, blendTime);
-    updateCurrentPreset();
-    logger.info(`🎲 Random preset: ${butterchurnPresets[currentPresetIndex].name}`);
+    if (typeof LocalVisualizer !== 'undefined') {
+        LocalVisualizer.random();
+        logger.info('🎲 Random local preset');
+    }
 }
 
 function selectPreset(value) {
-    if (!butterchurnViz || !butterchurnPresets.length) return;
-    
-    const index = Number(value);
-    if (!Number.isNaN(index) && butterchurnPresets[index]) {
-        currentPresetIndex = index;
-        const blendTime = Number(document.getElementById('blendSec').value || 2);
-        
-        butterchurnViz.loadPreset(butterchurnPresets[index].obj, blendTime);
-        updateCurrentPreset();
-        logger.info(`🎨 Selected preset: ${butterchurnPresets[index].name}`);
+    if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.presets) {
+        const index = parseInt(value);
+        if (index >= 0 && index < LocalVisualizer.presets.length) {
+            LocalVisualizer.currentPreset = index;
+            LocalVisualizer.updatePresetInfo();
+            logger.info(`🎯 Selected local preset: ${LocalVisualizer.presets[index].name}`);
+        }
     }
 }
 
@@ -6124,17 +6165,19 @@ function retryButterchurn() {
         currentPresetIndex = 0;
         isVisualizerRunning = false;
         
-        // Hide retry button
+        // Safely update UI elements if they exist
         const retryBtn = document.getElementById('retryBtn');
+        const presetStatus = document.getElementById('presetStatus');
+        const currentPreset = document.getElementById('currentPreset');
+        const totalPresets = document.getElementById('totalPresets');
+        
         if (retryBtn) retryBtn.style.display = 'none';
+        if (presetStatus) presetStatus.textContent = 'Retrying...';
+        if (currentPreset) currentPreset.textContent = 'None';
+        if (totalPresets) totalPresets.textContent = '0';
         
         // Hide local effect button
         hideLocalEffectButton();
-        
-        // Update status
-        document.getElementById('presetStatus').textContent = 'Retrying...';
-        document.getElementById('currentPreset').textContent = 'None';
-        document.getElementById('totalPresets').textContent = '0';
         
         // Clear canvas
         const canvas = document.getElementById('butterchurnCanvas');
@@ -6160,7 +6203,8 @@ function retryButterchurn() {
         
     } catch (error) {
         console.error('Failed to retry Butterchurn:', error);
-        document.getElementById('presetStatus').textContent = 'Retry failed';
+        const presetStatus = document.getElementById('presetStatus');
+        if (presetStatus) presetStatus.textContent = 'Retry failed';
     }
 }
 
@@ -6189,5 +6233,92 @@ function hideLocalEffectButton() {
     const nextLocalEffectBtn = document.getElementById('nextLocalEffectBtn');
     if (nextLocalEffectBtn) {
         nextLocalEffectBtn.style.display = 'none';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Hook local visualizer into the existing music system
+    hookLocalVisualizerIntoMusic();
+    
+    // Initialize local visualizer when the panel is first opened
+    const projectmPanel = document.getElementById('projectmPanel');
+    if (projectmPanel) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    if (projectmPanel.style.display === 'block') {
+                        // Panel opened, ensure local visualizer is ready
+                        if (typeof LocalVisualizer !== 'undefined' && !LocalVisualizer.canvas) {
+                            LocalVisualizer.init();
+                        }
+                    }
+                }
+            });
+        });
+        
+        observer.observe(projectmPanel, { attributes: true });
+    }
+});
+
+function hookLocalVisualizerIntoMusic() {
+    // Override the existing playMusic function to connect to local visualizer
+    const originalPlayMusic = window.playMusic;
+    window.playMusic = function(filename, event) {
+        // Call original function
+        const result = originalPlayMusic.call(this, filename, event);
+        
+        // Connect local visualizer to audio if available
+        if (typeof LocalVisualizer !== 'undefined' && window.currentAudio) {
+            connectLocalVisualizerToAudio(window.currentAudio);
+        }
+        
+        return result;
+    };
+    
+    // Override the existing playRadio function to connect to local visualizer
+    const originalPlayRadio = window.playRadioStream;
+    window.playRadioStream = function(radioUrl) {
+        // Call original function
+        const result = originalPlayRadio.call(this, radioUrl);
+        
+        // Connect local visualizer to audio if available
+        if (typeof LocalVisualizer !== 'undefined' && window.currentAudio) {
+            connectLocalVisualizerToAudio(window.currentAudio);
+        }
+        
+        return result;
+    };
+    
+    logger.info('🎵 Local visualizer hooked into music system');
+}
+
+function connectLocalVisualizerToAudio(audioElement) {
+    try {
+        if (!audioElement || typeof LocalVisualizer === 'undefined') return;
+        
+        // Create audio context for visualization
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!window.localAudioContext) {
+            window.localAudioContext = new AudioContext();
+        }
+        
+        // Create analyser node
+        if (!window.localAnalyser) {
+            window.localAnalyser = window.localAudioContext.createAnalyser();
+            window.localAnalyser.fftSize = 2048;
+            window.localAnalyser.smoothingTimeConstant = 0.8;
+        }
+        
+        // Connect audio to analyser
+        if (!window.localAudioSource) {
+            window.localAudioSource = window.localAudioContext.createMediaElementSource(audioElement);
+            window.localAudioSource.connect(window.localAnalyser);
+            window.localAnalyser.connect(window.localAudioContext.destination);
+        }
+        
+        logger.info('🎵 Local visualizer connected to audio');
+        
+    } catch (error) {
+        console.error('Failed to connect local visualizer to audio:', error);
     }
 }
