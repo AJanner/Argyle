@@ -120,8 +120,8 @@ html, body {
 /* Video and music button containers - match button sizing exactly */
 #toolbar > div[style*="flex-direction: column"] {
   flex: 1 1 0 !important;
-  min-width: 60px !important;
-  min-height: 50px !important;
+  min-width: 30px !important;
+  min-height: 30px !important;
   aspect-ratio: 1 !important;
 }
 
@@ -146,9 +146,9 @@ html, body {
 #toolbar button[data-icon="video"],
 #toolbar button[data-icon="music"] {
   aspect-ratio: 1 !important;
-  min-width: 60px !important;
+  min-width: 30px !important;
   max-width: none !important;
-  min-height: 50px !important;
+  min-height: 30px !important;
   max-height: none !important;
   flex: 1 1 0 !important;
 }
@@ -171,8 +171,8 @@ html, body {
   
   #toolbar > div[style*="flex-direction: column"] {
     flex: 1 1 0 !important;
-    min-width: 70px !important;
-    min-height: 45px !important;
+    min-width: 35px !important;
+    min-height: 35px !important;
     aspect-ratio: 1 !important;
   }
   
@@ -221,18 +221,18 @@ html, body {
   
   /* Ensure buttons inside video and music containers maintain square shape at 1200px */
   #toolbar > div[style*="flex-direction: column"] .toolbar-btn {
-    min-width: 70px !important;
+    min-width: 35px !important;
     max-width: none !important;
-    min-height: 45px !important;
+    min-height: 35px !important;
     max-height: none !important;
     aspect-ratio: 1 !important;
   }
   
   #toolbar button[data-icon="video"],
   #toolbar button[data-icon="music"] {
-    min-width: 70px !important;
+    min-width: 35px !important;
     max-width: none !important;
-    min-height: 45px !important;
+    min-height: 35px !important;
     max-height: none !important;
     aspect-ratio: 1 !important;
   }
@@ -259,8 +259,8 @@ html, body {
   
   #toolbar > div[style*="flex-direction: column"] {
     flex: 1 1 0 !important;
-    min-width: 50px !important;
-    min-height: 40px !important;
+    min-width: 25px !important;
+    min-height: 25px !important;
     aspect-ratio: 1 !important;
   }
   
@@ -307,20 +307,20 @@ html, body {
     padding: 0;
   }
   
-  /* Ensure buttons inside video and music containers maintain square shape at 900px */
+    /* Ensure buttons inside video and music containers maintain square shape at 900px */
   #toolbar > div[style*="flex-direction: column"] .toolbar-btn {
-    min-width: 50px !important;
+    min-width: 25px !important;
     max-width: none !important;
-    min-height: 40px !important;
- max-height: none !important;
+    min-height: 25px !important;
+    max-height: none !important;
     aspect-ratio: 1 !important;
   }
   
   #toolbar button[data-icon="video"],
   #toolbar button[data-icon="music"] {
-    min-width: 50px !important;
+    min-width: 25px !important;
     max-width: none !important;
-    min-height: 40px !important;
+    min-height: 25px !important;
     max-height: none !important;
     aspect-ratio: 1 !important;
   }
@@ -1590,8 +1590,8 @@ button[data-png="bucheck"].has-png {
   /* Fix video and music button containers on mobile - maintain square shape and scaling */
   #toolbar > div[style*="flex-direction: column"] {
     flex: 1 1 0 !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
     aspect-ratio: 1 !important;
     max-width: none !important;
     max-height: none !important;
@@ -1602,9 +1602,9 @@ button[data-png="bucheck"].has-png {
   #toolbar button[data-icon="music"] {
     width: 100% !important;
     height: 100% !important;
-    min-width: 40px !important;
+    min-width: 20px !important;
     max-width: none !important;
-    min-height: 40px !important;
+    min-height: 20px !important;
     max-height: none !important;
     aspect-ratio: 1 !important;
     flex: 1 1 0 !important;
@@ -1615,9 +1615,9 @@ button[data-png="bucheck"].has-png {
   #toolbar #musicVisualizer2 {
     width: 100% !important;
     height: 100% !important;
-    min-width: 40px !important;
+    min-width: 0 !important;
     max-width: none !important;
-    min-height: 40px !important;
+    min-height: 0 !important;
     max-height: none !important;
     aspect-ratio: 1 !important;
   }
