@@ -340,7 +340,9 @@
 
   <!-- Music Panel -->
   <div class="music-panel" id="musicPanel">
-    <h3>🎵 Music Player</h3>
+    <h3>🎵 Music Player
+      <div class="music-close-btn" onclick="closeMusicPanel()" title="Close Music Panel">✖️</div>
+    </h3>
     <div style="display: flex; gap: 0px; margin-bottom: 10px;">
       <button onclick="previousMusicTrack()" class="music-control-btn" data-icon="mprevious" style="background: linear-gradient(45deg, #FF9800, #F57C00); border: none; color: white; padding: 1px; border-radius: 6px 0px 0px 6px; cursor: pointer; font-weight: bold; flex: 1; height: 48px; background-size: 100% 100% !important; background-position: center !important;">⏮️ Previous</button>
       <button onclick="stopMusic()" class="music-control-btn" data-icon="mplay" style="background: linear-gradient(45deg, #f44336, #da190b); border: none; color: white; padding: 1px; border-radius: 0px; cursor: pointer; font-weight: bold; flex: 1; height: 48px; background-size: 100% 100% !important; background-position: center !important;">⏯️Play🎚️</button>
@@ -546,6 +548,7 @@
         // Export all functions to global scope
         window.loadYouTubeVideo = loadYouTubeVideo;
         window.toggleMusicPanel = toggleMusicPanel;
+        window.closeMusicPanel = closeMusicPanel;
         window.loadMusicList = loadMusicList;
         window.playMusic = playMusic;
         window.stopMusic = stopMusic;

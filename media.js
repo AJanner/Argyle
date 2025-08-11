@@ -187,6 +187,13 @@ function toggleMusicPanel() {
   }
 }
 
+function closeMusicPanel() {
+  const musicPanel = document.getElementById('musicPanel');
+  if (musicPanel) {
+    musicPanel.style.display = 'none';
+  }
+}
+
 async function loadMusicList() {
   const musicList = document.getElementById('musicList');
   
