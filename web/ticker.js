@@ -20,6 +20,7 @@ class NewsTicker {
         this.currentPosition = 0;
         this.lastUpdate = 0;
         this.offlineMode = false;
+        this.currentService = 'news';
 
         this.init();
     }
@@ -64,6 +65,15 @@ class NewsTicker {
         // Create ticker structure
         this.container.innerHTML = `
             <div class="news-ticker-container">
+                <div class="news-service-selector">
+                    <button class="news-service-button" id="news-service-btn">News</button>
+                    <div class="news-service-dropdown" id="news-service-dropdown">
+                        <div class="news-service-option active" data-service="news">📰 News</div>
+                        <div class="news-service-option" data-service="local">🏠 Local</div>
+                        <div class="news-service-option" data-service="sports">⚽ Sports</div>
+                        <div class="news-service-option" data-service="weather">🌤️ Weather</div>
+                    </div>
+                </div>
                 <div class="news-ticker-content">
                     <div class="news-ticker-track">
                         <div class="news-ticker-list"></div>
@@ -87,11 +97,74 @@ class NewsTicker {
         if (this.options.direction === 'rtl') {
             this.ticker.style.direction = 'rtl';
         }
+
+        // Set up news service selector
+        this.setupServiceSelector();
+    }
+
+    setupServiceSelector() {
+        const serviceBtn = this.container.querySelector('#news-service-btn');
+        const dropdown = this.container.querySelector('#news-service-dropdown');
+        const options = this.container.querySelectorAll('.news-service-option');
+
+        // Toggle dropdown
+        serviceBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('show');
+        });
+
+        // Handle option selection
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const service = option.dataset.service;
+                this.selectService(service);
+                dropdown.classList.remove('show');
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+            dropdown.classList.remove('show');
+        });
+
+        // Prevent dropdown from closing when clicking inside
+        dropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+
+    selectService(service) {
+        // Update active state
+        const options = this.container.querySelectorAll('.news-service-option');
+        options.forEach(option => {
+            option.classList.remove('active');
+            if (option.dataset.service === service) {
+                option.classList.add('active');
+            }
+        });
+
+        // Update button text
+        const serviceBtn = this.container.querySelector('#news-service-btn');
+        const activeOption = this.container.querySelector(`[data-service="${service}"]`);
+        serviceBtn.textContent = activeOption.textContent.split(' ')[1]; // Remove emoji
+
+        // Update current service
+        this.currentService = service;
+
+        // Load headlines for selected service
+        this.loadHeadlines();
     }
 
     async loadHeadlines() {
         try {
-            const response = await fetch(this.options.endpoint);
+            // Build endpoint based on selected service
+            let endpoint = this.options.endpoint;
+            if (this.currentService && this.currentService !== 'news') {
+                endpoint = `${this.options.endpoint}?service=${this.currentService}`;
+            }
+
+            const response = await fetch(endpoint);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             
             const headlines = await response.json();

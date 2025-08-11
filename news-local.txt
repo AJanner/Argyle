@@ -1,0 +1,7 @@
+# Plymouth Local News Sources
+feed https://www.plymouthherald.co.uk/news/rss.xml
+feed https://www.plymouth.gov.uk/news/rss.xml
+site https://www.plymouthlive.co.uk
+site https://www.bbc.co.uk/news/england/devon
+url  https://www.itv.com/news/westcountry
+headline "Plymouth Local News" https://example.com/plymouth

@@ -273,6 +273,21 @@ class NewsSourceParser {
             return [];
         }
     }
+
+    async loadHeadlinesFromSource(sourceFile) {
+        try {
+            // Read sources from the specified file
+            const sources = await this.readSources(path.join(process.cwd(), sourceFile));
+            
+            // Fetch headlines for these sources
+            const headlines = await this.fetchHeadlines(sources);
+            
+            return headlines;
+        } catch (error) {
+            console.error(`Failed to load headlines from ${sourceFile}:`, error);
+            throw error;
+        }
+    }
 }
 
 // CLI interface

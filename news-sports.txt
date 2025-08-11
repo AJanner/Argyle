@@ -1,0 +1,7 @@
+# Sports News Sources
+feed https://www.bbc.co.uk/sport/rss.xml
+feed https://www.skysports.com/rss/0,20514,11661,00.xml
+feed https://www.espn.com/espn/rss/news
+site https://www.goal.com
+site https://www.90min.com
+headline "Sports News" https://example.com/sports
