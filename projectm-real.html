@@ -99,6 +99,7 @@
         
         <button onclick="loadDefaultPresets()">📁 Load Default Presets</button>
         <button onclick="refreshPresets()">🔄 Refresh Presets</button>
+        <button onclick="debugPresets()">🐛 Debug Presets</button>
         <button onclick="toggleAudio()">🎵 Toggle Audio</button>
         <button onclick="nextPreset()">⏭️ Next Preset</button>
         <button onclick="previousPreset()">⏮️ Previous Preset</button>
@@ -116,6 +117,7 @@
         <div>FPS: <span id="fps">60</span></div>
         <div>Audio: <span id="audioStatus">Inactive</span></div>
         <div>Renderer: <span id="rendererStatus">Initializing...</span></div>
+        <div>Status: <span id="presetStatus">Loading...</span></div>
     </div>
 
     <script>
@@ -171,37 +173,53 @@
                 // It won't interfere with music/video playlists since it's separate
                 
                 try {
+                    console.log('🔄 Starting preset folder scan...');
+                    
                     // Try to fetch a preset list or index file
                     const response = await fetch('presets/index.txt');
                     if (response.ok) {
                         const presetList = await response.text();
                         const presetFiles = presetList.trim().split('\n').filter(line => line.trim() && !line.startsWith('#'));
                         
+                        console.log('📋 Found preset files in index:', presetFiles);
+                        
                         // Clear existing presets and reload
                         this.presets = [];
                         this.loadedPresets.clear();
                         
+                        let loadedCount = 0;
                         for (const presetFile of presetFiles) {
                             if (presetFile.endsWith('.milk')) {
-                                await this.loadPresetFromFile(presetFile);
+                                const success = await this.loadPresetFromFile(presetFile);
+                                if (success) loadedCount++;
                             }
                         }
                         
-                        console.log(`Refreshed and loaded ${this.presets.length} presets from presets folder`);
+                        console.log(`✅ Successfully loaded ${loadedCount} presets from presets folder`);
+                        
+                        // If no presets were loaded, fall back to defaults
+                        if (this.presets.length === 0) {
+                            console.log('⚠️ No presets loaded, falling back to defaults');
+                            this.loadDefaultPresets();
+                        }
                         
                         // Update UI
                         this.updatePresetList();
                         this.updatePresetInfo();
+                    } else {
+                        console.warn('⚠️ Could not read presets/index.txt, using defaults');
+                        this.loadDefaultPresets();
                     }
                 } catch (error) {
-                    // If we can't load from folder, that's okay - we'll use defaults
-                    console.log('Preset folder not accessible, using default presets');
+                    console.error('❌ Error loading presets from folder:', error);
+                    console.log('🔄 Falling back to default presets');
                     this.loadDefaultPresets();
                 }
             }
             
             async loadPresetFromFile(filename) {
                 try {
+                    console.log(`📁 Loading preset: ${filename}`);
                     const response = await fetch(`presets/${filename}`);
                     if (response.ok) {
                         const content = await response.text();
@@ -212,14 +230,16 @@
                         
                         this.presets.push(preset);
                         this.loadedPresets.set(filename, preset);
-                        console.log(`Loaded preset: ${filename} with ${Object.keys(preset.parameters).length} parameters`);
+                        console.log(`✅ Loaded preset: ${filename} with ${Object.keys(preset.parameters).length} parameters`);
                         
-                        // Update the UI
-                        this.updatePresetList();
-                        this.updatePresetInfo();
+                        return true;
+                    } else {
+                        console.warn(`⚠️ Could not load preset: ${filename} (HTTP ${response.status})`);
+                        return false;
                     }
                 } catch (error) {
-                    console.warn(`Could not load preset: ${filename}`);
+                    console.error(`❌ Error loading preset ${filename}:`, error);
+                    return false;
                 }
             }
             
@@ -245,6 +265,7 @@
                     }
                 }
                 
+                console.log(`📊 Parsed preset parameters:`, parameters);
                 return parameters;
             }
             
@@ -487,31 +508,123 @@
                 const width = this.canvas.width;
                 const height = this.canvas.height;
                 
-                switch(preset.type) {
-                    case 'milk':
-                        this.renderMilkPreset(preset, width, height);
-                        break;
-                    case 'geiss':
-                        this.renderGeiss(width, height);
-                        break;
-                    case 'waveform':
-                        this.renderWaveform(width, height);
-                        break;
-                    case 'spectrum':
-                        this.renderSpectrum(width, height);
-                        break;
-                    case 'particles':
-                        this.renderParticles(width, height);
-                        break;
-                    case 'spiral':
-                        this.renderSpiral(width, height);
-                        break;
-                    case 'matrix':
-                        this.renderMatrix(width, height);
-                        break;
-                    default:
-                        this.renderGeiss(width, height);
+                if (preset.type === 'milk' && preset.parameters) {
+                    // Use the milk preset with its parameters
+                    this.renderMilkPreset(preset, width, height);
+                } else {
+                    // Fall back to type-based rendering
+                    switch(preset.type) {
+                        case 'milk':
+                            this.renderMilkPreset(preset, width, height);
+                            break;
+                        case 'geiss':
+                            this.renderGeiss(width, height);
+                            break;
+                        case 'waveform':
+                            this.renderWaveform(width, height);
+                            break;
+                        case 'spectrum':
+                            this.renderSpectrum(width, height);
+                            break;
+                        case 'particles':
+                            this.renderParticles(width, height);
+                            break;
+                        case 'spiral':
+                            this.renderSpiral(width, height);
+                            break;
+                        case 'matrix':
+                            this.renderMatrix(width, height);
+                            break;
+                        default:
+                            this.renderGeiss(width, height);
+                    }
                 }
+            }
+            
+            renderMilkPreset(preset, width, height) {
+                // Render milk-style visualization using WebGL
+                if (!this.shaderPrograms.basic) return;
+                
+                this.gl.useProgram(this.shaderPrograms.basic);
+                
+                // Use preset parameters if available for more varied effects
+                let rotationSpeed = 0.5;
+                let scale = 1.0;
+                let waveCount = 8;
+                let colorShift = 0;
+                
+                if (preset.parameters) {
+                    rotationSpeed = preset.parameters.WAVE_SPEED || 0.5;
+                    scale = preset.parameters.WAVE_SCALE || 1.0;
+                    waveCount = preset.parameters.WAVES || 8;
+                    colorShift = preset.parameters.WAVE_A || 0;
+                }
+                
+                // Create rotation matrix with preset speed
+                const angle = this.time * rotationSpeed;
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                const rotation = [cos * scale, -sin * scale, sin * scale, cos * scale];
+                this.gl.uniformMatrix2fv(this.uniforms.rotation, false, rotation);
+                
+                // Bind buffers and draw
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                this.gl.enableVertexAttribArray(this.attributes.position);
+                this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                this.gl.enableVertexAttribArray(this.attributes.color);
+                this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                
+                // Draw multiple quads for more complex effects
+                for (let i = 0; i < Math.min(waveCount, 4); i++) {
+                    const offset = i * 0.2;
+                    const colorOffset = (colorShift + i * 0.25) % 1.0;
+                    
+                    // Modify colors based on preset parameters
+                    if (preset.parameters) {
+                        const r = preset.parameters.WAVE_A || 1.0;
+                        const g = preset.parameters.WAVE_B || 0.5;
+                        const b = preset.parameters.WAVE_C || 0.8;
+                        
+                        // Apply color rotation
+                        const hue = (this.time * 0.1 + colorOffset) % 1.0;
+                        const colors = this.hsvToRgb(hue, 0.8, 0.9);
+                        
+                        // Update color buffer with new colors
+                        const newColors = new Float32Array([
+                            colors.r, colors.g, colors.b,
+                            colors.r, colors.g, colors.b,
+                            colors.r, colors.g, colors.b,
+                            colors.r, colors.g, colors.b
+                        ]);
+                        
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    }
+                    
+                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+                }
+            }
+            
+            hsvToRgb(h, s, v) {
+                let r, g, b;
+                const i = Math.floor(h * 6);
+                const f = h * 6 - i;
+                const p = v * (1 - s);
+                const q = v * (1 - f * s);
+                const t = v * (1 - (1 - f) * s);
+                
+                switch (i % 6) {
+                    case 0: r = v, g = t, b = p; break;
+                    case 1: r = q, g = v, b = p; break;
+                    case 2: r = p, g = v, b = t; break;
+                    case 3: r = p, g = q, b = v; break;
+                    case 4: r = t, g = p, b = v; break;
+                    case 5: r = v, g = p, b = q; break;
+                }
+                
+                return { r, g, b };
             }
             
             renderDefault() {
@@ -538,40 +651,6 @@
                 this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
                 
                 // Draw
-                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
-            }
-            
-            renderMilkPreset(preset, width, height) {
-                // Render milk-style visualization using WebGL
-                if (!this.shaderPrograms.basic) return;
-                
-                this.gl.useProgram(this.shaderPrograms.basic);
-                
-                // Use preset parameters if available
-                let rotationSpeed = 0.5;
-                let scale = 1.0;
-                
-                if (preset.parameters) {
-                    rotationSpeed = preset.parameters.WAVE_SPEED || 0.5;
-                    scale = preset.parameters.WAVE_SCALE || 1.0;
-                }
-                
-                // Create rotation matrix with preset speed
-                const angle = this.time * rotationSpeed;
-                const cos = Math.cos(angle);
-                const sin = Math.sin(angle);
-                const rotation = [cos * scale, -sin * scale, sin * scale, cos * scale];
-                this.gl.uniformMatrix2fv(this.uniforms.rotation, false, rotation);
-                
-                // Bind buffers and draw
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
-                this.gl.enableVertexAttribArray(this.attributes.position);
-                this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
-                
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
-                this.gl.enableVertexAttribArray(this.attributes.color);
-                this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
-                
                 this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
             }
             
@@ -651,9 +730,23 @@
             }
             
             updatePresetInfo() {
-                document.getElementById('currentPreset').textContent = 
-                    this.presets.length > 0 ? this.presets[this.currentPresetIndex].name : 'None';
-                document.getElementById('totalPresets').textContent = this.presets.length;
+                const currentPresetName = this.presets.length > 0 ? this.presets[this.currentPresetIndex].name : 'None';
+                const totalPresets = this.presets.length;
+                
+                document.getElementById('currentPreset').textContent = currentPresetName;
+                document.getElementById('totalPresets').textContent = totalPresets;
+                
+                // Update preset status
+                if (totalPresets === 0) {
+                    document.getElementById('presetStatus').textContent = 'No presets loaded';
+                } else if (this.presets[this.currentPresetIndex].type === 'milk' && this.presets[this.currentPresetIndex].parameters) {
+                    const paramCount = Object.keys(this.presets[this.currentPresetIndex].parameters).length;
+                    document.getElementById('presetStatus').textContent = `Milk preset with ${paramCount} parameters`;
+                } else {
+                    document.getElementById('presetStatus').textContent = `${this.presets[this.currentPresetIndex].type} preset`;
+                }
+                
+                console.log(`📊 Preset info updated: ${currentPresetName} (${totalPresets} total)`);
             }
             
             setPreset(index) {
@@ -713,6 +806,20 @@
         }
         
         function refreshPresets() {
+            visualizer.loadPresetsFromFolder();
+        }
+        
+        function debugPresets() {
+            console.log('🐛 Debugging loaded presets:');
+            console.log(`Total presets: ${visualizer.presets.length}`);
+            console.log(`Current preset index: ${visualizer.currentPresetIndex}`);
+            
+            visualizer.presets.forEach((preset, index) => {
+                console.log(`Preset ${index}: ${preset.name} (Type: ${preset.type}, Parameters: ${JSON.stringify(preset.parameters)})`);
+            });
+            
+            // Test preset loading
+            console.log('🔄 Testing preset loading...');
             visualizer.loadPresetsFromFolder();
         }
         
