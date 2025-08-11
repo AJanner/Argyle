@@ -720,7 +720,7 @@ const themePresets = {
     "vy": 2.070210111510945,
     "color": "hsl(152.85992733189903, 100%, 70%)",
     "textColor": "hsl(31, 100%, 57.00964064783849%)",
-    "radius": 45,
+    "radius": 55,
     "font": "Monospace",
     "shape": "goal",
     "heightRatio": 1,
