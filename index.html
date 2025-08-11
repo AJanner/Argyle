@@ -917,7 +917,7 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
   </script>
   <!-- News Ticker Module -->
   <link rel="stylesheet" href="web/ticker.css">
-  <div id="news-ticker" style="display: none;"></div>
+  <div id="news-ticker"></div>
   
   <!-- Module-based visualization system - Load First -->
   <script type="module">
@@ -950,28 +950,39 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
   <script>
     // Initialize news ticker when page loads
     document.addEventListener('DOMContentLoaded', () => {
-      // Initialize news ticker
-      if (typeof initNewsTicker === 'function') {
-        window.newsTicker = initNewsTicker({
-          target: '#news-ticker',
-          endpoint: '/api/news',
-          speed: 60,
-          gap: 48,
-          pauseOnHover: true,
-          direction: 'ltr',
-          maxHeadlines: 50
-        });
-        
-        // Show ticker initially
-        const tickerElement = document.getElementById('news-ticker');
-        if (tickerElement) {
-          tickerElement.style.display = 'block';
+      console.log('🔍 DOM loaded, initializing news ticker...');
+      
+      // Wait a bit for everything to settle
+      setTimeout(() => {
+        // Initialize news ticker
+        if (typeof initNewsTicker === 'function') {
+          console.log('🎯 Creating news ticker...');
+          window.newsTicker = initNewsTicker({
+            target: '#news-ticker',
+            endpoint: '/api/news',
+            speed: 60,
+            gap: 48,
+            pauseOnHover: true,
+            direction: 'ltr',
+            maxHeadlines: 50
+          });
+          
+          // Ensure ticker is visible
+          const tickerElement = document.getElementById('news-ticker');
+          if (tickerElement) {
+            tickerElement.style.display = 'block';
+            tickerElement.style.visibility = 'visible';
+            tickerElement.style.opacity = '1';
+            console.log('✅ News ticker element made visible');
+          } else {
+            console.error('❌ News ticker element not found');
+          }
+          
+          console.log('✅ News ticker initialized successfully');
+        } else {
+          console.warn('⚠️ News ticker function not available');
         }
-        
-        console.log('✅ News ticker initialized');
-      } else {
-        console.warn('⚠️ News ticker function not available');
-      }
+      }, 1000); // Wait 1 second for everything to load
     });
     
     // Function to toggle news ticker visibility
@@ -991,6 +1002,32 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
       if (tickerElement) {
         // Hide ticker when media toolbar is visible
         tickerElement.style.display = mediaToolbarVisible ? 'none' : 'block';
+      }
+    };
+    
+    // Debug function to test ticker visibility
+    window.testNewsTicker = function() {
+      const tickerElement = document.getElementById('news-ticker');
+      if (tickerElement) {
+        console.log('🔍 News ticker element found:', tickerElement);
+        console.log('📊 Computed styles:', {
+          display: getComputedStyle(tickerElement).display,
+          visibility: getComputedStyle(tickerElement).visibility,
+          opacity: getComputedStyle(tickerElement).opacity,
+          zIndex: getComputedStyle(tickerElement).zIndex,
+          position: getComputedStyle(tickerElement).position,
+          bottom: getComputedStyle(tickerElement).bottom
+        });
+        
+        // Force show the ticker
+        tickerElement.style.display = 'block';
+        tickerElement.style.visibility = 'visible';
+        tickerElement.style.opacity = '1';
+        tickerElement.style.zIndex = '9999';
+        
+        console.log('✅ Ticker forced to be visible');
+      } else {
+        console.error('❌ News ticker element not found');
       }
     };
   </script>
