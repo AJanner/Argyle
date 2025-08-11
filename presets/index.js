@@ -7,6 +7,7 @@
 import { renderRainbowSpiral } from './effects/rainbow-spiral-GL.js';
 import { renderNeonPulse } from './effects/neon-pulse.js';
 import { renderMyCoolEffect } from './effects/my-cool-effect.js';
+import { renderQuantumPlasmaStorm } from './effects/quantum-plasma-storm.js';
 
 // Preset definitions
 export const presets = [
@@ -213,6 +214,13 @@ export const presets = [
     description: 'Custom audio-reactive circles with connecting lines',
     category: 'Custom',
     custom: true
+  },
+  {
+    name: 'Quantum Plasma Storm',
+    type: 'quantumPlasmaStorm',
+    description: 'Advanced WebGL2 plasma storm with particle systems and fluid dynamics',
+    category: 'Custom',
+    custom: true
   }
 ];
 
@@ -220,7 +228,8 @@ export const presets = [
 export const customEffects = {
   rainbowSpiral: renderRainbowSpiral,
   neonPulse: renderNeonPulse,
-  myCoolEffect: renderMyCoolEffect
+  myCoolEffect: renderMyCoolEffect,
+  quantumPlasmaStorm: renderQuantumPlasmaStorm
 };
 
 // Make customEffects available globally
