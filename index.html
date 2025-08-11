@@ -915,6 +915,10 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
       console.log("✅ MindsEye initialization complete");
     });
   </script>
+  <!-- News Ticker Module -->
+  <link rel="stylesheet" href="web/ticker.css">
+  <div id="news-ticker" style="display: none;"></div>
+  
   <!-- Module-based visualization system - Load First -->
   <script type="module">
     import { initializeVisualizer } from './modules/index.js';
@@ -939,6 +943,56 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
         }));
       }
     })();
+  </script>
+  
+  <!-- News Ticker Script -->
+  <script src="web/ticker.js"></script>
+  <script>
+    // Initialize news ticker when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize news ticker
+      if (typeof initNewsTicker === 'function') {
+        window.newsTicker = initNewsTicker({
+          target: '#news-ticker',
+          endpoint: '/api/news',
+          speed: 60,
+          gap: 48,
+          pauseOnHover: true,
+          direction: 'ltr',
+          maxHeadlines: 50
+        });
+        
+        // Show ticker initially
+        const tickerElement = document.getElementById('news-ticker');
+        if (tickerElement) {
+          tickerElement.style.display = 'block';
+        }
+        
+        console.log('✅ News ticker initialized');
+      } else {
+        console.warn('⚠️ News ticker function not available');
+      }
+    });
+    
+    // Function to toggle news ticker visibility
+    window.toggleNewsTicker = function() {
+      const tickerElement = document.getElementById('news-ticker');
+      if (tickerElement) {
+        const isVisible = tickerElement.style.display !== 'none';
+        tickerElement.style.display = isVisible ? 'none' : 'block';
+        return !isVisible;
+      }
+      return false;
+    };
+    
+    // Function to show/hide ticker based on media toolbar state
+    window.updateNewsTickerVisibility = function(mediaToolbarVisible) {
+      const tickerElement = document.getElementById('news-ticker');
+      if (tickerElement) {
+        // Hide ticker when media toolbar is visible
+        tickerElement.style.display = mediaToolbarVisible ? 'none' : 'block';
+      }
+    };
   </script>
 </body>
 </html>
