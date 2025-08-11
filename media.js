@@ -1584,11 +1584,7 @@ function enhanceVideo(videoElement) {
           videoElement.requestFullscreen();
         }
         break;
-      case 'KeyM':
-        e.preventDefault();
-        videoElement.muted = !videoElement.muted;
-        logger.video('Video muted', { muted: videoElement.muted });
-        break;
+      // M key shortcut removed - conflicts with music panel shortcut
     }
   };
   
@@ -1730,11 +1726,7 @@ function enhanceMusicPlayback(audioElement) {
       case 'ArrowDown':
         audioElement.volume = Math.max(0, audioElement.volume - 0.1);
         break;
-      case 'KeyM':
-        e.preventDefault();
-        audioElement.muted = !audioElement.muted;
-        logger.audio('Music muted', { muted: audioElement.muted });
-        break;
+      // M key shortcut removed - conflicts with music panel shortcut
     }
   };
   
@@ -6048,7 +6040,7 @@ function closeProjectMPanel() {
                         window.analysisPanelFadeTimeout = null;
                     }, 1000);
                 }
-            }, 10000);
+            }, 30000);
         }
         
         logger.info('🎨 Butterchurn panel closed - analysis panel timeout restarted');

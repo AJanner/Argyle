@@ -570,7 +570,7 @@ button[data-png="bucheck"].has-png {
   background: rgba(34, 34, 34, 0.95);
   color: white;
   padding: 15px;
-  border-radius: 0px 16px 16px 0px; /* Left side sharp, right side rounded for left-alignment */
+  border-radius: 8px; /* Rounded corners on all sides with smaller radius */
   border: 2px solid darkgreen;
   z-index: 29995;
   display: none;
@@ -960,17 +960,23 @@ button[data-png="bucheck"].has-png {
   position: fixed;
   top: 130px;
   left: 20px;
-  width: 300px;
-  background: rgba(34, 34, 34, 0.90);
+  width: 450px;
+  background: rgba(34, 34, 34, 0.95);
   color: white;
   padding: 20px;
-  border-radius: 8px; /* Slight curved corners on all sides */
-  border: 2px solid #E6064D;
+  border-radius: 8px;
+  border: 2px solid #4CAF50;
   z-index: 60000;
   display: none;
-  max-height: 70vh;
+  max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  direction: rtl; /* Move scrollbar to left */
+}
+
+.music-panel > * {
+  direction: ltr; /* Keep content left-to-right */
+  text-align: left;
 }
 
 .music-panel h3 {

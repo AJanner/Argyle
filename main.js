@@ -2082,10 +2082,10 @@ function showAnalysisPanel() {
       clearTimeout(window.analysisPanelFadeTimeout);
     }
     
-    // Set fade-out timeout for 10 seconds
+    // Set fade-out timeout for 30 seconds
     window.analysisPanelFadeTimeout = setTimeout(() => {
       fadeOutAnalysisPanel();
-    }, 10000);
+    }, 30000);
     analysisPanelFadeTimeout = window.analysisPanelFadeTimeout;
   }
 }
