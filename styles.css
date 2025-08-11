@@ -963,12 +963,12 @@ button[data-png="bucheck"].has-png {
   width: 300px; /* Match video playlist width */
   background: rgba(34, 34, 34, 0.95);
   color: white;
-  padding: 20px;
+  padding: 15px; /* Match video playlist padding */
   border-radius: 8px;
   border: 2px solid #4CAF50;
   z-index: 60000;
   display: none;
-  max-height: 80vh;
+  max-height: 70vh; /* Match video playlist height */
   overflow-y: auto;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   direction: rtl; /* Move scrollbar to left */
