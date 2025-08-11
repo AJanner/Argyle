@@ -5272,9 +5272,10 @@ function toggleProjectMPanel() {
             // Show the panel
             panel.style.display = 'block';
             
-            // Clear analysis panel timeout
+            // Clear analysis panel timeout to prevent it from closing
             if (window.analysisPanelFadeTimeout) {
                 clearTimeout(window.analysisPanelFadeTimeout);
+                window.analysisPanelFadeTimeout = null;
             }
             
             // Initialize local visualizer if not already done
@@ -5282,7 +5283,7 @@ function toggleProjectMPanel() {
                 LocalVisualizer.init();
             }
             
-            logger.info('🎨 Local visualization panel opened');
+            logger.info('🎨 Local visualization panel opened - analysis panel timeout cleared');
         }
         
     } catch (error) {
@@ -5308,13 +5309,22 @@ function closeProjectMPanel() {
         hideRetryButton();
         hideLocalEffectButton();
         
-        // Restart analysis panel timeout
-        if (window.analysisPanelFadeTimeout) {
-            clearTimeout(window.analysisPanelFadeTimeout);
-            window.analysisPanelFadeTimeout = null;
+        // Restart the analysis panel fade-out timeout since visualization panel is closed
+        if (window.analysisPanelFadeTimeout === null) {
+            window.analysisPanelFadeTimeout = setTimeout(() => {
+                const analysisPanel = document.getElementById('analysisPanel');
+                if (analysisPanel && analysisPanel.style.display === 'block') {
+                    // Fade out the analysis panel
+                    analysisPanel.style.opacity = '0';
+                    setTimeout(() => {
+                        analysisPanel.style.display = 'none';
+                        window.analysisPanelFadeTimeout = null;
+                    }, 1000);
+                }
+            }, 30000);
+            
+            logger.info('🎨 Visualization panel closed - analysis panel timeout restarted (30s)');
         }
-        
-        logger.info('🎨 ProjectM panel closed');
         
     } catch (error) {
         console.error('Failed to close ProjectM panel:', error);
@@ -5999,53 +6009,7 @@ function startRenderLoop() {
     render();
 }
 
-function toggleProjectMPanel() {
-    const projectmPanel = document.getElementById('projectmPanel');
-    if (projectmPanel.style.display === 'none' || projectmPanel.style.display === '') {
-        projectmPanel.style.display = 'block';
-        
-        // Clear the analysis panel fade-out timeout to prevent it from closing
-        if (window.analysisPanelFadeTimeout) {
-            clearTimeout(window.analysisPanelFadeTimeout);
-            window.analysisPanelFadeTimeout = null;
-        }
-        
-        logger.info('🎨 Butterchurn panel opened - no timeout');
-    } else {
-        projectmPanel.style.display = 'none';
-    }
-}
-
-function closeProjectMPanel() {
-    const projectmPanel = document.getElementById('projectmPanel');
-    if (projectmPanel) {
-        projectmPanel.style.display = 'none';
-        
-        // Stop visualizer
-        isVisualizerRunning = false;
-        if (autoPresetTimer) {
-            clearInterval(autoPresetTimer);
-            autoPresetTimer = null;
-        }
-        
-        // Restart the analysis panel fade-out timeout since ProjectM panel is closed
-        if (window.analysisPanelFadeTimeout === null) {
-            window.analysisPanelFadeTimeout = setTimeout(() => {
-                const analysisPanel = document.getElementById('analysisPanel');
-                if (analysisPanel && analysisPanel.style.display === 'block') {
-                    // Fade out the analysis panel
-                    analysisPanel.style.opacity = '0';
-                    setTimeout(() => {
-                        analysisPanel.style.display = 'none';
-                        window.analysisPanelFadeTimeout = null;
-                    }, 1000);
-                }
-            }, 30000);
-        }
-        
-        logger.info('🎨 Butterchurn panel closed - analysis panel timeout restarted');
-    }
-}
+// This function has been consolidated with the main closeProjectMPanel function above
 
 function toggleFullscreen() {
     if (!document.fullscreenElement) {

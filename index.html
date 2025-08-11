@@ -1259,6 +1259,43 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
         }
       },
       
+      // Safety function to ensure positive values for rendering
+      safeRadius: function(radius) {
+        return Math.max(1, radius);
+      },
+      
+      safeSize: function(size) {
+        return Math.max(1, size);
+      },
+      
+      // Fallback render function if main rendering fails
+      renderFallback: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        // Simple pulsing circle as fallback
+        const pulse = Math.sin(this.time * 2) * 0.5 + 0.5;
+        const radius = 50 + pulse * 30;
+        
+        this.ctx.fillStyle = `rgba(76, 175, 80, ${0.3 + pulse * 0.5})`;
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Add some simple particles
+        for (let i = 0; i < 10; i++) {
+          const angle = (i / 10) * Math.PI * 2 + this.time;
+          const x = centerX + Math.cos(angle) * (radius + 20);
+          const y = centerY + Math.sin(angle) * (radius + 20);
+          const size = 2 + pulse * 3;
+          
+          this.ctx.fillStyle = `rgba(255, 255, 255, ${0.5 + pulse * 0.5})`;
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, size, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      },
+      
       // Main render loop
       render: function() {
         if (!this.isRunning) return;
@@ -1273,99 +1310,105 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
         this.ctx.fillRect(0, 0, width, height);
         
-        // Render current preset
-        const preset = this.presets[this.currentPreset];
-        switch(preset.type) {
-          case 'waveform':
-            this.renderWaveform(width, height);
-            break;
-          case 'particles':
-            this.renderParticles(width, height);
-            break;
-          case 'rings':
-            this.renderRings(width, height);
-            break;
-          case 'spectrum':
-            this.renderSpectrum(width, height);
-            break;
-          case 'shapes':
-            this.renderShapes(width, height);
-            break;
-          case 'spiral':
-            this.renderSpiral(width, height);
-            break;
-          case 'matrix':
-            this.renderMatrix(width, height);
-            break;
-          case 'fireworks':
-            this.renderFireworks(width, height);
-            break;
-          case 'neonGrid':
-            this.renderNeonGrid(width, height);
-            break;
-          case 'cosmicDust':
-            this.renderCosmicDust(width, height);
-            break;
-          case 'liquidMetal':
-            this.renderLiquidMetal(width, height);
-            break;
-          case 'energyField':
-            this.renderEnergyField(width, height);
-            break;
-          case 'crystalFormation':
-            this.renderCrystalFormation(width, height);
-            break;
-          case 'plasmaStorm':
-            this.renderPlasmaStorm(width, height);
-            break;
-          case 'quantumWaves':
-            this.renderQuantumWaves(width, height);
-            break;
-          case 'stellarNebula':
-            this.renderStellarNebula(width, height);
-            break;
-          case 'digitalVortex':
-            this.renderDigitalVortex(width, height);
-            break;
-          case 'holographic':
-            this.renderHolographic(width, height);
-            break;
-          case 'neuralNetwork':
-            this.renderNeuralNetwork(width, height);
-            break;
-          case 'fractalUniverse':
-            this.renderFractalUniverse(width, height);
-            break;
-          case 'solarFlare':
-            this.renderSolarFlare(width, height);
-            break;
-          case 'auroraBorealis':
-            this.renderAuroraBorealis(width, height);
-            break;
-          case 'magneticField':
-            this.renderMagneticField(width, height);
-            break;
-          case 'temporalRift':
-            this.renderTemporalRift(width, height);
-            break;
-          case 'gravityWell':
-            this.renderGravityWell(width, height);
-            break;
-          case 'quantumTunnel':
-            this.renderQuantumTunnel(width, height);
-            break;
-          case 'darkMatter':
-            this.renderDarkMatter(width, height);
-            break;
-          case 'lightSpeed':
-            this.renderLightSpeed(width, height);
-            break;
-          case 'wormhole':
-            this.renderWormhole(width, height);
-            break;
-          case 'supernova':
-            this.renderSupernova(width, height);
-            break;
+        // Render current preset with error handling
+        try {
+          const preset = this.presets[this.currentPreset];
+          switch(preset.type) {
+            case 'waveform':
+              this.renderWaveform(width, height);
+              break;
+            case 'particles':
+              this.renderParticles(width, height);
+              break;
+            case 'rings':
+              this.renderRings(width, height);
+              break;
+            case 'spectrum':
+              this.renderSpectrum(width, height);
+              break;
+            case 'shapes':
+              this.renderShapes(width, height);
+              break;
+            case 'spiral':
+              this.renderSpiral(width, height);
+              break;
+            case 'matrix':
+              this.renderMatrix(width, height);
+              break;
+            case 'fireworks':
+              this.renderFireworks(width, height);
+              break;
+            case 'neonGrid':
+              this.renderNeonGrid(width, height);
+              break;
+            case 'cosmicDust':
+              this.renderCosmicDust(width, height);
+              break;
+            case 'liquidMetal':
+              this.renderLiquidMetal(width, height);
+              break;
+            case 'energyField':
+              this.renderEnergyField(width, height);
+              break;
+            case 'crystalFormation':
+              this.renderCrystalFormation(width, height);
+              break;
+            case 'plasmaStorm':
+              this.renderPlasmaStorm(width, height);
+              break;
+            case 'quantumWaves':
+              this.renderQuantumWaves(width, height);
+              break;
+            case 'stellarNebula':
+              this.renderStellarNebula(width, height);
+              break;
+            case 'digitalVortex':
+              this.renderDigitalVortex(width, height);
+              break;
+            case 'holographic':
+              this.renderHolographic(width, height);
+              break;
+            case 'neuralNetwork':
+              this.renderNeuralNetwork(width, height);
+              break;
+            case 'fractalUniverse':
+              this.renderFractalUniverse(width, height);
+              break;
+            case 'solarFlare':
+              this.renderSolarFlare(width, height);
+              break;
+            case 'auroraBorealis':
+              this.renderAuroraBorealis(width, height);
+              break;
+            case 'magneticField':
+              this.renderMagneticField(width, height);
+              break;
+            case 'temporalRift':
+              this.renderTemporalRift(width, height);
+              break;
+            case 'gravityWell':
+              this.renderGravityWell(width, height);
+              break;
+            case 'quantumTunnel':
+              this.renderQuantumTunnel(width, height);
+              break;
+            case 'darkMatter':
+              this.renderDarkMatter(width, height);
+              break;
+            case 'lightSpeed':
+              this.renderLightSpeed(width, height);
+              break;
+            case 'wormhole':
+              this.renderWormhole(width, height);
+              break;
+            case 'supernova':
+              this.renderSupernova(width, height);
+              break;
+          }
+        } catch (error) {
+          console.error('🎨 Visualization render error:', error);
+          // Fallback to a simple effect if rendering fails
+          this.renderFallback(width, height);
         }
         
         this.time += 0.02;
@@ -1446,12 +1489,15 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
         for (let ring = 0; ring < 6; ring++) {
           const ringRadius = (this.time * 25 + ring * 35) % (Math.max(width, height) / 2);
           const ringOpacity = Math.max(0, 1 - (ringRadius / (Math.max(width, height) / 2)));
-          const ringWidth = 4 + Math.sin(this.time * 2 + ring) * 3;
+          const ringWidth = Math.max(1, 4 + Math.sin(this.time * 2 + ring) * 3);
+          
+          // Ensure radius is always positive
+          const finalRadius = Math.max(1, ringRadius);
           
           this.ctx.strokeStyle = `hsla(${(this.time * 120 + ring * 50) % 360}, 80%, 60%, ${ringOpacity})`;
           this.ctx.lineWidth = ringWidth;
           this.ctx.beginPath();
-          this.ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
+          this.ctx.arc(centerX, centerY, finalRadius, 0, Math.PI * 2);
           this.ctx.stroke();
         }
       },
@@ -1584,7 +1630,7 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
             const velocity = 3 + Math.sin(this.time * 2 + p * 0.2) * 2;
             const x = centerX + Math.cos(angle) * velocity * (this.time * 20);
             const y = centerY + Math.sin(angle) * velocity * (this.time * 20);
-            const size = 3 + Math.sin(this.time * 3 + p * 0.3) * 2;
+            const size = Math.max(1, 3 + Math.sin(this.time * 3 + p * 0.3) * 2);
             
             this.ctx.fillStyle = `hsl(${(fw * 120 + p * 12 + this.time * 60) % 360}, 80%, 60%)`;
             this.ctx.beginPath();
@@ -2214,10 +2260,13 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
           const opacity = Math.max(0, 1 - (radius / maxRadius));
           const distortion = Math.sin(this.time * 2 + ring * 0.1) * 10;
           
+          // Ensure radius is always positive
+          const finalRadius = Math.max(1, radius + distortion);
+          
           this.ctx.strokeStyle = `rgba(150, 0, 255, ${opacity})`;
           this.ctx.lineWidth = 3;
           this.ctx.beginPath();
-          this.ctx.arc(centerX, centerY, radius + distortion, 0, Math.PI * 2);
+          this.ctx.arc(centerX, centerY, finalRadius, 0, Math.PI * 2);
           this.ctx.stroke();
         }
         
@@ -2227,7 +2276,7 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
           const radius = 80 + Math.sin(this.time * 1.5 + i * 0.1) * 30;
           const x = centerX + Math.cos(angle) * radius;
           const y = centerY + Math.sin(angle) * radius;
-          const size = 2 + Math.sin(this.time * 2 + i * 0.05) * 1;
+          const size = Math.max(1, 2 + Math.sin(this.time * 2 + i * 0.05) * 1);
           
           this.ctx.fillStyle = `hsl(${(i * 9 + this.time * 30) % 360}, 80%, 70%)`;
           this.ctx.beginPath();

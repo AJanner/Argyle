@@ -1016,7 +1016,8 @@ button[data-png="bucheck"].has-png {
 .projectm-panel {
   position: fixed;
   top: 130px;
-  left: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 450px;
   background: rgba(34, 34, 34, 0.95);
   color: white;
