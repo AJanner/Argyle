@@ -509,7 +509,7 @@
                 const height = this.canvas.height;
                 
                 if (preset.type === 'milk' && preset.parameters) {
-                    // Use the milk preset with its parameters
+                    // Use the milk preset with its parameters for varied effects
                     this.renderMilkPreset(preset, width, height);
                 } else {
                     // Fall back to type-based rendering
@@ -552,15 +552,42 @@
                 let scale = 1.0;
                 let waveCount = 8;
                 let colorShift = 0;
+                let waveMode = 1;
+                let waveSmoothing = 0.5;
                 
                 if (preset.parameters) {
                     rotationSpeed = preset.parameters.WAVE_SPEED || 0.5;
                     scale = preset.parameters.WAVE_SCALE || 1.0;
                     waveCount = preset.parameters.WAVES || 8;
                     colorShift = preset.parameters.WAVE_A || 0;
+                    waveMode = preset.parameters.WAVE_MODE || 1;
+                    waveSmoothing = preset.parameters.WAVE_SMOOTHING || 0.5;
                 }
                 
-                // Create rotation matrix with preset speed
+                // Different rendering modes based on WAVE_MODE
+                switch (waveMode) {
+                    case 1: // Simple rotating quad
+                        this.renderMilkMode1(preset, rotationSpeed, scale, colorShift);
+                        break;
+                    case 2: // Multiple rotating elements
+                        this.renderMilkMode2(preset, rotationSpeed, scale, waveCount, colorShift);
+                        break;
+                    case 3: // Wave pattern
+                        this.renderMilkMode3(preset, rotationSpeed, scale, waveCount, colorShift);
+                        break;
+                    case 4: // Geometric pattern
+                        this.renderMilkMode4(preset, rotationSpeed, scale, waveCount, colorShift);
+                        break;
+                    case 5: // Complex multi-layer
+                        this.renderMilkMode5(preset, rotationSpeed, scale, waveCount, colorShift);
+                        break;
+                    default:
+                        this.renderMilkMode1(preset, rotationSpeed, scale, colorShift);
+                }
+            }
+            
+            renderMilkMode1(preset, rotationSpeed, scale, colorShift) {
+                // Mode 1: Simple rotating quad with color variations
                 const angle = this.time * rotationSpeed;
                 const cos = Math.cos(angle);
                 const sin = Math.sin(angle);
@@ -572,38 +599,470 @@
                 this.gl.enableVertexAttribArray(this.attributes.position);
                 this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
                 
+                // Dynamic colors based on preset parameters
+                const hue = (this.time * 0.1 + colorShift) % 1.0;
+                const colors = this.hsvToRgb(hue, 0.8, 0.9);
+                const newColors = new Float32Array([
+                    colors.r, colors.g, colors.b,
+                    colors.r, colors.g, colors.b,
+                    colors.r, colors.g, colors.b,
+                    colors.r, colors.g, colors.b
+                ]);
+                
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
                 this.gl.enableVertexAttribArray(this.attributes.color);
                 this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
                 
-                // Draw multiple quads for more complex effects
-                for (let i = 0; i < Math.min(waveCount, 4); i++) {
-                    const offset = i * 0.2;
-                    const colorOffset = (colorShift + i * 0.25) % 1.0;
+                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+            }
+            
+            renderMilkMode2(preset, rotationSpeed, scale, waveCount, colorShift) {
+                // Mode 2: Multiple rotating elements in a circle
+                for (let i = 0; i < Math.min(waveCount, 6); i++) {
+                    const elementAngle = (i / waveCount) * Math.PI * 2;
+                    const elementRadius = 0.6;
+                    const elementX = Math.cos(elementAngle) * elementRadius;
+                    const elementY = Math.sin(elementAngle) * elementRadius;
+                    const elementSize = 0.15;
                     
-                    // Modify colors based on preset parameters
-                    if (preset.parameters) {
-                        const r = preset.parameters.WAVE_A || 1.0;
-                        const g = preset.parameters.WAVE_B || 0.5;
-                        const b = preset.parameters.WAVE_C || 0.8;
+                    // Create element-specific position buffer
+                    const elementPositions = new Float32Array([
+                        elementX - elementSize, elementY - elementSize,
+                        elementX + elementSize, elementY - elementSize,
+                        elementX - elementSize, elementY + elementSize,
+                        elementX + elementSize, elementY + elementSize
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, elementPositions, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.position);
+                    this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                    
+                    // Each element has different color and rotation
+                    const elementRotationSpeed = rotationSpeed * (1 + i * 0.2);
+                    const elementAngle2 = this.time * elementRotationSpeed;
+                    const cos = Math.cos(elementAngle2);
+                    const sin = Math.sin(elementAngle2);
+                    const rotation = [cos * scale * 0.5, -sin * scale * 0.5, sin * scale * 0.5, cos * scale * 0.5];
+                    this.gl.uniformMatrix2fv(this.uniforms.rotation, false, rotation);
+                    
+                    const hue = (this.time * 0.1 + colorShift + i * 0.15) % 1.0;
+                    const colors = this.hsvToRgb(hue, 0.9, 1.0);
+                    const newColors = new Float32Array([
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.color);
+                    this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                    
+                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+                }
+            }
+            
+            renderMilkMode3(preset, rotationSpeed, scale, waveCount, colorShift) {
+                // Mode 3: Wave pattern with flowing motion
+                const waveSegments = Math.min(waveCount * 2, 16);
+                for (let i = 0; i < waveSegments; i++) {
+                    const waveX = (i / waveSegments) * 2 - 1;
+                    const waveY = Math.sin(this.time * rotationSpeed + i * 0.5) * 0.3;
+                    const waveSize = 0.08 + Math.sin(this.time * 2 + i * 0.3) * 0.04;
+                    
+                    // Create wave segment position buffer
+                    const wavePositions = new Float32Array([
+                        waveX - waveSize, waveY - waveSize,
+                        waveX + waveSize, waveY - waveSize,
+                        waveX - waveSize, waveY + waveSize,
+                        waveX + waveSize, waveY + waveSize
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, wavePositions, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.position);
+                    this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                    
+                    // Wave colors flow along the pattern
+                    const hue = (i / waveSegments + this.time * 0.1 + colorShift) % 1.0;
+                    const colors = this.hsvToRgb(hue, 0.8, 0.9);
+                    const newColors = new Float32Array([
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.color);
+                    this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                    
+                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+                }
+            }
+            
+            renderMilkMode4(preset, rotationSpeed, scale, waveCount, colorShift) {
+                // Mode 4: Geometric pattern with angular motion
+                const sides = Math.max(3, Math.min(waveCount, 8));
+                for (let i = 0; i < sides; i++) {
+                    const angle = (i / sides) * Math.PI * 2 + this.time * rotationSpeed;
+                    const radius = 0.7 + Math.sin(this.time * 2 + i * 0.5) * 0.2;
+                    const x = Math.cos(angle) * radius;
+                    const y = Math.sin(angle) * radius;
+                    const size = 0.12;
+                    
+                    // Create geometric element position buffer
+                    const elementPositions = new Float32Array([
+                        x - size, y - size,
+                        x + size, y - size,
+                        x - size, y + size,
+                        x + size, y + size
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, elementPositions, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.position);
+                    this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                    
+                    // Geometric colors with sharp contrasts
+                    const hue = (i / sides + this.time * 0.15 + colorShift) % 1.0;
+                    const colors = this.hsvToRgb(hue, 1.0, 1.0);
+                    const newColors = new Float32Array([
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.color);
+                    this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                    
+                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+                }
+            }
+            
+            renderMilkMode5(preset, rotationSpeed, scale, waveCount, colorShift) {
+                // Mode 5: Complex multi-layer with depth effect
+                const layers = Math.min(waveCount, 4);
+                for (let layer = 0; layer < layers; layer++) {
+                    const layerScale = 1.0 - layer * 0.2;
+                    const layerSpeed = rotationSpeed * (1 + layer * 0.3);
+                    const layerAngle = this.time * layerSpeed;
+                    
+                    const cos = Math.cos(layerAngle);
+                    const sin = Math.sin(layerAngle);
+                    const rotation = [cos * scale * layerScale, -sin * scale * layerScale, sin * scale * layerScale, cos * scale * layerScale];
+                    this.gl.uniformMatrix2fv(this.uniforms.rotation, false, rotation);
+                    
+                    // Bind buffers
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                    this.gl.enableVertexAttribArray(this.attributes.position);
+                    this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                    
+                    // Layer colors with depth variation
+                    const hue = (this.time * 0.1 + colorShift + layer * 0.25) % 1.0;
+                    const saturation = 0.8 + layer * 0.1;
+                    const value = 0.7 + layer * 0.2;
+                    const colors = this.hsvToRgb(hue, saturation, value);
+                    const newColors = new Float32Array([
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.color);
+                    this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                    
+                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+                }
+            }
+            
+            renderGeiss(width, height) {
+                // Render Geiss-style visualization - different from milk
+                if (!this.shaderPrograms.basic) return;
+                
+                this.gl.useProgram(this.shaderPrograms.basic);
+                
+                // Geiss style: multiple rotating rings
+                const ringCount = 3;
+                for (let ring = 0; ring < ringCount; ring++) {
+                    const ringSpeed = 0.3 + ring * 0.2;
+                    const ringScale = 0.8 - ring * 0.2;
+                    const angle = this.time * ringSpeed;
+                    
+                    const cos = Math.cos(angle);
+                    const sin = Math.sin(angle);
+                    const rotation = [cos * ringScale, -sin * ringScale, sin * ringScale, cos * ringScale];
+                    this.gl.uniformMatrix2fv(this.uniforms.rotation, false, rotation);
+                    
+                    // Bind buffers
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                    this.gl.enableVertexAttribArray(this.attributes.position);
+                    this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                    
+                    // Geiss colors: more vibrant and varied
+                    const hue = (this.time * 0.2 + ring * 0.3) % 1.0;
+                    const colors = this.hsvToRgb(hue, 0.9, 1.0);
+                    const newColors = new Float32Array([
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.color);
+                    this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                    
+                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+                }
+            }
+            
+            renderWaveform(width, height) {
+                // Render waveform visualization - horizontal bars
+                if (!this.shaderPrograms.basic) return;
+                
+                this.gl.useProgram(this.shaderPrograms.basic);
+                
+                // Waveform: multiple horizontal bars that move
+                const barCount = 8;
+                for (let bar = 0; bar < barCount; bar++) {
+                    const barHeight = 0.1;
+                    const barY = (bar / barCount) * 2 - 1;
+                    const barSpeed = 0.5 + bar * 0.1;
+                    const barWidth = 0.8 + Math.sin(this.time * barSpeed) * 0.4;
+                    
+                    // Create bar-specific position buffer
+                    const barPositions = new Float32Array([
+                        -barWidth, barY - barHeight,
+                         barWidth, barY - barHeight,
+                        -barWidth, barY + barHeight,
+                         barWidth, barY + barHeight
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, barPositions, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.position);
+                    this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                    
+                    // Waveform colors: based on frequency
+                    const hue = (bar / barCount + this.time * 0.1) % 1.0;
+                    const colors = this.hsvToRgb(hue, 0.8, 0.9);
+                    const newColors = new Float32Array([
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.color);
+                    this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                    
+                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+                }
+            }
+            
+            renderSpectrum(width, height) {
+                // Render spectrum visualization - vertical bars
+                if (!this.shaderPrograms.basic) return;
+                
+                this.gl.useProgram(this.shaderPrograms.basic);
+                
+                // Spectrum: multiple vertical bars that pulse
+                const barCount = 12;
+                for (let bar = 0; bar < barCount; bar++) {
+                    const barWidth = 0.1;
+                    const barX = (bar / barCount) * 2 - 1;
+                    const barHeight = 0.5 + Math.sin(this.time * 2 + bar * 0.5) * 0.4;
+                    
+                    // Create bar-specific position buffer
+                    const barPositions = new Float32Array([
+                        barX - barWidth, -barHeight,
+                        barX + barWidth, -barHeight,
+                        barX - barWidth,  barHeight,
+                        barX + barWidth,  barHeight
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, barPositions, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.position);
+                    this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                    
+                    // Spectrum colors: rainbow effect
+                    const hue = (bar / barCount + this.time * 0.15) % 1.0;
+                    const colors = this.hsvToRgb(hue, 0.9, 1.0);
+                    const newColors = new Float32Array([
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.color);
+                    this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                    
+                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+                }
+            }
+            
+            renderParticles(width, height) {
+                // Render particle system - floating dots
+                if (!this.shaderPrograms.basic) return;
+                
+                this.gl.useProgram(this.shaderPrograms.basic);
+                
+                // Particles: multiple small dots that float around
+                const particleCount = 20;
+                for (let particle = 0; particle < particleCount; particle++) {
+                    const particleSize = 0.05;
+                    const particleX = Math.sin(this.time * 0.5 + particle * 0.3) * 0.8;
+                    const particleY = Math.cos(this.time * 0.3 + particle * 0.4) * 0.6;
+                    
+                    // Create particle-specific position buffer
+                    const particlePositions = new Float32Array([
+                        particleX - particleSize, particleY - particleSize,
+                        particleX + particleSize, particleY - particleSize,
+                        particleX - particleSize, particleY + particleSize,
+                        particleX + particleSize, particleY + particleSize
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, particlePositions, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.position);
+                    this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                    
+                    // Particle colors: twinkling effect
+                    const brightness = 0.5 + Math.sin(this.time * 3 + particle * 0.5) * 0.5;
+                    const hue = (particle / particleCount + this.time * 0.1) % 1.0;
+                    const colors = this.hsvToRgb(hue, 0.7, brightness);
+                    const newColors = new Float32Array([
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.color);
+                    this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                    
+                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+                }
+            }
+            
+            renderSpiral(width, height) {
+                // Render spiral visualization - expanding spiral
+                if (!this.shaderPrograms.basic) return;
+                
+                this.gl.useProgram(this.shaderPrograms.basic);
+                
+                // Spiral: expanding spiral pattern
+                const spiralSegments = 16;
+                for (let segment = 0; segment < spiralSegments; segment++) {
+                    const spiralRadius = (segment / spiralSegments) * 0.8;
+                    const spiralAngle = segment * 0.5 + this.time * 0.8;
+                    const spiralX = Math.cos(spiralAngle) * spiralRadius;
+                    const spiralY = Math.sin(spiralAngle) * spiralRadius;
+                    const spiralSize = 0.03 + (segment / spiralSegments) * 0.05;
+                    
+                    // Create spiral segment position buffer
+                    const spiralPositions = new Float32Array([
+                        spiralX - spiralSize, spiralY - spiralSize,
+                        spiralX + spiralSize, spiralY - spiralSize,
+                        spiralX - spiralSize, spiralY + spiralSize,
+                        spiralX + spiralSize, spiralY + spiralSize
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, spiralPositions, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.position);
+                    this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                    
+                    // Spiral colors: gradient from center to edge
+                    const hue = (segment / spiralSegments + this.time * 0.2) % 1.0;
+                    const saturation = 0.8;
+                    const value = 0.3 + (segment / spiralSegments) * 0.7;
+                    const colors = this.hsvToRgb(hue, saturation, value);
+                    const newColors = new Float32Array([
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.color);
+                    this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                    
+                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+                }
+            }
+            
+            renderMatrix(width, height) {
+                // Render matrix-style visualization - falling characters
+                if (!this.shaderPrograms.basic) return;
+                
+                this.gl.useProgram(this.shaderPrograms.basic);
+                
+                // Matrix: grid of falling elements
+                const gridSize = 8;
+                for (let row = 0; row < gridSize; row++) {
+                    for (let col = 0; col < gridSize; col++) {
+                        const elementSize = 0.08;
+                        const elementX = (col / gridSize) * 2 - 1;
+                        const elementY = (row / gridSize) * 2 - 1;
+                        const fallSpeed = 0.5 + (row + col) * 0.1;
+                        const fallOffset = (this.time * fallSpeed) % 2;
+                        const finalY = elementY - fallOffset;
                         
-                        // Apply color rotation
-                        const hue = (this.time * 0.1 + colorOffset) % 1.0;
-                        const colors = this.hsvToRgb(hue, 0.8, 0.9);
+                        // Skip if element has fallen off screen
+                        if (finalY < -1.2) continue;
                         
-                        // Update color buffer with new colors
+                        // Create matrix element position buffer
+                        const elementPositions = new Float32Array([
+                            elementX - elementSize, finalY - elementSize,
+                            elementX + elementSize, finalY - elementSize,
+                            elementX - elementSize, finalY + elementSize,
+                            elementX + elementSize, finalY + elementSize
+                        ]);
+                        
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, elementPositions, this.gl.STATIC_DRAW);
+                        this.gl.enableVertexAttribArray(this.attributes.position);
+                        this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                        
+                        // Matrix colors: green with variations
+                        const greenIntensity = 0.3 + Math.sin(this.time * 2 + row + col) * 0.7;
                         const newColors = new Float32Array([
-                            colors.r, colors.g, colors.b,
-                            colors.r, colors.g, colors.b,
-                            colors.r, colors.g, colors.b,
-                            colors.r, colors.g, colors.b
+                            0.0, greenIntensity, 0.0,
+                            0.0, greenIntensity, 0.0,
+                            0.0, greenIntensity, 0.0,
+                            0.0, greenIntensity, 0.0
                         ]);
                         
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                        this.gl.enableVertexAttribArray(this.attributes.color);
+                        this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                        
+                        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
                     }
-                    
-                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
                 }
             }
             
@@ -652,36 +1111,6 @@
                 
                 // Draw
                 this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
-            }
-            
-            renderGeiss(width, height) {
-                // Render Geiss-style visualization
-                this.renderMilkPreset(null, width, height);
-            }
-            
-            renderWaveform(width, height) {
-                // Render waveform visualization
-                this.renderMilkPreset(null, width, height);
-            }
-            
-            renderSpectrum(width, height) {
-                // Render spectrum visualization
-                this.renderMilkPreset(null, width, height);
-            }
-            
-            renderParticles(width, height) {
-                // Render particle system
-                this.renderMilkPreset(null, width, height);
-            }
-            
-            renderSpiral(width, height) {
-                // Render spiral visualization
-                this.renderMilkPreset(null, width, height);
-            }
-            
-            renderMatrix(width, height) {
-                // Render matrix-style visualization
-                this.renderMilkPreset(null, width, height);
             }
             
             loadDefaultPresets() {
