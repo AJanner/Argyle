@@ -2033,6 +2033,7 @@ function fadeOutDrawingSettingsPanel() {
 }
 
 let analysisPanelFadeTimeout = null;
+window.analysisPanelFadeTimeout = analysisPanelFadeTimeout;
 
 // Suggestions button cooldown
 let suggestionsCooldownActive = false;
@@ -2077,14 +2078,15 @@ function showAnalysisPanel() {
     }
     
     // Clear any existing timeout
-    if (analysisPanelFadeTimeout) {
-      clearTimeout(analysisPanelFadeTimeout);
+    if (window.analysisPanelFadeTimeout) {
+      clearTimeout(window.analysisPanelFadeTimeout);
     }
     
     // Set fade-out timeout for 10 seconds
-    analysisPanelFadeTimeout = setTimeout(() => {
+    window.analysisPanelFadeTimeout = setTimeout(() => {
       fadeOutAnalysisPanel();
     }, 10000);
+    analysisPanelFadeTimeout = window.analysisPanelFadeTimeout;
   }
 }
 
@@ -2094,8 +2096,9 @@ function hideAnalysisPanel() {
   
   if (panel) {
     panel.style.display = 'none';
-    if (analysisPanelFadeTimeout) {
-      clearTimeout(analysisPanelFadeTimeout);
+    if (window.analysisPanelFadeTimeout) {
+      clearTimeout(window.analysisPanelFadeTimeout);
+      window.analysisPanelFadeTimeout = null;
       analysisPanelFadeTimeout = null;
     }
     logger.info('📊 Analysis panel closed');
@@ -2116,6 +2119,7 @@ function fadeOutAnalysisPanel() {
     // Hide after fade completes
     setTimeout(() => {
       panel.style.display = 'none';
+      window.analysisPanelFadeTimeout = null;
       analysisPanelFadeTimeout = null;
       logger.info('📊 Analysis panel faded out');
     }, 1000);

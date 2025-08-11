@@ -5274,12 +5274,13 @@ function toggleProjectMPanel() {
   if (projectmPanel.style.display === 'none' || projectmPanel.style.display === '') {
     projectmPanel.style.display = 'block';
     
-    // Auto-hide after 60 seconds
-    setTimeout(() => {
-      if (projectmPanel.style.display === 'block') {
-        projectmPanel.style.display = 'none';
-      }
-    }, 60000);
+    // Clear the analysis panel fade-out timeout to prevent it from closing
+    if (window.analysisPanelFadeTimeout) {
+      clearTimeout(window.analysisPanelFadeTimeout);
+      window.analysisPanelFadeTimeout = null;
+    }
+    
+    logger.info('🎨 ProjectM panel opened - no timeout');
   } else {
     projectmPanel.style.display = 'none';
   }
@@ -5289,6 +5290,23 @@ function closeProjectMPanel() {
   const projectmPanel = document.getElementById('projectmPanel');
   if (projectmPanel) {
     projectmPanel.style.display = 'none';
+    
+    // Restart the analysis panel fade-out timeout since ProjectM panel is closed
+    if (window.analysisPanelFadeTimeout === null) {
+      window.analysisPanelFadeTimeout = setTimeout(() => {
+        const analysisPanel = document.getElementById('analysisPanel');
+        if (analysisPanel && analysisPanel.style.display === 'block') {
+          // Fade out the analysis panel
+          analysisPanel.style.opacity = '0';
+          setTimeout(() => {
+            analysisPanel.style.display = 'none';
+            window.analysisPanelFadeTimeout = null;
+          }, 1000);
+        }
+      }, 10000);
+    }
+    
+    logger.info('🎨 ProjectM panel closed - analysis panel timeout restarted');
   }
 }
 
