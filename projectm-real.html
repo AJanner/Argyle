@@ -183,6 +183,9 @@
                         
                         console.log('📋 Found preset files in index:', presetFiles);
                         
+                        // Store current preset index before clearing
+                        const currentIndex = this.currentPresetIndex;
+                        
                         // Clear existing presets and reload
                         this.presets = [];
                         this.loadedPresets.clear();
@@ -201,19 +204,30 @@
                         if (this.presets.length === 0) {
                             console.log('⚠️ No presets loaded, falling back to defaults');
                             this.loadDefaultPresets();
+                        } else {
+                            // Reset to first preset if current index is out of bounds
+                            if (currentIndex >= this.presets.length) {
+                                this.currentPresetIndex = 0;
+                            }
                         }
                         
                         // Update UI
                         this.updatePresetList();
                         this.updatePresetInfo();
+                        
+                        // Update status
+                        document.getElementById('presetStatus').textContent = `Loaded ${loadedCount} presets`;
+                        
                     } else {
                         console.warn('⚠️ Could not read presets/index.txt, using defaults');
                         this.loadDefaultPresets();
+                        document.getElementById('presetStatus').textContent = 'Using default presets';
                     }
                 } catch (error) {
                     console.error('❌ Error loading presets from folder:', error);
                     console.log('🔄 Falling back to default presets');
                     this.loadDefaultPresets();
+                    document.getElementById('presetStatus').textContent = 'Error loading presets, using defaults';
                 }
             }
             
@@ -227,6 +241,12 @@
                         
                         // Parse preset content for parameters
                         preset.parameters = this.parseMilkPreset(content);
+                        
+                        // Validate that we have some parameters
+                        if (Object.keys(preset.parameters).length === 0) {
+                            console.warn(`⚠️ Preset ${filename} has no parameters, skipping`);
+                            return false;
+                        }
                         
                         this.presets.push(preset);
                         this.loadedPresets.set(filename, preset);
@@ -263,6 +283,20 @@
                             }
                         }
                     }
+                }
+                
+                // Ensure we have at least some basic parameters
+                if (Object.keys(parameters).length === 0) {
+                    // Add default parameters if none found
+                    parameters.WAVES = 8;
+                    parameters.WAVE_SPEED = 1.0;
+                    parameters.WAVE_SCALE = 1.0;
+                    parameters.WAVE_MODE = 1;
+                    parameters.WAVE_A = 0.5;
+                    parameters.WAVE_B = 0.3;
+                    parameters.WAVE_C = 0.7;
+                    parameters.WAVE_D = 0.4;
+                    console.log('📊 No parameters found, using defaults');
                 }
                 
                 console.log(`📊 Parsed preset parameters:`, parameters);
@@ -453,10 +487,40 @@
             renderWebGL() {
                 this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
                 
-                if (this.presets.length > 0) {
-                    const preset = this.presets[this.currentPresetIndex];
-                    this.renderPreset(preset);
-                } else {
+                try {
+                    if (this.presets.length > 0 && this.currentPresetIndex < this.presets.length) {
+                        const preset = this.presets[this.currentPresetIndex];
+                        this.renderPreset(preset, this.canvas.width, this.canvas.height);
+                    } else {
+                        // Fallback to default rendering if no presets
+                        this.renderDefault();
+                    }
+                } catch (error) {
+                    console.error('❌ Error in WebGL rendering:', error);
+                    // Fallback to default rendering on error
+                    this.renderDefault();
+                }
+            }
+            
+            renderPreset(preset, width, height) {
+                try {
+                    if (!preset) {
+                        console.warn('⚠️ No preset to render, using default');
+                        this.renderDefault();
+                        return;
+                    }
+                    
+                    console.log(`🎨 Rendering preset: ${preset.name} (Type: ${preset.type})`);
+                    
+                    if (preset.type === 'milk' && preset.parameters && Object.keys(preset.parameters).length > 0) {
+                        this.renderMilkPreset(preset, width, height);
+                    } else {
+                        // Fallback to type-based rendering
+                        this.renderPresetByType(preset, width, height);
+                    }
+                } catch (error) {
+                    console.error('❌ Error rendering preset:', error);
+                    // Fallback to default rendering on error
                     this.renderDefault();
                 }
             }
@@ -504,129 +568,123 @@
                 }
             }
             
-            renderPreset(preset) {
-                const width = this.canvas.width;
-                const height = this.canvas.height;
-                
-                if (preset.type === 'milk' && preset.parameters) {
-                    // Use the milk preset with its parameters for varied effects
-                    this.renderMilkPreset(preset, width, height);
-                } else {
-                    // Fall back to type-based rendering
-                    switch(preset.type) {
-                        case 'milk':
-                            this.renderMilkPreset(preset, width, height);
-                            break;
-                        case 'geiss':
-                            this.renderGeiss(width, height);
-                            break;
-                        case 'waveform':
-                            this.renderWaveform(width, height);
-                            break;
-                        case 'spectrum':
-                            this.renderSpectrum(width, height);
-                            break;
-                        case 'particles':
-                            this.renderParticles(width, height);
-                            break;
-                        case 'spiral':
-                            this.renderSpiral(width, height);
-                            break;
-                        case 'matrix':
-                            this.renderMatrix(width, height);
-                            break;
-                        default:
-                            this.renderGeiss(width, height);
-                    }
-                }
-            }
-            
             renderMilkPreset(preset, width, height) {
-                // Render proper ProjectM-style visualization
+                // Render actual ProjectM-style visualization based on .milk preset content
                 if (!this.shaderPrograms.basic) return;
                 
                 this.gl.useProgram(this.shaderPrograms.basic);
                 
-                // Use preset parameters if available
-                let rotationSpeed = 0.5;
-                let scale = 1.0;
+                // Parse preset parameters for real ProjectM effects
                 let waveCount = 8;
-                let colorShift = 0;
-                let waveMode = 1;
+                let waveSpeed = 1.0;
+                let waveScale = 1.0;
                 let waveSmoothing = 0.5;
+                let waveMode = 1;
+                let waveA = 0.5;
+                let waveB = 0.3;
+                let waveC = 0.7;
+                let waveD = 0.4;
                 
                 if (preset.parameters) {
-                    rotationSpeed = preset.parameters.WAVE_SPEED || 0.5;
-                    scale = preset.parameters.WAVE_SCALE || 1.0;
-                    waveCount = preset.parameters.WAVES || 8;
-                    colorShift = preset.parameters.WAVE_A || 0;
-                    waveMode = preset.parameters.WAVE_MODE || 1;
-                    waveSmoothing = preset.parameters.WAVE_SMOOTHING || 0.5;
+                    waveCount = preset.parameters.WAVES || preset.parameters.WAVE_COUNT || 8;
+                    waveSpeed = preset.parameters.WAVE_SPEED || preset.parameters.SPEED || 1.0;
+                    waveScale = preset.parameters.WAVE_SCALE || preset.parameters.SCALE || 1.0;
+                    waveSmoothing = preset.parameters.WAVE_SMOOTHING || preset.parameters.SMOOTHING || 0.5;
+                    waveMode = preset.parameters.WAVE_MODE || preset.parameters.MODE || 1;
+                    waveA = preset.parameters.WAVE_A || preset.parameters.A || 0.5;
+                    waveB = preset.parameters.WAVE_B || preset.parameters.B || 0.3;
+                    waveC = preset.parameters.WAVE_C || preset.parameters.C || 0.7;
+                    waveD = preset.parameters.WAVE_D || preset.parameters.D || 0.4;
                 }
                 
-                // Different rendering modes based on WAVE_MODE
+                // Render based on wave mode
                 switch (waveMode) {
-                    case 1: // Classic MilkDrop waves
-                        this.renderMilkWaves(preset, rotationSpeed, scale, waveCount, colorShift);
+                    case 1:
+                        this.renderProjectMWaves(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
                         break;
-                    case 2: // Spectrum analyzer
-                        this.renderMilkSpectrum(preset, rotationSpeed, scale, waveCount, colorShift);
+                    case 2:
+                        this.renderProjectMSpectrum(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
                         break;
-                    case 3: // Circular wave pattern
-                        this.renderMilkCircular(preset, rotationSpeed, scale, waveCount, colorShift);
+                    case 3:
+                        this.renderProjectMCircular(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
                         break;
-                    case 4: // Geometric wave forms
-                        this.renderMilkGeometric(preset, rotationSpeed, scale, waveCount, colorShift);
+                    case 4:
+                        this.renderProjectMGeometric(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
                         break;
-                    case 5: // Complex multi-wave
-                        this.renderMilkComplex(preset, rotationSpeed, scale, waveCount, colorShift);
+                    case 5:
+                        this.renderProjectMComplex(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
                         break;
                     default:
-                        this.renderMilkWaves(preset, rotationSpeed, scale, waveCount, colorShift);
+                        this.renderProjectMWaves(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
                 }
             }
             
-            renderMilkWaves(preset, rotationSpeed, scale, waveCount, colorShift) {
-                // Classic MilkDrop wave visualization
-                const segments = Math.max(32, waveCount * 4);
+            renderProjectMWaves(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD) {
+                // Classic ProjectM wave visualization
+                const segments = Math.max(64, waveCount * 8);
                 const centerY = 0;
                 
+                // Create wave data
+                const waveData = [];
                 for (let i = 0; i < segments; i++) {
                     const x = (i / segments) * 2 - 1;
                     const progress = i / segments;
                     
-                    // Create wave motion
-                    const wave1 = Math.sin(this.time * rotationSpeed + progress * Math.PI * 4) * 0.3;
-                    const wave2 = Math.sin(this.time * rotationSpeed * 0.7 + progress * Math.PI * 8) * 0.2;
-                    const wave3 = Math.sin(this.time * rotationSpeed * 0.3 + progress * Math.PI * 2) * 0.1;
+                    // Complex wave synthesis using preset parameters
+                    const wave1 = Math.sin(this.time * waveSpeed + progress * Math.PI * waveA * 4) * waveScale * 0.4;
+                    const wave2 = Math.sin(this.time * waveSpeed * waveB + progress * Math.PI * waveC * 8) * waveScale * 0.3;
+                    const wave3 = Math.sin(this.time * waveSpeed * waveD + progress * Math.PI * waveA * 2) * waveScale * 0.2;
+                    const wave4 = Math.sin(this.time * waveSpeed * 0.7 + progress * Math.PI * waveB * 6) * waveScale * 0.15;
                     
-                    const waveHeight = (wave1 + wave2 + wave3) * scale;
+                    const waveHeight = (wave1 + wave2 + wave3 + wave4) * waveSmoothing;
                     const y1 = centerY + waveHeight;
                     const y2 = centerY - waveHeight;
                     
-                    // Wave thickness
-                    const thickness = 0.02 + Math.sin(this.time * 2 + progress * Math.PI * 6) * 0.01;
+                    // Dynamic wave thickness
+                    const thickness = 0.015 + Math.sin(this.time * 2 + progress * Math.PI * waveC * 4) * 0.01;
                     
-                    // Create wave segment
-                    const wavePositions = new Float32Array([
-                        x - thickness, y1,
-                        x + thickness, y1,
-                        x - thickness, y2,
-                        x + thickness, y2
+                    waveData.push({
+                        x: x,
+                        y1: y1,
+                        y2: y2,
+                        thickness: thickness,
+                        progress: progress
+                    });
+                }
+                
+                // Render waves with smooth interpolation
+                for (let i = 0; i < waveData.length - 1; i++) {
+                    const current = waveData[i];
+                    const next = waveData[i + 1];
+                    
+                    // Create smooth wave segment
+                    const segmentPositions = new Float32Array([
+                        current.x - current.thickness, current.y1,
+                        current.x + current.thickness, current.y1,
+                        next.x - next.thickness, next.y1,
+                        next.x + next.thickness, next.y1,
+                        current.x - current.thickness, current.y2,
+                        current.x + current.thickness, current.y2,
+                        next.x - next.thickness, next.y2,
+                        next.x + next.thickness, next.y2
                     ]);
                     
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, wavePositions, this.gl.STATIC_DRAW);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, segmentPositions, this.gl.STATIC_DRAW);
                     this.gl.enableVertexAttribArray(this.attributes.position);
                     this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
                     
-                    // Dynamic colors based on wave position and time
-                    const hue = (progress + this.time * 0.1 + colorShift) % 1.0;
-                    const saturation = 0.8 + Math.sin(this.time * 3 + progress * Math.PI * 4) * 0.2;
-                    const value = 0.7 + Math.sin(this.time * 2 + progress * Math.PI * 3) * 0.3;
+                    // ProjectM-style color scheme
+                    const hue = (current.progress + this.time * 0.1 + waveA) % 1.0;
+                    const saturation = 0.8 + Math.sin(this.time * 3 + current.progress * Math.PI * 4) * 0.2;
+                    const value = 0.7 + Math.sin(this.time * 2 + current.progress * Math.PI * 3) * 0.3;
                     const colors = this.hsvToRgb(hue, saturation, value);
                     
-                    const newColors = new Float32Array([
+                    const segmentColors = new Float32Array([
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
                         colors.r, colors.g, colors.b,
                         colors.r, colors.g, colors.b,
                         colors.r, colors.g, colors.b,
@@ -634,30 +692,32 @@
                     ]);
                     
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, segmentColors, this.gl.STATIC_DRAW);
                     this.gl.enableVertexAttribArray(this.attributes.color);
                     this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
                     
-                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+                    // Draw wave segment
+                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 8);
                 }
             }
             
-            renderMilkSpectrum(preset, rotationSpeed, scale, waveCount, colorShift) {
-                // Spectrum analyzer style visualization
-                const bars = Math.max(16, waveCount * 2);
+            renderProjectMSpectrum(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD) {
+                // ProjectM spectrum analyzer
+                const bars = Math.max(32, waveCount * 4);
                 const barWidth = 2.0 / bars;
                 
                 for (let i = 0; i < bars; i++) {
                     const x = (i / bars) * 2 - 1;
                     const progress = i / bars;
                     
-                    // Create spectrum bar heights
-                    const baseHeight = 0.1 + progress * 0.4;
-                    const wave1 = Math.sin(this.time * rotationSpeed + progress * Math.PI * 3) * 0.3;
-                    const wave2 = Math.sin(this.time * rotationSpeed * 0.5 + progress * Math.PI * 7) * 0.2;
-                    const wave3 = Math.sin(this.time * rotationSpeed * 0.8 + progress * Math.PI * 5) * 0.15;
+                    // Spectrum bar heights using preset parameters
+                    const baseHeight = 0.1 + progress * 0.6;
+                    const wave1 = Math.sin(this.time * waveSpeed + progress * Math.PI * waveA * 3) * waveScale * 0.4;
+                    const wave2 = Math.sin(this.time * waveSpeed * waveB + progress * Math.PI * waveC * 7) * waveScale * 0.3;
+                    const wave3 = Math.sin(this.time * waveSpeed * waveD + progress * Math.PI * waveA * 5) * waveScale * 0.25;
+                    const wave4 = Math.sin(this.time * waveSpeed * 0.6 + progress * Math.PI * waveB * 9) * waveScale * 0.2;
                     
-                    const barHeight = (baseHeight + wave1 + wave2 + wave3) * scale;
+                    const barHeight = (baseHeight + wave1 + wave2 + wave3 + wave4) * waveSmoothing;
                     const y1 = 1.0;
                     const y2 = 1.0 - barHeight;
                     
@@ -674,13 +734,13 @@
                     this.gl.enableVertexAttribArray(this.attributes.position);
                     this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
                     
-                    // Spectrum colors: frequency-based rainbow
-                    const hue = (progress + this.time * 0.15 + colorShift) % 1.0;
-                    const saturation = 0.9;
-                    const value = 0.6 + Math.sin(this.time * 2 + progress * Math.PI * 4) * 0.4;
+                    // ProjectM spectrum colors
+                    const hue = (progress + this.time * 0.15 + waveA) % 1.0;
+                    const saturation = 0.9 + Math.sin(this.time * 2 + progress * Math.PI * waveB * 4) * 0.1;
+                    const value = 0.6 + Math.sin(this.time * 2.5 + progress * Math.PI * waveC * 3) * 0.4;
                     const colors = this.hsvToRgb(hue, saturation, value);
                     
-                    const newColors = new Float32Array([
+                    const barColors = new Float32Array([
                         colors.r, colors.g, colors.b,
                         colors.r, colors.g, colors.b,
                         colors.r, colors.g, colors.b,
@@ -688,7 +748,7 @@
                     ]);
                     
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, barColors, this.gl.STATIC_DRAW);
                     this.gl.enableVertexAttribArray(this.attributes.color);
                     this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
                     
@@ -696,9 +756,9 @@
                 }
             }
             
-            renderMilkCircular(preset, rotationSpeed, scale, waveCount, colorShift) {
-                // Circular wave pattern
-                const segments = Math.max(64, waveCount * 8);
+            renderProjectMCircular(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD) {
+                // ProjectM circular wave pattern
+                const segments = Math.max(128, waveCount * 16);
                 const centerX = 0;
                 const centerY = 0;
                 
@@ -706,18 +766,19 @@
                     const angle = (i / segments) * Math.PI * 2;
                     const progress = i / segments;
                     
-                    // Create circular wave motion
+                    // Circular wave synthesis
                     const baseRadius = 0.6;
-                    const wave1 = Math.sin(this.time * rotationSpeed + progress * Math.PI * 6) * 0.15;
-                    const wave2 = Math.sin(this.time * rotationSpeed * 0.6 + progress * Math.PI * 12) * 0.1;
-                    const wave3 = Math.sin(this.time * rotationSpeed * 0.4 + progress * Math.PI * 3) * 0.08;
+                    const wave1 = Math.sin(this.time * waveSpeed + progress * Math.PI * waveA * 6) * waveScale * 0.2;
+                    const wave2 = Math.sin(this.time * waveSpeed * waveB + progress * Math.PI * waveC * 12) * waveScale * 0.15;
+                    const wave3 = Math.sin(this.time * waveSpeed * waveD + progress * Math.PI * waveA * 3) * waveScale * 0.1;
+                    const wave4 = Math.sin(this.time * waveSpeed * 0.8 + progress * Math.PI * waveB * 8) * waveScale * 0.08;
                     
-                    const radius = (baseRadius + wave1 + wave2 + wave3) * scale;
+                    const radius = (baseRadius + wave1 + wave2 + wave3 + wave4) * waveSmoothing;
                     const x = centerX + Math.cos(angle) * radius;
                     const y = centerY + Math.sin(angle) * radius;
                     
-                    // Point size
-                    const pointSize = 0.015 + Math.sin(this.time * 3 + progress * Math.PI * 4) * 0.005;
+                    // Dynamic point size
+                    const pointSize = 0.012 + Math.sin(this.time * 3 + progress * Math.PI * waveC * 4) * 0.006;
                     
                     // Create circular point
                     const pointPositions = new Float32Array([
@@ -732,13 +793,13 @@
                     this.gl.enableVertexAttribArray(this.attributes.position);
                     this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
                     
-                    // Circular colors: rotating around the circle
-                    const hue = (progress + this.time * 0.2 + colorShift) % 1.0;
-                    const saturation = 0.8 + Math.sin(this.time * 2 + progress * Math.PI * 4) * 0.2;
-                    const value = 0.7 + Math.sin(this.time * 1.5 + progress * Math.PI * 3) * 0.3;
+                    // ProjectM circular colors
+                    const hue = (progress + this.time * 0.2 + waveA) % 1.0;
+                    const saturation = 0.8 + Math.sin(this.time * 2 + progress * Math.PI * waveB * 4) * 0.2;
+                    const value = 0.7 + Math.sin(this.time * 1.5 + progress * Math.PI * waveC * 3) * 0.3;
                     const colors = this.hsvToRgb(hue, saturation, value);
                     
-                    const newColors = new Float32Array([
+                    const pointColors = new Float32Array([
                         colors.r, colors.g, colors.b,
                         colors.r, colors.g, colors.b,
                         colors.r, colors.g, colors.b,
@@ -746,7 +807,7 @@
                     ]);
                     
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, pointColors, this.gl.STATIC_DRAW);
                     this.gl.enableVertexAttribArray(this.attributes.color);
                     this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
                     
@@ -754,28 +815,29 @@
                 }
             }
             
-            renderMilkGeometric(preset, rotationSpeed, scale, waveCount, colorShift) {
-                // Geometric wave forms with sharp edges
-                const sides = Math.max(3, Math.min(waveCount, 12));
+            renderProjectMGeometric(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD) {
+                // ProjectM geometric wave forms
+                const sides = Math.max(3, Math.min(waveCount, 16));
                 const centerX = 0;
                 const centerY = 0;
                 
                 for (let i = 0; i < sides; i++) {
-                    const angle = (i / sides) * Math.PI * 2 + this.time * rotationSpeed;
+                    const angle = (i / sides) * Math.PI * 2 + this.time * waveSpeed;
                     const progress = i / sides;
                     
-                    // Create geometric wave motion
+                    // Geometric wave synthesis
                     const baseRadius = 0.7;
-                    const wave1 = Math.sin(this.time * rotationSpeed * 0.8 + progress * Math.PI * 4) * 0.2;
-                    const wave2 = Math.sin(this.time * rotationSpeed * 0.5 + progress * Math.PI * 8) * 0.15;
-                    const wave3 = Math.sin(this.time * rotationSpeed * 0.3 + progress * Math.PI * 2) * 0.1;
+                    const wave1 = Math.sin(this.time * waveSpeed * waveA + progress * Math.PI * waveB * 4) * waveScale * 0.25;
+                    const wave2 = Math.sin(this.time * waveSpeed * waveC + progress * Math.PI * waveD * 8) * waveScale * 0.2;
+                    const wave3 = Math.sin(this.time * waveSpeed * 0.6 + progress * Math.PI * waveA * 2) * waveScale * 0.15;
+                    const wave4 = Math.sin(this.time * waveSpeed * 0.9 + progress * Math.PI * waveB * 6) * waveScale * 0.1;
                     
-                    const radius = (baseRadius + wave1 + wave2 + wave3) * scale;
+                    const radius = (baseRadius + wave1 + wave2 + wave3 + wave4) * waveSmoothing;
                     const x = centerX + Math.cos(angle) * radius;
                     const y = centerY + Math.sin(angle) * radius;
                     
-                    // Geometric element size
-                    const elementSize = 0.08 + Math.sin(this.time * 2 + progress * Math.PI * 3) * 0.03;
+                    // Dynamic element size
+                    const elementSize = 0.07 + Math.sin(this.time * 2 + progress * Math.PI * waveC * 3) * 0.04;
                     
                     // Create geometric element
                     const elementPositions = new Float32Array([
@@ -790,13 +852,13 @@
                     this.gl.enableVertexAttribArray(this.attributes.position);
                     this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
                     
-                    // Geometric colors: sharp contrasts
-                    const hue = (progress + this.time * 0.25 + colorShift) % 1.0;
+                    // ProjectM geometric colors
+                    const hue = (progress + this.time * 0.25 + waveA) % 1.0;
                     const saturation = 1.0;
-                    const value = 0.8 + Math.sin(this.time * 1.8 + progress * Math.PI * 4) * 0.2;
+                    const value = 0.8 + Math.sin(this.time * 1.8 + progress * Math.PI * waveB * 4) * 0.2;
                     const colors = this.hsvToRgb(hue, saturation, value);
                     
-                    const newColors = new Float32Array([
+                    const elementColors = new Float32Array([
                         colors.r, colors.g, colors.b,
                         colors.r, colors.g, colors.b,
                         colors.r, colors.g, colors.b,
@@ -804,7 +866,7 @@
                     ]);
                     
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, elementColors, this.gl.STATIC_DRAW);
                     this.gl.enableVertexAttribArray(this.attributes.color);
                     this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
                     
@@ -812,35 +874,36 @@
                 }
             }
             
-            renderMilkComplex(preset, rotationSpeed, scale, waveCount, colorShift) {
-                // Complex multi-wave with depth and layering
-                const layers = Math.min(waveCount, 5);
+            renderProjectMComplex(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD) {
+                // ProjectM complex multi-wave with depth
+                const layers = Math.min(waveCount, 6);
                 
                 for (let layer = 0; layer < layers; layer++) {
-                    const layerScale = 1.0 - layer * 0.15;
-                    const layerSpeed = rotationSpeed * (1 + layer * 0.2);
-                    const layerOffset = layer * 0.1;
+                    const layerScale = 1.0 - layer * 0.12;
+                    const layerSpeed = waveSpeed * (1 + layer * 0.15);
+                    const layerOffset = layer * 0.08;
                     
                     // Render wave pattern for this layer
-                    const segments = Math.max(24, waveCount * 3);
+                    const segments = Math.max(48, waveCount * 4);
                     const centerY = layerOffset;
                     
                     for (let i = 0; i < segments; i++) {
                         const x = (i / segments) * 2 - 1;
                         const progress = i / segments;
                         
-                        // Create complex wave motion
-                        const wave1 = Math.sin(this.time * layerSpeed + progress * Math.PI * 4) * 0.25;
-                        const wave2 = Math.sin(this.time * layerSpeed * 0.7 + progress * Math.PI * 8) * 0.18;
-                        const wave3 = Math.sin(this.time * layerSpeed * 0.4 + progress * Math.PI * 6) * 0.12;
-                        const wave4 = Math.sin(this.time * layerSpeed * 0.9 + progress * Math.PI * 10) * 0.08;
+                        // Complex wave synthesis for each layer
+                        const wave1 = Math.sin(this.time * layerSpeed + progress * Math.PI * waveA * 4) * waveScale * 0.3;
+                        const wave2 = Math.sin(this.time * layerSpeed * waveB + progress * Math.PI * waveC * 8) * waveScale * 0.25;
+                        const wave3 = Math.sin(this.time * layerSpeed * waveD + progress * Math.PI * waveA * 6) * waveScale * 0.2;
+                        const wave4 = Math.sin(this.time * layerSpeed * 0.7 + progress * Math.PI * waveB * 10) * waveScale * 0.15;
+                        const wave5 = Math.sin(this.time * layerSpeed * 0.5 + progress * Math.PI * waveC * 12) * waveScale * 0.1;
                         
-                        const waveHeight = (wave1 + wave2 + wave3 + wave4) * layerScale * scale;
+                        const waveHeight = (wave1 + wave2 + wave3 + wave4 + wave5) * layerScale * waveSmoothing;
                         const y1 = centerY + waveHeight;
                         const y2 = centerY - waveHeight;
                         
                         // Layer thickness
-                        const thickness = 0.015 + Math.sin(this.time * 2.5 + progress * Math.PI * 5) * 0.008;
+                        const thickness = 0.012 + Math.sin(this.time * 2.5 + progress * Math.PI * waveD * 5) * 0.006;
                         
                         // Create complex wave segment
                         const wavePositions = new Float32Array([
@@ -855,13 +918,13 @@
                         this.gl.enableVertexAttribArray(this.attributes.position);
                         this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
                         
-                        // Complex colors with depth variation
-                        const hue = (progress + this.time * 0.12 + colorShift + layer * 0.1) % 1.0;
-                        const saturation = 0.8 + Math.sin(this.time * 2.2 + progress * Math.PI * 4) * 0.2;
-                        const value = 0.6 + layer * 0.1 + Math.sin(this.time * 1.6 + progress * Math.PI * 3) * 0.3;
+                        // ProjectM complex colors with depth variation
+                        const hue = (progress + this.time * 0.12 + waveA + layer * 0.08) % 1.0;
+                        const saturation = 0.8 + Math.sin(this.time * 2.2 + progress * Math.PI * waveB * 4) * 0.2;
+                        const value = 0.6 + layer * 0.08 + Math.sin(this.time * 1.6 + progress * Math.PI * waveC * 3) * 0.3;
                         const colors = this.hsvToRgb(hue, saturation, value);
                         
-                        const newColors = new Float32Array([
+                        const waveColors = new Float32Array([
                             colors.r, colors.g, colors.b,
                             colors.r, colors.g, colors.b,
                             colors.r, colors.g, colors.b,
@@ -869,12 +932,38 @@
                         ]);
                         
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, newColors, this.gl.STATIC_DRAW);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, waveColors, this.gl.STATIC_DRAW);
                         this.gl.enableVertexAttribArray(this.attributes.color);
                         this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
                         
                         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
                     }
+                }
+            }
+            
+            renderPresetByType(preset, width, height) {
+                // Fallback rendering for non-milk presets
+                switch(preset.type) {
+                    case 'geiss':
+                        this.renderGeiss(width, height);
+                        break;
+                    case 'waveform':
+                        this.renderWaveform(width, height);
+                        break;
+                    case 'spectrum':
+                        this.renderSpectrum(width, height);
+                        break;
+                    case 'particles':
+                        this.renderParticles(width, height);
+                        break;
+                    case 'spiral':
+                        this.renderSpiral(width, height);
+                        break;
+                    case 'matrix':
+                        this.renderMatrix(width, height);
+                        break;
+                    default:
+                        this.renderGeiss(width, height);
                 }
             }
             
@@ -1179,30 +1268,55 @@
             }
             
             renderDefault() {
-                // Render a simple rotating quad as default
+                // Always render something - never blank
                 if (!this.shaderPrograms.basic) return;
                 
                 this.gl.useProgram(this.shaderPrograms.basic);
                 
-                // Create rotation matrix
-                const angle = this.time * 0.5;
-                const cos = Math.cos(angle);
-                const sin = Math.sin(angle);
-                const rotation = [cos, -sin, sin, cos];
-                this.gl.uniformMatrix2fv(this.uniforms.rotation, false, rotation);
+                // Render a simple animated pattern
+                const time = this.time;
+                const segments = 32;
                 
-                // Bind position buffer
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
-                this.gl.enableVertexAttribArray(this.attributes.position);
-                this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
-                
-                // Bind color buffer
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
-                this.gl.enableVertexAttribArray(this.attributes.color);
-                this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
-                
-                // Draw
-                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+                for (let i = 0; i < segments; i++) {
+                    const x = (i / segments) * 2 - 1;
+                    const progress = i / segments;
+                    
+                    // Simple wave motion
+                    const waveHeight = Math.sin(time + progress * Math.PI * 4) * 0.3;
+                    const y1 = waveHeight;
+                    const y2 = -waveHeight;
+                    const thickness = 0.02;
+                    
+                    // Create wave segment
+                    const wavePositions = new Float32Array([
+                        x - thickness, y1,
+                        x + thickness, y1,
+                        x - thickness, y2,
+                        x + thickness, y2
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, wavePositions, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.position);
+                    this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                    
+                    // Dynamic colors
+                    const hue = (progress + time * 0.1) % 1.0;
+                    const colors = this.hsvToRgb(hue, 0.8, 0.9);
+                    const waveColors = new Float32Array([
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b,
+                        colors.r, colors.g, colors.b
+                    ]);
+                    
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, waveColors, this.gl.STATIC_DRAW);
+                    this.gl.enableVertexAttribArray(this.attributes.color);
+                    this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                    
+                    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+                }
             }
             
             loadDefaultPresets() {
@@ -1275,31 +1389,71 @@
                     this.currentPresetIndex = index;
                     this.updatePresetList();
                     this.updatePresetInfo();
+                    
+                    // Update status
+                    const preset = this.presets[index];
+                    if (preset) {
+                        document.getElementById('presetStatus').textContent = `Active: ${preset.name}`;
+                        console.log(`🎨 Switched to preset: ${preset.name}`);
+                    }
+                } else {
+                    console.warn(`⚠️ Invalid preset index: ${index}, max: ${this.presets.length - 1}`);
                 }
             }
             
             nextPreset() {
                 if (this.presets.length > 0) {
-                    this.currentPresetIndex = (this.currentPresetIndex + 1) % this.presets.length;
+                    this.currentPresetIndex = (this.currentPresetIndex + 1) % this.presets.length; // Wrap around
                     this.updatePresetList();
                     this.updatePresetInfo();
+                    
+                    // Update status
+                    const preset = this.presets[this.currentPresetIndex];
+                    if (preset) {
+                        document.getElementById('presetStatus').textContent = `Active: ${preset.name}`;
+                        console.log(`⏭️ Next preset: ${preset.name}`);
+                    }
+                } else {
+                    console.warn('⚠️ No presets available');
                 }
             }
             
             previousPreset() {
                 if (this.presets.length > 0) {
                     this.currentPresetIndex = this.currentPresetIndex === 0 ? 
-                        this.presets.length - 1 : this.currentPresetIndex - 1;
+                        this.presets.length - 1 : this.currentPresetIndex - 1; // Wrap around
                     this.updatePresetList();
                     this.updatePresetInfo();
+                    
+                    // Update status
+                    const preset = this.presets[this.currentPresetIndex];
+                    if (preset) {
+                        document.getElementById('presetStatus').textContent = `Active: ${preset.name}`;
+                        console.log(`⏮️ Previous preset: ${preset.name}`);
+                    }
+                } else {
+                    console.warn('⚠️ No presets available');
                 }
             }
             
             randomPreset() {
                 if (this.presets.length > 0) {
-                    this.currentPresetIndex = Math.floor(Math.random() * this.presets.length);
+                    let newIndex;
+                    do {
+                        newIndex = Math.floor(Math.random() * this.presets.length);
+                    } while (newIndex === this.currentPresetIndex && this.presets.length > 1); // Ensure different preset if possible
+                    this.currentPresetIndex = newIndex;
                     this.updatePresetList();
                     this.updatePresetInfo();
+                    
+                    // Update status
+                    const preset = this.presets[this.currentPresetIndex];
+                    if (preset) {
+                        document.getElementById('presetStatus').textContent = `Active: ${preset.name}`;
+                        console.log(`🎲 Random preset: ${preset.name}`);
+                    }
+                } else {
+                    console.warn('⚠️ No presets available');
                 }
             }
             

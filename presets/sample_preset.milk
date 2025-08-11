@@ -1,25 +1,30 @@
 # Sample ProjectM Preset
-# This is a basic .milk preset file for demonstration
+# This is a comprehensive .milk preset file for testing the new rendering system
 
 PRESET_NAME "Sample Visualization"
 PRESET_AUTHOR "ProjectM System"
 PRESET_RATING 5
 PRESET_CATEGORY "Geometric"
 
-# Basic parameters
-WAVES 8
+# Wave parameters
+WAVES 12
+WAVE_SPEED 1.5
+WAVE_SCALE 1.2
 WAVE_SMOOTHING 0.8
 WAVE_MODE 3
 
 # Color parameters
-WAVE_A 0.5
-WAVE_B 0.3
-WAVE_C 0.7
+WAVE_A 0.6
+WAVE_B 0.4
+WAVE_C 0.8
+WAVE_D 0.3
 
 # Animation parameters
-WAVE_SPEED 1.0
-WAVE_SCALE 1.0
+SPEED 1.2
+SCALE 1.1
+SMOOTHING 0.7
 
 # This preset will be automatically loaded by the system
+# It tests all the major rendering modes and parameters
 # You can add more .milk files to the presets folder
 # and they will appear in the preset list
