@@ -993,7 +993,7 @@ function showWelcomeMessage() {
           <strong>Keyboard Shortcuts:</strong><br>
           • <kbd>V</kbd> - Open/close video player<br>
           • <kbd>M</kbd> - Open/close music panel<br>
-          • <kbd>Space</kbd> - Pause/unpause speed<br>
+          • <kbd>Space</kbd> - Pause/unpause animation speed<br>
           • <kbd>ESC</kbd> - Close all panels<br>
           • <kbd>D</kbd> - Toggle drawing mode<br>
           • <kbd>X</kbd> - Clear drawings<br>
@@ -1009,7 +1009,7 @@ function showWelcomeMessage() {
           <strong>Speed Control:</strong><br>
           • <kbd>-</kbd> - Decrease speed<br>
           • <kbd>+</kbd> - Increase speed<br>
-          • <kbd>Space</kbd> - Pause/Resume<br><br>
+          • <kbd>Space</kbd> - Pause/Resume animation speed<br><br>
           
           <strong>Gamepad Controls (PS5):</strong><br>
           • <kbd>Triangle</kbd> - Toggle video player<br>
@@ -1370,10 +1370,7 @@ function playMp4Video() {
         // Add keyboard controls
         document.addEventListener('keydown', (e) => {
           switch(e.code) {
-            case 'Space':
-              e.preventDefault();
-              video.paused ? video.play() : video.pause();
-              break;
+            // Spacebar removed - now only controls speed multiplier in main.js
             case 'ArrowRight':
               video.currentTime = Math.min(video.duration, video.currentTime + 10);
               break;
@@ -1505,10 +1502,7 @@ function enhanceVideo(videoElement) {
     if (e.target.tagName === 'INPUT') return; // Don't interfere with input fields
     
     switch(e.code) {
-      case 'Space':
-        e.preventDefault();
-        videoElement.paused ? videoElement.play() : videoElement.pause();
-        break;
+      // Spacebar removed - now only controls speed multiplier in main.js
       case 'ArrowRight':
         videoElement.currentTime = Math.min(videoElement.duration, videoElement.currentTime + 10);
         break;
@@ -1662,10 +1656,7 @@ function enhanceMusicPlayback(audioElement) {
     if (e.target.tagName === 'INPUT') return; // Don't interfere with input fields
     
     switch(e.code) {
-      case 'Space':
-        e.preventDefault();
-        audioElement.paused ? audioElement.play() : audioElement.pause();
-        break;
+      // Spacebar removed - now only controls speed multiplier in main.js
       case 'ArrowRight':
         audioElement.currentTime = Math.min(audioElement.duration, audioElement.currentTime + 10);
         break;
