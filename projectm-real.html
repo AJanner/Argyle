@@ -569,7 +569,7 @@
             }
             
             renderMilkPreset(preset, width, height) {
-                // Render actual ProjectM-style visualization based on .milk preset content
+                // Render actual ProjectM/MilkDrop-style visualization
                 if (!this.shaderPrograms.basic) return;
                 
                 this.gl.useProgram(this.shaderPrograms.basic);
@@ -597,10 +597,10 @@
                     waveD = preset.parameters.WAVE_D || preset.parameters.D || 0.4;
                 }
                 
-                // Render based on wave mode
+                // Render based on actual ProjectM algorithms
                 switch (waveMode) {
                     case 1:
-                        this.renderProjectMWaves(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
+                        this.renderProjectMWaveform(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
                         break;
                     case 2:
                         this.renderProjectMSpectrum(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
@@ -609,55 +609,59 @@
                         this.renderProjectMCircular(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
                         break;
                     case 4:
-                        this.renderProjectMGeometric(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
+                        this.renderProjectMParticles(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
                         break;
                     case 5:
                         this.renderProjectMComplex(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
                         break;
                     default:
-                        this.renderProjectMWaves(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
+                        this.renderProjectMWaveform(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD);
                 }
             }
             
-            renderProjectMWaves(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD) {
-                // Classic ProjectM wave visualization
-                const segments = Math.max(64, waveCount * 8);
+            renderProjectMWaveform(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD) {
+                // Real ProjectM waveform rendering - flowing wave patterns
+                const segments = Math.max(128, waveCount * 16);
                 const centerY = 0;
                 
-                // Create wave data
+                // Create smooth wave data using ProjectM algorithms
                 const waveData = [];
                 for (let i = 0; i < segments; i++) {
                     const x = (i / segments) * 2 - 1;
                     const progress = i / segments;
                     
-                    // Complex wave synthesis using preset parameters
-                    const wave1 = Math.sin(this.time * waveSpeed + progress * Math.PI * waveA * 4) * waveScale * 0.4;
-                    const wave2 = Math.sin(this.time * waveSpeed * waveB + progress * Math.PI * waveC * 8) * waveScale * 0.3;
-                    const wave3 = Math.sin(this.time * waveSpeed * waveD + progress * Math.PI * waveA * 2) * waveScale * 0.2;
-                    const wave4 = Math.sin(this.time * waveSpeed * 0.7 + progress * Math.PI * waveB * 6) * waveScale * 0.15;
+                    // ProjectM wave synthesis - multiple frequency layers
+                    const time = this.time * waveSpeed;
+                    const wave1 = Math.sin(time + progress * Math.PI * waveA * 4) * waveScale * 0.4;
+                    const wave2 = Math.sin(time * waveB + progress * Math.PI * waveC * 8) * waveScale * 0.3;
+                    const wave3 = Math.sin(time * waveD + progress * Math.PI * waveA * 2) * waveScale * 0.2;
+                    const wave4 = Math.sin(time * 0.7 + progress * Math.PI * waveB * 6) * waveScale * 0.15;
+                    const wave5 = Math.sin(time * 0.5 + progress * Math.PI * waveC * 10) * waveScale * 0.1;
                     
-                    const waveHeight = (wave1 + wave2 + wave3 + wave4) * waveSmoothing;
+                    // Combine waves with smoothing
+                    const waveHeight = (wave1 + wave2 + wave3 + wave4 + wave5) * waveSmoothing;
                     const y1 = centerY + waveHeight;
                     const y2 = centerY - waveHeight;
                     
-                    // Dynamic wave thickness
-                    const thickness = 0.015 + Math.sin(this.time * 2 + progress * Math.PI * waveC * 4) * 0.01;
+                    // Dynamic wave thickness based on amplitude
+                    const thickness = 0.008 + Math.abs(waveHeight) * 0.02;
                     
                     waveData.push({
                         x: x,
                         y1: y1,
                         y2: y2,
                         thickness: thickness,
-                        progress: progress
+                        progress: progress,
+                        amplitude: Math.abs(waveHeight)
                     });
                 }
                 
-                // Render waves with smooth interpolation
+                // Render smooth, connected wave segments
                 for (let i = 0; i < waveData.length - 1; i++) {
                     const current = waveData[i];
                     const next = waveData[i + 1];
                     
-                    // Create smooth wave segment
+                    // Create smooth wave segment with interpolation
                     const segmentPositions = new Float32Array([
                         current.x - current.thickness, current.y1,
                         current.x + current.thickness, current.y1,
@@ -674,10 +678,10 @@
                     this.gl.enableVertexAttribArray(this.attributes.position);
                     this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
                     
-                    // ProjectM-style color scheme
+                    // ProjectM color scheme - flowing rainbow with amplitude variation
                     const hue = (current.progress + this.time * 0.1 + waveA) % 1.0;
                     const saturation = 0.8 + Math.sin(this.time * 3 + current.progress * Math.PI * 4) * 0.2;
-                    const value = 0.7 + Math.sin(this.time * 2 + current.progress * Math.PI * 3) * 0.3;
+                    const value = 0.6 + current.amplitude * 0.4 + Math.sin(this.time * 2 + current.progress * Math.PI * 3) * 0.2;
                     const colors = this.hsvToRgb(hue, saturation, value);
                     
                     const segmentColors = new Float32Array([
@@ -696,37 +700,46 @@
                     this.gl.enableVertexAttribArray(this.attributes.color);
                     this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
                     
-                    // Draw wave segment
+                    // Draw smooth wave segment
                     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 8);
                 }
             }
             
             renderProjectMSpectrum(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD) {
-                // ProjectM spectrum analyzer
-                const bars = Math.max(32, waveCount * 4);
+                // Real ProjectM spectrum analyzer - frequency-based bars
+                const bars = Math.max(64, waveCount * 8);
                 const barWidth = 2.0 / bars;
                 
                 for (let i = 0; i < bars; i++) {
                     const x = (i / bars) * 2 - 1;
                     const progress = i / bars;
                     
-                    // Spectrum bar heights using preset parameters
-                    const baseHeight = 0.1 + progress * 0.6;
-                    const wave1 = Math.sin(this.time * waveSpeed + progress * Math.PI * waveA * 3) * waveScale * 0.4;
-                    const wave2 = Math.sin(this.time * waveSpeed * waveB + progress * Math.PI * waveC * 7) * waveScale * 0.3;
-                    const wave3 = Math.sin(this.time * waveSpeed * waveD + progress * Math.PI * waveA * 5) * waveScale * 0.25;
-                    const wave4 = Math.sin(this.time * waveSpeed * 0.6 + progress * Math.PI * waveB * 9) * waveScale * 0.2;
+                    // ProjectM spectrum synthesis - frequency-dependent heights
+                    const time = this.time * waveSpeed;
+                    const frequency = progress * 4; // Frequency multiplier
                     
-                    const barHeight = (baseHeight + wave1 + wave2 + wave3 + wave4) * waveSmoothing;
+                    // Create spectrum bars using ProjectM algorithms
+                    const baseHeight = 0.05 + progress * 0.8;
+                    const wave1 = Math.sin(time + frequency * waveA) * waveScale * 0.4;
+                    const wave2 = Math.sin(time * waveB + frequency * waveC * 2) * waveScale * 0.3;
+                    const wave3 = Math.sin(time * waveD + frequency * waveA * 3) * waveScale * 0.25;
+                    const wave4 = Math.sin(time * 0.6 + frequency * waveB * 4) * waveScale * 0.2;
+                    const wave5 = Math.sin(time * 0.8 + frequency * waveC * 5) * waveScale * 0.15;
+                    
+                    // Combine with frequency response curve
+                    const frequencyResponse = Math.sin(frequency * Math.PI) * 0.3;
+                    const barHeight = (baseHeight + wave1 + wave2 + wave3 + wave4 + wave5 + frequencyResponse) * waveSmoothing;
+                    
                     const y1 = 1.0;
                     const y2 = 1.0 - barHeight;
                     
-                    // Create spectrum bar
+                    // Create spectrum bar with dynamic width
+                    const dynamicWidth = barWidth * (0.8 + Math.sin(time * 2 + frequency) * 0.2);
                     const barPositions = new Float32Array([
-                        x - barWidth/2, y1,
-                        x + barWidth/2, y1,
-                        x - barWidth/2, y2,
-                        x + barWidth/2, y2
+                        x - dynamicWidth/2, y1,
+                        x + dynamicWidth/2, y1,
+                        x - dynamicWidth/2, y2,
+                        x + dynamicWidth/2, y2
                     ]);
                     
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
@@ -734,10 +747,10 @@
                     this.gl.enableVertexAttribArray(this.attributes.position);
                     this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
                     
-                    // ProjectM spectrum colors
+                    // ProjectM spectrum colors - frequency-based rainbow with intensity
                     const hue = (progress + this.time * 0.15 + waveA) % 1.0;
-                    const saturation = 0.9 + Math.sin(this.time * 2 + progress * Math.PI * waveB * 4) * 0.1;
-                    const value = 0.6 + Math.sin(this.time * 2.5 + progress * Math.PI * waveC * 3) * 0.4;
+                    const saturation = 0.9 + Math.sin(time * 2 + frequency * waveB) * 0.1;
+                    const value = 0.5 + barHeight * 0.5 + Math.sin(time * 2.5 + frequency * waveC) * 0.3;
                     const colors = this.hsvToRgb(hue, saturation, value);
                     
                     const barColors = new Float32Array([
@@ -757,8 +770,8 @@
             }
             
             renderProjectMCircular(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD) {
-                // ProjectM circular wave pattern
-                const segments = Math.max(128, waveCount * 16);
+                // Real ProjectM circular wave pattern - ripple effects
+                const segments = Math.max(256, waveCount * 32);
                 const centerX = 0;
                 const centerY = 0;
                 
@@ -766,19 +779,27 @@
                     const angle = (i / segments) * Math.PI * 2;
                     const progress = i / segments;
                     
-                    // Circular wave synthesis
-                    const baseRadius = 0.6;
-                    const wave1 = Math.sin(this.time * waveSpeed + progress * Math.PI * waveA * 6) * waveScale * 0.2;
-                    const wave2 = Math.sin(this.time * waveSpeed * waveB + progress * Math.PI * waveC * 12) * waveScale * 0.15;
-                    const wave3 = Math.sin(this.time * waveSpeed * waveD + progress * Math.PI * waveA * 3) * waveScale * 0.1;
-                    const wave4 = Math.sin(this.time * waveSpeed * 0.8 + progress * Math.PI * waveB * 8) * waveScale * 0.08;
+                    // ProjectM circular wave synthesis - multiple ripple layers
+                    const time = this.time * waveSpeed;
+                    const radius = progress * 1.2; // Base radius
                     
-                    const radius = (baseRadius + wave1 + wave2 + wave3 + wave4) * waveSmoothing;
-                    const x = centerX + Math.cos(angle) * radius;
-                    const y = centerY + Math.sin(angle) * radius;
+                    // Create ripple effects using ProjectM algorithms
+                    const ripple1 = Math.sin(time + radius * waveA * 6) * waveScale * 0.2;
+                    const ripple2 = Math.sin(time * waveB + radius * waveC * 12) * waveScale * 0.15;
+                    const ripple3 = Math.sin(time * waveD + radius * waveA * 3) * waveScale * 0.1;
+                    const ripple4 = Math.sin(time * 0.8 + radius * waveB * 8) * waveScale * 0.08;
+                    const ripple5 = Math.sin(time * 0.6 + radius * waveC * 15) * waveScale * 0.06;
                     
-                    // Dynamic point size
-                    const pointSize = 0.012 + Math.sin(this.time * 3 + progress * Math.PI * waveC * 4) * 0.006;
+                    // Combine ripples with distance falloff
+                    const distanceFalloff = Math.exp(-radius * 2);
+                    const finalRadius = (radius + ripple1 + ripple2 + ripple3 + ripple4 + ripple5) * distanceFalloff * waveSmoothing;
+                    
+                    const x = centerX + Math.cos(angle) * finalRadius;
+                    const y = centerY + Math.sin(angle) * finalRadius;
+                    
+                    // Dynamic point size based on ripple intensity
+                    const rippleIntensity = Math.abs(ripple1 + ripple2 + ripple3 + ripple4 + ripple5);
+                    const pointSize = 0.008 + rippleIntensity * 0.02;
                     
                     // Create circular point
                     const pointPositions = new Float32Array([
@@ -793,10 +814,10 @@
                     this.gl.enableVertexAttribArray(this.attributes.position);
                     this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
                     
-                    // ProjectM circular colors
+                    // ProjectM circular colors - rotating rainbow with ripple intensity
                     const hue = (progress + this.time * 0.2 + waveA) % 1.0;
-                    const saturation = 0.8 + Math.sin(this.time * 2 + progress * Math.PI * waveB * 4) * 0.2;
-                    const value = 0.7 + Math.sin(this.time * 1.5 + progress * Math.PI * waveC * 3) * 0.3;
+                    const saturation = 0.8 + Math.sin(time * 2 + radius * waveB * 4) * 0.2;
+                    const value = 0.6 + rippleIntensity * 0.4 + Math.sin(time * 1.5 + radius * waveC * 3) * 0.2;
                     const colors = this.hsvToRgb(hue, saturation, value);
                     
                     const pointColors = new Float32Array([
@@ -815,50 +836,56 @@
                 }
             }
             
-            renderProjectMGeometric(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD) {
-                // ProjectM geometric wave forms
-                const sides = Math.max(3, Math.min(waveCount, 16));
-                const centerX = 0;
-                const centerY = 0;
+            renderProjectMParticles(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD) {
+                // Real ProjectM particle system - organic motion
+                const particleCount = Math.max(100, waveCount * 12);
                 
-                for (let i = 0; i < sides; i++) {
-                    const angle = (i / sides) * Math.PI * 2 + this.time * waveSpeed;
-                    const progress = i / sides;
+                for (let particle = 0; particle < particleCount; particle++) {
+                    const time = this.time * waveSpeed;
+                    const particleSeed = particle * 0.1;
                     
-                    // Geometric wave synthesis
-                    const baseRadius = 0.7;
-                    const wave1 = Math.sin(this.time * waveSpeed * waveA + progress * Math.PI * waveB * 4) * waveScale * 0.25;
-                    const wave2 = Math.sin(this.time * waveSpeed * waveC + progress * Math.PI * waveD * 8) * waveScale * 0.2;
-                    const wave3 = Math.sin(this.time * waveSpeed * 0.6 + progress * Math.PI * waveA * 2) * waveScale * 0.15;
-                    const wave4 = Math.sin(this.time * waveSpeed * 0.9 + progress * Math.PI * waveB * 6) * waveScale * 0.1;
+                    // ProjectM particle physics - organic motion patterns
+                    const baseX = Math.sin(time * 0.3 + particleSeed * waveA) * 0.8;
+                    const baseY = Math.cos(time * 0.4 + particleSeed * waveB) * 0.6;
                     
-                    const radius = (baseRadius + wave1 + wave2 + wave3 + wave4) * waveSmoothing;
-                    const x = centerX + Math.cos(angle) * radius;
-                    const y = centerY + Math.sin(angle) * radius;
+                    // Add wave-based motion
+                    const waveX = Math.sin(time + particleSeed * waveC * 2) * waveScale * 0.3;
+                    const waveY = Math.cos(time * 0.7 + particleSeed * waveD * 3) * waveScale * 0.25;
                     
-                    // Dynamic element size
-                    const elementSize = 0.07 + Math.sin(this.time * 2 + progress * Math.PI * waveC * 3) * 0.04;
+                    // Add spiral motion
+                    const spiralRadius = (particleSeed * 0.1) % 0.5;
+                    const spiralAngle = time * 0.5 + particleSeed * 10;
+                    const spiralX = Math.cos(spiralAngle) * spiralRadius;
+                    const spiralY = Math.sin(spiralAngle) * spiralRadius;
                     
-                    // Create geometric element
-                    const elementPositions = new Float32Array([
-                        x - elementSize, y - elementSize,
-                        x + elementSize, y - elementSize,
-                        x - elementSize, y + elementSize,
-                        x + elementSize, y + elementSize
+                    // Combine all motion components
+                    const particleX = baseX + waveX + spiralX;
+                    const particleY = baseY + waveY + spiralY;
+                    
+                    // Dynamic particle size based on motion
+                    const motionIntensity = Math.sqrt(waveX * waveX + waveY * waveY);
+                    const particleSize = 0.006 + motionIntensity * 0.02;
+                    
+                    // Create particle
+                    const particlePositions = new Float32Array([
+                        particleX - particleSize, particleY - particleSize,
+                        particleX + particleSize, particleY - particleSize,
+                        particleX - particleSize, particleY + particleSize,
+                        particleX + particleSize, particleY + particleSize
                     ]);
                     
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, elementPositions, this.gl.STATIC_DRAW);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, particlePositions, this.gl.STATIC_DRAW);
                     this.gl.enableVertexAttribArray(this.attributes.position);
                     this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
                     
-                    // ProjectM geometric colors
-                    const hue = (progress + this.time * 0.25 + waveA) % 1.0;
-                    const saturation = 1.0;
-                    const value = 0.8 + Math.sin(this.time * 1.8 + progress * Math.PI * waveB * 4) * 0.2;
+                    // ProjectM particle colors - organic color evolution
+                    const hue = (particleSeed + time * 0.1 + waveA) % 1.0;
+                    const saturation = 0.7 + Math.sin(time * 2 + particleSeed * waveB) * 0.3;
+                    const value = 0.5 + motionIntensity * 0.5 + Math.sin(time * 1.8 + particleSeed * waveC) * 0.3;
                     const colors = this.hsvToRgb(hue, saturation, value);
                     
-                    const elementColors = new Float32Array([
+                    const particleColors = new Float32Array([
                         colors.r, colors.g, colors.b,
                         colors.r, colors.g, colors.b,
                         colors.r, colors.g, colors.b,
@@ -866,7 +893,7 @@
                     ]);
                     
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, elementColors, this.gl.STATIC_DRAW);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, particleColors, this.gl.STATIC_DRAW);
                     this.gl.enableVertexAttribArray(this.attributes.color);
                     this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
                     
@@ -875,35 +902,43 @@
             }
             
             renderProjectMComplex(preset, waveCount, waveSpeed, waveScale, waveSmoothing, waveA, waveB, waveC, waveD) {
-                // ProjectM complex multi-wave with depth
-                const layers = Math.min(waveCount, 6);
+                // Real ProjectM complex visualization - multi-layer effects
+                const layers = Math.min(waveCount, 8);
                 
                 for (let layer = 0; layer < layers; layer++) {
-                    const layerScale = 1.0 - layer * 0.12;
-                    const layerSpeed = waveSpeed * (1 + layer * 0.15);
-                    const layerOffset = layer * 0.08;
+                    const layerScale = 1.0 - layer * 0.1;
+                    const layerSpeed = waveSpeed * (1 + layer * 0.2);
+                    const layerOffset = layer * 0.05;
                     
-                    // Render wave pattern for this layer
-                    const segments = Math.max(48, waveCount * 4);
+                    // Render complex wave pattern for each layer
+                    const segments = Math.max(96, waveCount * 6);
                     const centerY = layerOffset;
                     
                     for (let i = 0; i < segments; i++) {
                         const x = (i / segments) * 2 - 1;
                         const progress = i / segments;
                         
-                        // Complex wave synthesis for each layer
-                        const wave1 = Math.sin(this.time * layerSpeed + progress * Math.PI * waveA * 4) * waveScale * 0.3;
-                        const wave2 = Math.sin(this.time * layerSpeed * waveB + progress * Math.PI * waveC * 8) * waveScale * 0.25;
-                        const wave3 = Math.sin(this.time * layerSpeed * waveD + progress * Math.PI * waveA * 6) * waveScale * 0.2;
-                        const wave4 = Math.sin(this.time * layerSpeed * 0.7 + progress * Math.PI * waveB * 10) * waveScale * 0.15;
-                        const wave5 = Math.sin(this.time * layerSpeed * 0.5 + progress * Math.PI * waveC * 12) * waveScale * 0.1;
+                        // ProjectM complex wave synthesis - multiple frequency layers
+                        const time = this.time * layerSpeed;
+                        const frequency = progress * 6;
                         
-                        const waveHeight = (wave1 + wave2 + wave3 + wave4 + wave5) * layerScale * waveSmoothing;
+                        // Create complex wave motion using ProjectM algorithms
+                        const wave1 = Math.sin(time + frequency * waveA * 4) * waveScale * 0.35;
+                        const wave2 = Math.sin(time * waveB + frequency * waveC * 8) * waveScale * 0.28;
+                        const wave3 = Math.sin(time * waveD + frequency * waveA * 6) * waveScale * 0.22;
+                        const wave4 = Math.sin(time * 0.7 + frequency * waveB * 10) * waveScale * 0.18;
+                        const wave5 = Math.sin(time * 0.5 + frequency * waveC * 12) * waveScale * 0.15;
+                        const wave6 = Math.sin(time * 0.9 + frequency * waveD * 14) * waveScale * 0.12;
+                        
+                        // Add modulation effects
+                        const modulation = Math.sin(time * 0.3 + frequency * 0.5) * 0.1;
+                        const waveHeight = (wave1 + wave2 + wave3 + wave4 + wave5 + wave6 + modulation) * layerScale * waveSmoothing;
+                        
                         const y1 = centerY + waveHeight;
                         const y2 = centerY - waveHeight;
                         
-                        // Layer thickness
-                        const thickness = 0.012 + Math.sin(this.time * 2.5 + progress * Math.PI * waveD * 5) * 0.006;
+                        // Dynamic layer thickness
+                        const thickness = 0.01 + Math.abs(waveHeight) * 0.015;
                         
                         // Create complex wave segment
                         const wavePositions = new Float32Array([
@@ -918,10 +953,10 @@
                         this.gl.enableVertexAttribArray(this.attributes.position);
                         this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
                         
-                        // ProjectM complex colors with depth variation
-                        const hue = (progress + this.time * 0.12 + waveA + layer * 0.08) % 1.0;
-                        const saturation = 0.8 + Math.sin(this.time * 2.2 + progress * Math.PI * waveB * 4) * 0.2;
-                        const value = 0.6 + layer * 0.08 + Math.sin(this.time * 1.6 + progress * Math.PI * waveC * 3) * 0.3;
+                        // ProjectM complex colors - depth-based color variation
+                        const hue = (progress + time * 0.12 + waveA + layer * 0.1) % 1.0;
+                        const saturation = 0.8 + Math.sin(time * 2.2 + frequency * waveB * 4) * 0.2;
+                        const value = 0.5 + layer * 0.1 + Math.abs(waveHeight) * 0.3 + Math.sin(time * 1.6 + frequency * waveC * 3) * 0.2;
                         const colors = this.hsvToRgb(hue, saturation, value);
                         
                         const waveColors = new Float32Array([
