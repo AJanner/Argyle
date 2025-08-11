@@ -2433,7 +2433,7 @@ function updatePresetSelector(themeName) {
   const presetSelector = document.getElementById('presetSelector');
   if (!presetSelector) return;
   
-  presetSelector.innerHTML = '<option value="">😇 Preset</option>';
+  presetSelector.innerHTML = '<option value="">Preset 😇</option>';
   
   const theme = themePresets[themeName];
   if (theme && theme.presets) {
