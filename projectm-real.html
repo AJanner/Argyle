@@ -114,6 +114,7 @@
         <div>Total: <span id="totalPresets">0</span></div>
         <div>FPS: <span id="fps">60</span></div>
         <div>Audio: <span id="audioStatus">Inactive</span></div>
+        <div>Renderer: <span id="rendererStatus">Initializing...</span></div>
     </div>
 
     <script>
@@ -131,6 +132,7 @@
             constructor() {
                 this.canvas = document.getElementById('canvas');
                 this.gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl');
+                this.ctx = this.canvas.getContext('2d'); // Fallback to Canvas 2D
                 this.audioContext = null;
                 this.analyser = null;
                 this.dataArray = null;
@@ -143,6 +145,7 @@
                 // WebGL shader programs
                 this.shaderPrograms = {};
                 this.buffers = {};
+                this.webglSupported = false;
                 
                 this.init();
                 this.loadDefaultPresets();
@@ -150,13 +153,20 @@
             
             init() {
                 if (!this.gl) {
-                    console.error('WebGL not supported');
-                    return;
+                    console.warn('WebGL not supported, falling back to Canvas 2D');
+                    this.webglSupported = false;
+                    this.setupCanvas2D();
+                } else {
+                    this.webglSupported = true;
+                    this.setupWebGL();
                 }
                 
                 this.resize();
                 window.addEventListener('resize', () => this.resize());
-                
+                this.startAnimation();
+            }
+            
+            setupWebGL() {
                 // Initialize WebGL
                 this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
                 this.gl.enable(this.gl.DEPTH_TEST);
@@ -164,7 +174,17 @@
                 // Create shaders
                 this.createShaders();
                 
-                this.startAnimation();
+                // Update renderer status
+                document.getElementById('rendererStatus').textContent = 'WebGL';
+            }
+            
+            setupCanvas2D() {
+                // Setup Canvas 2D for fallback rendering
+                this.ctx.fillStyle = 'black';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Update renderer status
+                document.getElementById('rendererStatus').textContent = 'Canvas 2D (Fallback)';
             }
             
             createShaders() {
@@ -173,7 +193,6 @@
                     attribute vec2 a_position;
                     attribute vec3 a_color;
                     varying vec3 v_color;
-                    uniform float u_time;
                     uniform mat2 u_rotation;
                     
                     void main() {
@@ -187,7 +206,6 @@
                 const fragmentShaderSource = `
                     precision mediump float;
                     varying vec3 v_color;
-                    uniform float u_time;
                     
                     void main() {
                         gl_FragColor = vec4(v_color, 1.0);
@@ -198,8 +216,22 @@
                 const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexShaderSource);
                 const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentShaderSource);
                 
+                // Check if shaders were created successfully
+                if (!vertexShader || !fragmentShader) {
+                    console.error('Failed to create shaders');
+                    this.webglSupported = false;
+                    return;
+                }
+                
                 // Create shader program
                 this.shaderPrograms.basic = this.createShaderProgram(vertexShader, fragmentShader);
+                
+                // Check if shader program was created successfully
+                if (!this.shaderPrograms.basic) {
+                    console.error('Failed to create shader program');
+                    this.webglSupported = false;
+                    return;
+                }
                 
                 // Get attribute and uniform locations
                 this.attributes = {
@@ -208,7 +240,6 @@
                 };
                 
                 this.uniforms = {
-                    time: this.gl.getUniformLocation(this.shaderPrograms.basic, 'u_time'),
                     rotation: this.gl.getUniformLocation(this.shaderPrograms.basic, 'u_rotation')
                 };
                 
@@ -238,6 +269,7 @@
                 
                 if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
                     console.error('Program linking error:', this.gl.getProgramInfoLog(program));
+                    this.gl.deleteProgram(program);
                     return null;
                 }
                 
@@ -274,7 +306,10 @@
             resize() {
                 this.canvas.width = window.innerWidth;
                 this.canvas.height = window.innerHeight;
-                this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+                
+                if (this.webglSupported && this.gl) {
+                    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+                }
             }
             
             startAnimation() {
@@ -287,6 +322,17 @@
             }
             
             render() {
+                if (this.webglSupported && this.shaderPrograms.basic) {
+                    this.renderWebGL();
+                } else {
+                    this.renderCanvas2D();
+                }
+                
+                // Update FPS display
+                document.getElementById('fps').textContent = Math.round(1000 / 16);
+            }
+            
+            renderWebGL() {
                 this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
                 
                 if (this.presets.length > 0) {
@@ -295,9 +341,49 @@
                 } else {
                     this.renderDefault();
                 }
+            }
+            
+            renderCanvas2D() {
+                // Clear canvas
+                this.ctx.fillStyle = 'black';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                 
-                // Update FPS display
-                document.getElementById('fps').textContent = Math.round(1000 / 16);
+                // Render fallback visualization
+                this.renderCanvas2DFallback();
+            }
+            
+            renderCanvas2DFallback() {
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                
+                // Draw rotating circles
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2 + this.time * 0.5;
+                    const radius = 150 + Math.sin(this.time * 2 + i * 0.5) * 100;
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+                    const size = 20 + Math.sin(this.time * 3 + i * 0.3) * 15;
+                    
+                    this.ctx.fillStyle = `hsl(${(i * 45 + this.time * 50) % 360}, 70%, 60%)`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Add connecting lines
+                    if (i > 0) {
+                        const prevAngle = ((i - 1) / 8) * Math.PI * 2 + this.time * 0.5;
+                        const prevRadius = 150 + Math.sin(this.time * 2 + (i - 1) * 0.5) * 100;
+                        const prevX = centerX + Math.cos(prevAngle) * prevRadius;
+                        const prevY = centerY + Math.sin(prevAngle) * prevRadius;
+                        
+                        this.ctx.strokeStyle = `hsl(${(i * 45 + this.time * 50) % 360}, 60%, 50%)`;
+                        this.ctx.lineWidth = 2;
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(prevX, prevY);
+                        this.ctx.lineTo(x, y);
+                        this.ctx.stroke();
+                    }
+                }
             }
             
             renderPreset(preset) {
@@ -333,10 +419,9 @@
             
             renderDefault() {
                 // Render a simple rotating quad as default
-                this.gl.useProgram(this.shaderPrograms.basic);
+                if (!this.shaderPrograms.basic) return;
                 
-                // Set uniforms
-                this.gl.uniform1f(this.uniforms.time, this.time);
+                this.gl.useProgram(this.shaderPrograms.basic);
                 
                 // Create rotation matrix
                 const angle = this.time * 0.5;
@@ -361,10 +446,9 @@
             
             renderMilkPreset(preset, width, height) {
                 // Render milk-style visualization using WebGL
-                this.gl.useProgram(this.shaderPrograms.basic);
+                if (!this.shaderPrograms.basic) return;
                 
-                // Set uniforms
-                this.gl.uniform1f(this.uniforms.time, this.time);
+                this.gl.useProgram(this.shaderPrograms.basic);
                 
                 // Create rotation matrix
                 const angle = this.time * 0.5;
