@@ -10,6 +10,7 @@ import { renderMyCoolEffect } from './effects/my-cool-effect.js';
 import { renderQuantumPlasmaStorm } from './effects/quantum-plasma-storm.js';
 import { renderSpirographOrbital } from './effects/spirograph-orbital.js';
 import { renderMilkLike } from './effects/milklike-elephant.js';
+import { renderImageCollage } from './effects/image-collage-visual.js';
 
 // Preset definitions
 export const presets = [
@@ -237,6 +238,13 @@ export const presets = [
     description: 'Advanced MilkDrop-style domain-warped noise flow with kaleidoscope patterns',
     category: 'Custom',
     custom: true
+  },
+  {
+    name: 'Image Collage Visual',
+    type: 'imageCollage',
+    description: 'Professional VJ-style image collage with audio-reactive effects and transitions',
+    category: 'Custom',
+    custom: true
   }
 ];
 
@@ -247,7 +255,8 @@ export const customEffects = {
   myCoolEffect: renderMyCoolEffect,
   quantumPlasmaStorm: renderQuantumPlasmaStorm,
   spirographOrbital: renderSpirographOrbital,
-  milkLike: renderMilkLike
+  milkLike: renderMilkLike,
+  imageCollage: renderImageCollage
 };
 
 // Make customEffects available globally
