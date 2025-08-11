@@ -5374,3 +5374,433 @@ function resetProjectMVisualizer() {
     }
   }
 }
+
+// Butterchurn visualization system
+let butterchurnViz = null;
+let butterchurnCtx = null;
+let butterchurnAnalyser = null;
+let butterchurnPresets = [];
+let currentPresetIndex = 0;
+let autoPresetTimer = null;
+let isVisualizerRunning = false;
+
+function startButterchurn() {
+    try {
+        if (!butterchurnViz) {
+            initializeButterchurn();
+        }
+        
+        if (butterchurnViz && !isVisualizerRunning) {
+            isVisualizerRunning = true;
+            document.getElementById('presetStatus').textContent = 'Running';
+            loadAllPresets();
+            startRenderLoop();
+            logger.info('🎨 Butterchurn visualizer started');
+        }
+    } catch (error) {
+        console.error('Failed to start Butterchurn:', error);
+        document.getElementById('presetStatus').textContent = 'Error starting';
+    }
+}
+
+function initializeButterchurn() {
+    try {
+        // Check if Butterchurn is available
+        if (typeof butterchurn === 'undefined') {
+            loadButterchurnScripts();
+            return;
+        }
+        
+        const canvas = document.getElementById('butterchurnCanvas');
+        if (!canvas) {
+            throw new Error('Canvas not found');
+        }
+        
+        // Create audio context
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        butterchurnCtx = new AudioContext();
+        butterchurnAnalyser = butterchurnCtx.createAnalyser();
+        butterchurnAnalyser.fftSize = 2048;
+        butterchurnAnalyser.smoothingTimeConstant = 0.8;
+        
+        // Create visualizer
+        butterchurnViz = butterchurn.createVisualizer(butterchurnCtx, canvas, {
+            width: canvas.clientWidth || 400,
+            height: canvas.clientHeight || 300,
+            pixelRatio: Math.min(window.devicePixelRatio || 1, 2)
+        });
+        
+        butterchurnViz.connectAudio(butterchurnAnalyser);
+        
+        // Connect to current audio if playing
+        connectCurrentAudio();
+        
+        logger.info('🎨 Butterchurn initialized successfully');
+        
+    } catch (error) {
+        console.error('Failed to initialize Butterchurn:', error);
+        document.getElementById('presetStatus').textContent = 'Initialization failed';
+    }
+}
+
+function loadButterchurnScripts() {
+    // Load Butterchurn scripts if not already loaded
+    if (document.querySelector('script[src*="butterchurn"]')) {
+        return;
+    }
+    
+    const butterchurnScript = document.createElement('script');
+    butterchurnScript.src = 'https://cdn.jsdelivr.net/npm/butterchurn@2.6.7/butterchurn.min.js';
+    butterchurnScript.onload = () => {
+        const presetsScript = document.createElement('script');
+        presetsScript.src = 'https://cdn.jsdelivr.net/npm/butterchurn-presets@2.4.7/dist/butterchurn-presets.min.js';
+        presetsScript.onload = () => {
+            setTimeout(initializeButterchurn, 100);
+        };
+        document.head.appendChild(presetsScript);
+    };
+    document.head.appendChild(butterchurnScript);
+}
+
+function connectCurrentAudio() {
+    if (!butterchurnCtx || !butterchurnAnalyser) return;
+    
+    try {
+        // Connect to current audio element if playing
+        if (window.currentAudio && !window.currentAudio.paused) {
+            const source = butterchurnCtx.createMediaElementSource(window.currentAudio);
+            const gain = butterchurnCtx.createGain();
+            source.connect(gain);
+            gain.connect(butterchurnAnalyser);
+            gain.connect(butterchurnCtx.destination); // Route to speakers
+            logger.info('🎵 Connected to current audio');
+        }
+    } catch (error) {
+        console.error('Failed to connect audio:', error);
+    }
+}
+
+function loadAllPresets() {
+    try {
+        if (!butterchurnViz) return;
+        
+        // Load presets from Butterchurn
+        const banks = [];
+        if (window.butterchurnPresets?.getPresets) {
+            banks.push(window.butterchurnPresets.getPresets("community"));
+            banks.push(window.butterchurnPresets.getPresets("legacy"));
+            banks.push(window.butterchurnPresets.getPresets("monstercat"));
+        }
+        
+        // Flatten to array
+        const list = [];
+        banks.forEach(bank => {
+            if (!bank) return;
+            Object.keys(bank).forEach(name => list.push({ name, obj: bank[name] }));
+        });
+        
+        // Fallback preset
+        if (list.length === 0) {
+            list.push({
+                name: "Built-in: Simple Waves",
+                obj: {
+                    name: "simple-waves",
+                    author: "butterchurn-inline",
+                    shaders: {}
+                }
+            });
+        }
+        
+        // Sort and store
+        list.sort((a, b) => a.name.localeCompare(b.name));
+        butterchurnPresets = list;
+        
+        // Update UI
+        updatePresetSelect();
+        updatePresetInfo();
+        
+        // Load first preset
+        if (butterchurnPresets[0]) {
+            butterchurnViz.loadPreset(butterchurnPresets[0].obj, 0.0);
+            currentPresetIndex = 0;
+            updateCurrentPreset();
+        }
+        
+        logger.info(`🎨 Loaded ${butterchurnPresets.length} presets`);
+        
+    } catch (error) {
+        console.error('Failed to load presets:', error);
+        document.getElementById('presetStatus').textContent = 'Failed to load presets';
+    }
+}
+
+function updatePresetSelect() {
+    const select = document.getElementById('presetSelect');
+    if (!select) return;
+    
+    select.innerHTML = '';
+    butterchurnPresets.forEach((preset, index) => {
+        const option = document.createElement('option');
+        option.value = String(index);
+        option.textContent = preset.name;
+        select.appendChild(option);
+    });
+}
+
+function updatePresetInfo() {
+    document.getElementById('totalPresets').textContent = butterchurnPresets.length;
+}
+
+function updateCurrentPreset() {
+    if (butterchurnPresets[currentPresetIndex]) {
+        document.getElementById('currentPreset').textContent = butterchurnPresets[currentPresetIndex].name;
+        document.getElementById('presetSelect').value = String(currentPresetIndex);
+    }
+}
+
+function nextPreset() {
+    if (!butterchurnViz || !butterchurnPresets.length) return;
+    
+    currentPresetIndex = (currentPresetIndex + 1) % butterchurnPresets.length;
+    const blendTime = Number(document.getElementById('blendSec').value || 2);
+    
+    butterchurnViz.loadPreset(butterchurnPresets[currentPresetIndex].obj, blendTime);
+    updateCurrentPreset();
+    logger.info(`⏭️ Next preset: ${butterchurnPresets[currentPresetIndex].name}`);
+}
+
+function previousPreset() {
+    if (!butterchurnViz || !butterchurnPresets.length) return;
+    
+    currentPresetIndex = currentPresetIndex === 0 ? 
+        butterchurnPresets.length - 1 : currentPresetIndex - 1;
+    const blendTime = Number(document.getElementById('blendSec').value || 2);
+    
+    butterchurnViz.loadPreset(butterchurnPresets[currentPresetIndex].obj, blendTime);
+    updateCurrentPreset();
+    logger.info(`⏮️ Previous preset: ${butterchurnPresets[currentPresetIndex].name}`);
+}
+
+function randomPreset() {
+    if (!butterchurnViz || !butterchurnPresets.length) return;
+    
+    let newIndex;
+    do {
+        newIndex = Math.floor(Math.random() * butterchurnPresets.length);
+    } while (newIndex === currentPresetIndex && butterchurnPresets.length > 1);
+    
+    currentPresetIndex = newIndex;
+    const blendTime = Number(document.getElementById('blendSec').value || 2);
+    
+    butterchurnViz.loadPreset(butterchurnPresets[currentPresetIndex].obj, blendTime);
+    updateCurrentPreset();
+    logger.info(`🎲 Random preset: ${butterchurnPresets[currentPresetIndex].name}`);
+}
+
+function selectPreset(value) {
+    if (!butterchurnViz || !butterchurnPresets.length) return;
+    
+    const index = Number(value);
+    if (!Number.isNaN(index) && butterchurnPresets[index]) {
+        currentPresetIndex = index;
+        const blendTime = Number(document.getElementById('blendSec').value || 2);
+        
+        butterchurnViz.loadPreset(butterchurnPresets[index].obj, blendTime);
+        updateCurrentPreset();
+        logger.info(`🎨 Selected preset: ${butterchurnPresets[index].name}`);
+    }
+}
+
+function toggleAutoPreset() {
+    const autoSelect = document.getElementById('autoMs');
+    const currentValue = autoSelect.value;
+    
+    if (currentValue === '0') {
+        // Turn on auto with 30s default
+        autoSelect.value = '30000';
+        setAutoPreset('30000');
+    } else {
+        // Turn off auto
+        autoSelect.value = '0';
+        setAutoPreset('0');
+    }
+}
+
+function setAutoPreset(ms) {
+    if (autoPresetTimer) {
+        clearInterval(autoPresetTimer);
+        autoPresetTimer = null;
+    }
+    
+    const milliseconds = Number(ms);
+    if (milliseconds > 0) {
+        autoPresetTimer = setInterval(() => {
+            if (isVisualizerRunning) {
+                nextPreset();
+            }
+        }, milliseconds);
+        logger.info(`🔄 Auto preset enabled: ${milliseconds/1000}s`);
+    } else {
+        logger.info('🔄 Auto preset disabled');
+    }
+}
+
+function startRenderLoop() {
+    if (!butterchurnViz) return;
+    
+    function render() {
+        if (isVisualizerRunning && butterchurnViz) {
+            butterchurnViz.render();
+            requestAnimationFrame(render);
+        }
+    }
+    render();
+}
+
+function toggleProjectMPanel() {
+    const projectmPanel = document.getElementById('projectmPanel');
+    if (projectmPanel.style.display === 'none' || projectmPanel.style.display === '') {
+        projectmPanel.style.display = 'block';
+        
+        // Clear the analysis panel fade-out timeout to prevent it from closing
+        if (window.analysisPanelFadeTimeout) {
+            clearTimeout(window.analysisPanelFadeTimeout);
+            window.analysisPanelFadeTimeout = null;
+        }
+        
+        logger.info('🎨 Butterchurn panel opened - no timeout');
+    } else {
+        projectmPanel.style.display = 'none';
+    }
+}
+
+function closeProjectMPanel() {
+    const projectmPanel = document.getElementById('projectmPanel');
+    if (projectmPanel) {
+        projectmPanel.style.display = 'none';
+        
+        // Stop visualizer
+        isVisualizerRunning = false;
+        if (autoPresetTimer) {
+            clearInterval(autoPresetTimer);
+            autoPresetTimer = null;
+        }
+        
+        // Restart the analysis panel fade-out timeout since ProjectM panel is closed
+        if (window.analysisPanelFadeTimeout === null) {
+            window.analysisPanelFadeTimeout = setTimeout(() => {
+                const analysisPanel = document.getElementById('analysisPanel');
+                if (analysisPanel && analysisPanel.style.display === 'block') {
+                    // Fade out the analysis panel
+                    analysisPanel.style.opacity = '0';
+                    setTimeout(() => {
+                        analysisPanel.style.display = 'none';
+                        window.analysisPanelFadeTimeout = null;
+                    }, 1000);
+                }
+            }, 10000);
+        }
+        
+        logger.info('🎨 Butterchurn panel closed - analysis panel timeout restarted');
+    }
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+// Add this to the existing music system to connect Butterchurn when audio plays
+function connectButterchurnToAudio(audioElement) {
+    if (!butterchurnCtx || !butterchurnAnalyser || !audioElement) return;
+    
+    try {
+        // Disconnect any existing connections
+        if (butterchurnCtx.state === 'suspended') {
+            butterchurnCtx.resume();
+        }
+        
+        // Create new audio source connection
+        const source = butterchurnCtx.createMediaElementSource(audioElement);
+        const gain = butterchurnCtx.createGain();
+        source.connect(gain);
+        gain.connect(butterchurnAnalyser);
+        gain.connect(butterchurnCtx.destination); // Route to speakers
+        
+        logger.info('🎵 Butterchurn connected to audio');
+        
+        // If visualizer is running, start rendering
+        if (isVisualizerRunning && butterchurnViz) {
+            startRenderLoop();
+        }
+        
+    } catch (error) {
+        console.error('Failed to connect Butterchurn to audio:', error);
+    }
+}
+
+// Hook into existing music system
+function hookButterchurnIntoMusic() {
+    // Override the existing playMusic function to connect Butterchurn
+    const originalPlayMusic = window.playMusic;
+    if (originalPlayMusic) {
+        window.playMusic = function(trackIndex) {
+            const result = originalPlayMusic.call(this, trackIndex);
+            
+            // Connect Butterchurn after a short delay to ensure audio is loaded
+            setTimeout(() => {
+                if (window.currentAudio) {
+                    connectButterchurnToAudio(window.currentAudio);
+                }
+            }, 100);
+            
+            return result;
+        };
+    }
+    
+    // Also hook into radio stream changes
+    const originalPlayRadio = window.playRadio;
+    if (originalPlayRadio) {
+        window.playRadio = function(streamUrl) {
+            const result = originalPlayRadio.call(this, streamUrl);
+            
+            setTimeout(() => {
+                if (window.currentAudio) {
+                    connectButterchurnToAudio(window.currentAudio);
+                }
+            }, 100);
+            
+            return result;
+        };
+    }
+}
+
+// Initialize Butterchurn integration when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Hook Butterchurn into the existing music system
+    hookButterchurnIntoMusic();
+    
+    // Initialize Butterchurn when the panel is first opened
+    const projectmPanel = document.getElementById('projectmPanel');
+    if (projectmPanel) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    if (projectmPanel.style.display === 'block' && !butterchurnViz) {
+                        // Panel opened for the first time, initialize Butterchurn
+                        setTimeout(() => {
+                            if (typeof butterchurn !== 'undefined') {
+                                initializeButterchurn();
+                            }
+                        }, 100);
+                    }
+                }
+            });
+        });
+        
+        observer.observe(projectmPanel, { attributes: true });
+    }
+});

@@ -1011,8 +1011,8 @@ button[data-png="bucheck"].has-png {
   position: fixed;
   top: 130px;
   left: 20px;
-  width: 400px;
-  background: rgba(34, 34, 34, 0.90);
+  width: 450px;
+  background: rgba(34, 34, 34, 0.95);
   color: white;
   padding: 20px;
   border-radius: 8px;
@@ -1025,55 +1025,120 @@ button[data-png="bucheck"].has-png {
 }
 
 .projectm-panel h3 {
+  margin: 0 0 15px 0;
   color: #9C27B0;
-  margin-top: 0;
-  text-align: center;
-  position: relative;
+  font-size: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .projectm-close-btn {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  width: 25px;
-  height: 25px;
-  background: rgba(0, 0, 0, 0.9);
-  color: #9C27B0;
-  border: 2px solid #9C27B0;
-  border-radius: 50%;
   cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 60001;
-  transition: all 0.3s ease;
-  font-weight: bold;
+  font-size: 16px;
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  border-radius: 4px;
+  padding: 4px 8px;
+  transition: background 0.2s;
+}
+
+.projectm-close-btn:hover {
+  background: rgba(255, 107, 107, 0.2);
 }
 
 .projectm-controls {
   display: flex;
-  gap: 8px;
-  margin: 15px 0;
   flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
 }
 
-.projectm-btn {
-  background: rgba(156, 39, 176, 0.8);
+.projectm-controls button {
+  background: linear-gradient(45deg, #9C27B0, #7B1FA2);
+  border: none;
   color: white;
-  border: 1px solid #9C27B0;
-  border-radius: 6px;
   padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
-  transition: all 0.3s ease;
-  flex: 1;
-  min-width: 120px;
+  font-weight: bold;
+  transition: all 0.2s;
 }
 
-.projectm-btn:hover {
-  background: rgba(156, 39, 176, 1);
+.projectm-controls button:hover {
+  background: linear-gradient(45deg, #BA68C8, #9C27B0);
   transform: translateY(-1px);
+}
+
+.preset-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+}
+
+.preset-controls label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #ddd;
+}
+
+.preset-controls select,
+.preset-controls input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.preset-controls select option {
+  background: #333;
+  color: white;
+}
+
+.visualization-canvas-container {
+  margin-bottom: 15px;
+  text-align: center;
+  background: #000;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#butterchurnCanvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: #000;
+}
+
+.preset-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  font-size: 12px;
+  color: #ccc;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+}
+
+.preset-info div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.preset-info span {
+  color: #9C27B0;
+  font-weight: bold;
 }
 
 .projectm-container {
