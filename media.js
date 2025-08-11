@@ -5265,4 +5265,94 @@ function stopMusicVisualizer() {
   
   bars1.forEach(bar => bar.style.height = '0%');
   bars2.forEach(bar => bar.style.height = '0%');
-} 
+}
+
+// ===== PROJECTM VISUALIZATION FUNCTIONS =====
+
+function toggleProjectMPanel() {
+  const projectmPanel = document.getElementById('projectmPanel');
+  if (projectmPanel.style.display === 'none' || projectmPanel.style.display === '') {
+    projectmPanel.style.display = 'block';
+    
+    // Auto-hide after 60 seconds
+    setTimeout(() => {
+      if (projectmPanel.style.display === 'block') {
+        projectmPanel.style.display = 'none';
+      }
+    }, 60000);
+  } else {
+    projectmPanel.style.display = 'none';
+  }
+}
+
+function closeProjectMPanel() {
+  const projectmPanel = document.getElementById('projectmPanel');
+  if (projectmPanel) {
+    projectmPanel.style.display = 'none';
+  }
+}
+
+function toggleProjectM() {
+  const toggleBtn = document.getElementById('projectmToggleBtn');
+  const iframe = document.getElementById('projectmFrame');
+  
+  if (toggleBtn.textContent.includes('Start')) {
+    // Start visualization
+    toggleBtn.textContent = '⏸️ Stop Visualization';
+    
+    // Load enhanced ProjectM visualizer with .milk support
+    iframe.src = 'projectm-real.html';
+    
+    logger.info('🎨 ProjectM visualization started');
+  } else {
+    // Stop visualization
+    toggleBtn.textContent = '▶️ Start Visualization';
+    iframe.src = 'about:blank';
+    logger.info('🎨 ProjectM visualization stopped');
+  }
+}
+
+function changeProjectMPreset() {
+  // Send message to iframe to change preset
+  const iframe = document.getElementById('projectmFrame');
+  if (iframe.src && iframe.src.includes('projectm-visualizer.html')) {
+    try {
+      iframe.contentWindow.postMessage({ command: 'changePreset' }, '*');
+      logger.info('🎨 ProjectM preset changed');
+    } catch (error) {
+      logger.error('Failed to change preset:', error);
+      // Fallback: reload iframe
+      const currentSrc = iframe.src;
+      iframe.src = 'about:blank';
+      setTimeout(() => {
+        iframe.src = currentSrc;
+      }, 100);
+    }
+  }
+}
+
+function toggleProjectMFullscreen() {
+  const projectmPanel = document.getElementById('projectmPanel');
+  if (projectmPanel) {
+    projectmPanel.classList.toggle('fullscreen');
+    
+    if (projectmPanel.classList.contains('fullscreen')) {
+      logger.info('🎨 ProjectM visualization fullscreen enabled');
+    } else {
+      logger.info('🎨 ProjectM visualization fullscreen disabled');
+    }
+  }
+}
+
+function resetProjectMVisualizer() {
+  // Send message to iframe to reset visualizer
+  const iframe = document.getElementById('projectmFrame');
+  if (iframe.src && iframe.src.includes('projectm-visualizer.html')) {
+    try {
+      iframe.contentWindow.postMessage({ command: 'reset' }, '*');
+      logger.info('🎨 ProjectM visualizer reset');
+    } catch (error) {
+      logger.error('Failed to reset visualizer:', error);
+    }
+  }
+}

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProjectM Local Setup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+        .container {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .code {
+            background: #000;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 4px solid #9C27B0;
+            background: #333;
+        }
+        .warning {
+            background: #ff9800;
+            color: #000;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #4caf50;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 ProjectM Local Setup Guide</h1>
+    
+    <div class="container">
+        <h2>What is ProjectM?</h2>
+        <p>ProjectM is an open-source music visualization engine that creates real-time visualizations based on audio input. It's the same technology used in many media players and visualization applications.</p>
+    </div>
+
+    <div class="container">
+        <h2>Option 1: Use External Services (Easiest)</h2>
+        <p>For immediate use, you can use these external visualization services:</p>
+        <ul>
+            <li><strong>Shadertoy</strong> - WebGL shader-based visualizations</li>
+            <li><strong>WebGL Visualizer</strong> - Various online visualizers</li>
+            <li><strong>Custom hosted ProjectM</strong> - If you have access to one</li>
+        </ul>
+        
+        <div class="step">
+            <h3>Quick Setup with Shadertoy</h3>
+            <p>Edit the <code>toggleProjectM()</code> function in your code:</p>
+            <div class="code">
+                // Replace the iframe.src line with:
+                iframe.src = 'https://www.shadertoy.com/';
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Option 2: Local ProjectM Setup (Advanced)</h2>
+        <p>For full control and offline use, you can set up ProjectM locally:</p>
+        
+        <div class="step">
+            <h3>Step 1: Install ProjectM</h3>
+            <p>Download and install ProjectM from the official repository:</p>
+            <div class="code">
+                git clone https://github.com/projectM-visualizer/projectm.git
+                cd projectm
+                mkdir build && cd build
+                cmake ..
+                make
+                sudo make install
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Create a Web Interface</h3>
+            <p>Create a simple web server to serve ProjectM:</p>
+            <div class="code">
+                # Create a directory for your web interface
+                mkdir projectm-web
+                cd projectm-web
+                
+                # Create a simple HTML file
+                echo "&lt;html&gt;&lt;body&gt;&lt;canvas id='projectm'&gt;&lt;/canvas&gt;&lt;/body&gt;&lt;/html&gt;" > index.html
+                
+                # Start a simple HTTP server
+                python3 -m http.server 8080
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Update Your Code</h3>
+            <p>Change the iframe source to point to your local instance:</p>
+            <div class="code">
+                // In the toggleProjectM function:
+                iframe.src = 'http://localhost:8080/';
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Option 3: WebAssembly Version (Recommended for Web)</h2>
+        <p>For the best web experience, you can use ProjectM compiled to WebAssembly:</p>
+        
+        <div class="step">
+            <h3>Using Emscripten</h3>
+            <p>Compile ProjectM to WebAssembly for browser use:</p>
+            <div class="code">
+                # Install Emscripten
+                git clone https://github.com/emscripten-core/emsdk.git
+                cd emsdk
+                ./emsdk install latest
+                ./emsdk activate latest
+                source ./emsdk_env.sh
+                
+                # Compile ProjectM
+                emcc projectm.cpp -o projectm.js -s USE_WEBGL2=1 -s FULL_ES3=1
+            </div>
+        </div>
+    </div>
+
+    <div class="warning">
+        <strong>⚠️ Important Notes:</strong>
+        <ul>
+            <li>External services may have usage limits or require accounts</li>
+            <li>Local setup requires technical knowledge and system resources</li>
+            <li>WebAssembly version provides the best performance but requires compilation</li>
+            <li>Some browsers may block certain iframe sources for security reasons</li>
+        </ul>
+    </div>
+
+    <div class="success">
+        <strong>✅ Current Implementation:</strong>
+        <p>Your site now has a ProjectM visualization panel that can be opened with the 🎨 button in the toolbar. The panel includes controls for starting/stopping visualizations, changing presets, and fullscreen mode.</p>
+    </div>
+
+    <div class="container">
+        <h2>Next Steps</h2>
+        <ol>
+            <li>Test the visualization panel by clicking the 🎨 button</li>
+            <li>Choose an external service or set up a local instance</li>
+            <li>Customize the visualization sources in the <code>toggleProjectM()</code> function</li>
+            <li>Add more presets and controls as needed</li>
+        </ol>
+    </div>
+</body>
+</html>

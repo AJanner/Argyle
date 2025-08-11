@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProjectM Real - Milk Preset Loader</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        .controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            max-width: 300px;
+        }
+        .controls button {
+            background: #9C27B0;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            width: 100%;
+        }
+        .controls button:hover {
+            background: #7B1FA2;
+        }
+        .preset-info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-width: 250px;
+        }
+        .preset-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        .preset-item {
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+            margin: 2px 0;
+        }
+        .preset-item:hover {
+            background: rgba(156, 39, 176, 0.3);
+        }
+        .preset-item.active {
+            background: rgba(156, 39, 176, 0.6);
+        }
+        .file-input {
+            margin: 10px 0;
+        }
+        .file-input input {
+            width: 100%;
+            padding: 5px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="controls">
+        <h3>🎨 ProjectM Controls</h3>
+        
+        <div class="file-input">
+            <label>Load .milk Presets:</label>
+            <input type="file" id="milkFileInput" accept=".milk" multiple>
+        </div>
+        
+        <button onclick="loadDefaultPresets()">📁 Load Default Presets</button>
+        <button onclick="toggleAudio()">🎵 Toggle Audio</button>
+        <button onclick="nextPreset()">⏭️ Next Preset</button>
+        <button onclick="previousPreset()">⏮️ Previous Preset</button>
+        <button onclick="randomPreset()">🎲 Random Preset</button>
+        <button onclick="toggleFullscreen()">⛶ Fullscreen</button>
+        
+        <div class="preset-list" id="presetList">
+            <div class="preset-item">No presets loaded</div>
+        </div>
+    </div>
+    
+    <div class="preset-info">
+        <div>Current: <span id="currentPreset">None</span></div>
+        <div>Total: <span id="totalPresets">0</span></div>
+        <div>FPS: <span id="fps">60</span></div>
+        <div>Audio: <span id="audioStatus">Inactive</span></div>
+    </div>
+
+    <script>
+        // ProjectM-style Preset System
+        class ProjectMPreset {
+            constructor(name, type, code) {
+                this.name = name;
+                this.type = type;
+                this.code = code;
+                this.parameters = {};
+            }
+        }
+        
+        class ProjectMVisualizer {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl');
+                this.audioContext = null;
+                this.analyser = null;
+                this.dataArray = null;
+                this.animationId = null;
+                this.currentPresetIndex = 0;
+                this.presets = [];
+                this.time = 0;
+                this.audioData = null;
+                
+                this.init();
+                this.loadDefaultPresets();
+            }
+            
+            init() {
+                if (!this.gl) {
+                    console.error('WebGL not supported');
+                    return;
+                }
+                
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                
+                // Initialize WebGL
+                this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+                this.gl.enable(this.gl.DEPTH_TEST);
+                
+                this.startAnimation();
+            }
+            
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            startAnimation() {
+                const animate = () => {
+                    this.time += 0.016; // ~60fps
+                    this.render();
+                    this.animationId = requestAnimationFrame(animate);
+                };
+                animate();
+            }
+            
+            render() {
+                this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+                
+                if (this.presets.length > 0) {
+                    const preset = this.presets[this.currentPresetIndex];
+                    this.renderPreset(preset);
+                }
+                
+                // Update FPS display
+                document.getElementById('fps').textContent = Math.round(1000 / 16);
+            }
+            
+            renderPreset(preset) {
+                const width = this.canvas.width;
+                const height = this.canvas.height;
+                
+                switch(preset.type) {
+                    case 'milk':
+                        this.renderMilkPreset(preset, width, height);
+                        break;
+                    case 'geiss':
+                        this.renderGeiss(width, height);
+                        break;
+                    case 'waveform':
+                        this.renderWaveform(width, height);
+                        break;
+                    case 'spectrum':
+                        this.renderSpectrum(width, height);
+                        break;
+                    case 'particles':
+                        this.renderParticles(width, height);
+                        break;
+                    case 'spiral':
+                        this.renderSpiral(width, height);
+                        break;
+                    case 'matrix':
+                        this.renderMatrix(width, height);
+                        break;
+                    default:
+                        this.renderGeiss(width, height);
+                }
+            }
+            
+            renderMilkPreset(preset, width, height) {
+                // This would normally parse .milk file parameters
+                // For now, we'll render a milk-style visualization
+                const gl = this.gl;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                // Create milk-style geometric patterns
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2 + this.time * 0.5;
+                    const radius = 150 + Math.sin(this.time * 2 + i * 0.5) * 100;
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+                    const size = 20 + Math.sin(this.time * 3 + i * 0.3) * 15;
+                    
+                    gl.fillStyle = `hsl(${(i * 45 + this.time * 50) % 360}, 70%, 60%)`;
+                    gl.beginPath();
+                    gl.arc(x, y, size, 0, Math.PI * 2);
+                    gl.fill();
+                    
+                    // Add connecting lines
+                    if (i > 0) {
+                        const prevAngle = ((i - 1) / 8) * Math.PI * 2 + this.time * 0.5;
+                        const prevRadius = 150 + Math.sin(this.time * 2 + (i - 1) * 0.5) * 100;
+                        const prevX = centerX + Math.cos(prevAngle) * prevRadius;
+                        const prevY = centerY + Math.sin(prevAngle) * prevRadius;
+                        
+                        gl.strokeStyle = `hsl(${(i * 45 + this.time * 50) % 360}, 60%, 50%)`;
+                        gl.lineWidth = 2;
+                        gl.beginPath();
+                        gl.moveTo(prevX, prevY);
+                        gl.lineTo(x, y);
+                        gl.stroke();
+                    }
+                }
+            }
+            
+            renderGeiss(width, height) {
+                const gl = this.gl;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                gl.beginPath();
+                for (let i = 0; i < 360; i += 10) {
+                    const angle = (i + this.time * 50) * Math.PI / 180;
+                    const radius = 100 + Math.sin(this.time * 2 + i * 0.1) * 50;
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+                    
+                    if (i === 0) {
+                        gl.moveTo(x, y);
+                    } else {
+                        gl.lineTo(x, y);
+                    }
+                }
+                gl.closePath();
+                
+                const gradient = gl.createLinearGradient(0, 0, width, height);
+                gradient.addColorStop(0, `hsl(${(this.time * 50) % 360}, 70%, 50%)`);
+                gradient.addColorStop(1, `hsl(${(this.time * 50 + 180) % 360}, 70%, 50%)`);
+                
+                gl.strokeStyle = gradient;
+                gl.lineWidth = 3;
+                gl.stroke();
+            }
+            
+            renderWaveform(width, height) {
+                const gl = this.gl;
+                const centerY = height / 2;
+                
+                const waveform = this.audioData?.waveform || new Array(width).fill(0).map((_, i) => 
+                    Math.sin((i / width) * 10 + this.time * 2) * 0.5
+                );
+                
+                gl.beginPath();
+                gl.moveTo(0, centerY);
+                
+                for (let x = 0; x < width; x += 2) {
+                    const amplitude = waveform[x] * 200;
+                    const y = centerY + amplitude;
+                    gl.lineTo(x, y);
+                }
+                
+                const avgAmplitude = waveform.reduce((sum, val) => sum + Math.abs(val), 0) / waveform.length;
+                const hue = (this.time * 100) % 360;
+                const saturation = 80 + (avgAmplitude * 20);
+                
+                gl.strokeStyle = `hsl(${hue}, ${saturation}%, 60%)`;
+                gl.lineWidth = 2;
+                gl.stroke();
+            }
+            
+            renderSpectrum(width, height) {
+                const gl = this.gl;
+                const barWidth = width / 64;
+                
+                const frequencies = this.audioData?.frequencies || new Array(64).fill(0).map((_, i) => 
+                    Math.sin(this.time * 2 + i * 0.2) * 0.5 + 0.5
+                );
+                
+                for (let i = 0; i < 64; i++) {
+                    const frequencyValue = frequencies[i] || 0;
+                    const barHeight = frequencyValue * 300 + 50;
+                    const x = i * barWidth;
+                    const y = height - barHeight;
+                    
+                    const hue = (i * 5 + this.time * 50) % 360;
+                    const saturation = 70 + (frequencyValue * 30);
+                    const lightness = 50 + (frequencyValue * 20);
+                    
+                    gl.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                    gl.fillRect(x, y, barWidth - 1, barHeight);
+                }
+            }
+            
+            renderParticles(width, height) {
+                const gl = this.gl;
+                const particleCount = 100;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const x = (Math.sin(this.time + i * 0.1) + 1) * width / 2;
+                    const y = (Math.cos(this.time + i * 0.2) + 1) * height / 2;
+                    const size = Math.sin(this.time + i * 0.3) * 5 + 5;
+                    
+                    gl.fillStyle = `hsl(${(i * 3.6 + this.time * 30) % 360}, 80%, 60%)`;
+                    gl.beginPath();
+                    gl.arc(x, y, size, 0, Math.PI * 2);
+                    gl.fill();
+                }
+            }
+            
+            renderSpiral(width, height) {
+                const gl = this.gl;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                gl.beginPath();
+                for (let i = 0; i < 1000; i++) {
+                    const angle = i * 0.1 + this.time * 2;
+                    const radius = i * 0.5;
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+                    
+                    if (i === 0) {
+                        gl.moveTo(x, y);
+                    } else {
+                        gl.lineTo(x, y);
+                    }
+                }
+                
+                gl.strokeStyle = `hsl(${(this.time * 50) % 360}, 80%, 60%)`;
+                gl.lineWidth = 1;
+                gl.stroke();
+            }
+            
+            renderMatrix(width, height) {
+                const gl = this.gl;
+                const fontSize = 20;
+                const columns = Math.floor(width / fontSize);
+                
+                for (let i = 0; i < columns; i++) {
+                    const x = i * fontSize;
+                    const y = (Math.sin(this.time + i * 0.5) + 1) * height / 2;
+                    
+                    gl.fillStyle = `hsl(120, 80%, ${50 + Math.sin(this.time + i) * 20}%)`;
+                    gl.font = `${fontSize}px monospace`;
+                    gl.fillText('01', x, y);
+                }
+            }
+            
+            loadDefaultPresets() {
+                this.presets = [
+                    new ProjectMPreset('Geiss', 'geiss'),
+                    new ProjectMPreset('Waveform', 'waveform'),
+                    new ProjectMPreset('Spectrum', 'spectrum'),
+                    new ProjectMPreset('Particles', 'particles'),
+                    new ProjectMPreset('Spiral', 'spiral'),
+                    new ProjectMPreset('Matrix', 'matrix')
+                ];
+                
+                this.updatePresetList();
+                this.updatePresetInfo();
+            }
+            
+            loadMilkPreset(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const content = e.target.result;
+                            const preset = new ProjectMPreset(file.name.replace('.milk', ''), 'milk', content);
+                            this.presets.push(preset);
+                            this.updatePresetList();
+                            this.updatePresetInfo();
+                            resolve(preset);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+                    reader.onerror = reject;
+                    reader.readAsText(file);
+                });
+            }
+            
+            updatePresetList() {
+                const list = document.getElementById('presetList');
+                list.innerHTML = '';
+                
+                this.presets.forEach((preset, index) => {
+                    const item = document.createElement('div');
+                    item.className = `preset-item ${index === this.currentPresetIndex ? 'active' : ''}`;
+                    item.textContent = preset.name;
+                    item.onclick = () => this.setPreset(index);
+                    list.appendChild(item);
+                });
+            }
+            
+            updatePresetInfo() {
+                document.getElementById('currentPreset').textContent = 
+                    this.presets.length > 0 ? this.presets[this.currentPresetIndex].name : 'None';
+                document.getElementById('totalPresets').textContent = this.presets.length;
+            }
+            
+            setPreset(index) {
+                if (index >= 0 && index < this.presets.length) {
+                    this.currentPresetIndex = index;
+                    this.updatePresetList();
+                    this.updatePresetInfo();
+                }
+            }
+            
+            nextPreset() {
+                if (this.presets.length > 0) {
+                    this.currentPresetIndex = (this.currentPresetIndex + 1) % this.presets.length;
+                    this.updatePresetList();
+                    this.updatePresetInfo();
+                }
+            }
+            
+            previousPreset() {
+                if (this.presets.length > 0) {
+                    this.currentPresetIndex = (this.currentPresetIndex - 1 + this.presets.length) % this.presets.length;
+                    this.updatePresetList();
+                    this.updatePresetInfo();
+                }
+            }
+            
+            randomPreset() {
+                if (this.presets.length > 0) {
+                    this.currentPresetIndex = Math.floor(Math.random() * this.presets.length);
+                    this.updatePresetList();
+                    this.updatePresetInfo();
+                }
+            }
+            
+            setAudioData(audioData) {
+                this.audioData = audioData;
+            }
+            
+            destroy() {
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+            }
+        }
+        
+        // Initialize visualizer
+        let visualizer = new ProjectMVisualizer();
+        
+        // Control functions
+        function loadDefaultPresets() {
+            visualizer.loadDefaultPresets();
+        }
+        
+        function nextPreset() {
+            visualizer.nextPreset();
+        }
+        
+        function previousPreset() {
+            visualizer.previousPreset();
+        }
+        
+        function randomPreset() {
+            visualizer.randomPreset();
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        function toggleAudio() {
+            const status = document.getElementById('audioStatus');
+            if (status.textContent === 'Inactive') {
+                status.textContent = 'Active';
+                status.style.color = '#4CAF50';
+            } else {
+                status.textContent = 'Inactive';
+                status.style.color = '#FF9800';
+            }
+        }
+        
+        // Handle milk file uploads
+        document.getElementById('milkFileInput').addEventListener('change', async (event) => {
+            const files = event.target.files;
+            for (const file of files) {
+                if (file.name.endsWith('.milk')) {
+                    try {
+                        await visualizer.loadMilkPreset(file);
+                        console.log(`Loaded milk preset: ${file.name}`);
+                    } catch (error) {
+                        console.error(`Failed to load milk preset: ${file.name}`, error);
+                    }
+                }
+            }
+        });
+        
+        // Handle window messages for external control
+        window.addEventListener('message', function(event) {
+            if (event.data.command === 'changePreset') {
+                visualizer.nextPreset();
+            } else if (event.data.command === 'reset') {
+                visualizer.setPreset(0);
+            } else if (event.data.command === 'setAudioData') {
+                visualizer.setAudioData(event.data.audioData);
+            }
+        });
+        
+        // Expose functions to parent window
+        window.parent.postMessage({ 
+            type: 'visualizerReady', 
+            commands: ['changePreset', 'reset', 'setAudioData'] 
+        }, '*');
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (visualizer) {
+                visualizer.destroy();
+            }
+        });
+    </script>
+</body>
+</html>
