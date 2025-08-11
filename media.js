@@ -5278,10 +5278,11 @@ function toggleProjectMPanel() {
                 window.analysisPanelFadeTimeout = null;
             }
             
-            // Initialize local visualizer if not already done
-            if (typeof LocalVisualizer !== 'undefined' && !LocalVisualizer.canvas) {
-                LocalVisualizer.init();
-            }
+                    // Initialize local visualizer if not already done
+        if (typeof window.LocalVisualizer !== 'undefined' && !window.LocalVisualizer.canvas) {
+            // Module system handles initialization
+            console.log('🎨 Module-based visualizer ready');
+        }
             
             logger.info('🎨 Local visualization panel opened - analysis panel timeout cleared');
         }
@@ -5294,8 +5295,8 @@ function toggleProjectMPanel() {
 function closeProjectMPanel() {
     try {
         // Stop local visualizer if running
-        if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.isRunning) {
-            LocalVisualizer.stop();
+        if (typeof window.LocalVisualizer !== 'undefined' && window.LocalVisualizer.isRunning) {
+            window.LocalVisualizer.stop();
             isVisualizerRunning = false;
         }
         
@@ -5408,27 +5409,27 @@ let isVisualizerRunning = false;
 function startButterchurn() {
     try {
         // Check if local visualizer is available
-        if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.isRunning === false) {
-            LocalVisualizer.start();
+        if (typeof window.LocalVisualizer !== 'undefined' && window.LocalVisualizer.isRunning === false) {
+            window.LocalVisualizer.start();
             isVisualizerRunning = true;
             logger.info('🎬 Local visualizer started');
             return;
         }
         
         // If local visualizer is already running, stop it
-        if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.isRunning) {
-            LocalVisualizer.stop();
+        if (typeof window.LocalVisualizer !== 'undefined' && window.LocalVisualizer.isRunning) {
+            window.LocalVisualizer.stop();
             isVisualizerRunning = false;
             logger.info('⏹️ Local visualizer stopped');
             return;
         }
         
         // Initialize local visualizer if not available
-        if (typeof LocalVisualizer !== 'undefined') {
-            LocalVisualizer.init();
-            LocalVisualizer.start();
+        if (typeof window.LocalVisualizer !== 'undefined') {
+            // Module system handles initialization
+            window.LocalVisualizer.start();
             isVisualizerRunning = true;
-            logger.info('🎬 Local visualizer initialized and started');
+            logger.info('🎬 Local visualizer started');
         } else {
             logger.error('Local visualizer not available');
         }
@@ -5900,8 +5901,8 @@ function updatePresetSelect() {
     presetSelect.innerHTML = '';
     
     // Add local preset options
-    if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.presets) {
-        LocalVisualizer.presets.forEach((preset, index) => {
+    if (typeof window.LocalVisualizer !== 'undefined' && window.LocalVisualizer.presets) {
+        window.LocalVisualizer.presets.forEach((preset, index) => {
             const option = document.createElement('option');
             option.value = index;
             option.textContent = preset.name;
@@ -5909,56 +5910,56 @@ function updatePresetSelect() {
         });
         
         // Set current selection
-        presetSelect.value = LocalVisualizer.currentPreset;
+        presetSelect.value = window.LocalVisualizer.currentPreset;
     }
 }
 
 function updatePresetInfo() {
-    if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.presets) {
+    if (typeof window.LocalVisualizer !== 'undefined' && window.LocalVisualizer.presets) {
         const totalPresets = document.getElementById('totalPresets');
         if (totalPresets) {
-            totalPresets.textContent = LocalVisualizer.presets.length;
+            totalPresets.textContent = window.LocalVisualizer.presets.length;
         }
     }
 }
 
 function updateCurrentPreset() {
-    if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.presets) {
+    if (typeof window.LocalVisualizer !== 'undefined' && window.LocalVisualizer.presets) {
         const currentPreset = document.getElementById('currentPreset');
         if (currentPreset) {
-            currentPreset.textContent = LocalVisualizer.presets[LocalVisualizer.currentPreset].name;
+            currentPreset.textContent = window.LocalVisualizer.presets[window.LocalVisualizer.currentPreset].name;
         }
     }
 }
 
 function nextPreset() {
-    if (typeof LocalVisualizer !== 'undefined') {
-        LocalVisualizer.next();
+    if (typeof window.LocalVisualizer !== 'undefined') {
+        window.LocalVisualizer.next();
         logger.info('⏭️ Next local preset');
     }
 }
 
 function previousPreset() {
-    if (typeof LocalVisualizer !== 'undefined') {
-        LocalVisualizer.previous();
+    if (typeof window.LocalVisualizer !== 'undefined') {
+        window.LocalVisualizer.previous();
         logger.info('⏮️ Previous local preset');
     }
 }
 
 function randomPreset() {
-    if (typeof LocalVisualizer !== 'undefined') {
-        LocalVisualizer.random();
-        logger.info('🎲 Random local preset');
+    if (typeof window.LocalVisualizer !== 'undefined') {
+        window.LocalVisualizer.random();
+        logger.info('🎲 Random preset');
     }
 }
 
 function selectPreset(value) {
-    if (typeof LocalVisualizer !== 'undefined' && LocalVisualizer.presets) {
+    if (typeof window.LocalVisualizer !== 'undefined' && window.LocalVisualizer.presets) {
         const index = parseInt(value);
-        if (index >= 0 && index < LocalVisualizer.presets.length) {
-            LocalVisualizer.currentPreset = index;
-            LocalVisualizer.updatePresetInfo();
-            logger.info(`🎯 Selected local preset: ${LocalVisualizer.presets[index].name}`);
+        if (index >= 0 && index < window.LocalVisualizer.presets.length) {
+            window.LocalVisualizer.currentPreset = index;
+            window.LocalVisualizer.updatePresetInfo();
+            logger.info(`🎯 Selected preset: ${window.LocalVisualizer.presets[index].name}`);
         }
     }
 }
@@ -6204,9 +6205,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
                     if (projectmPanel.style.display === 'block') {
                         // Panel opened, ensure local visualizer is ready
-                        if (typeof LocalVisualizer !== 'undefined' && !LocalVisualizer.canvas) {
-                            LocalVisualizer.init();
-                        }
+                                if (typeof window.LocalVisualizer !== 'undefined' && !window.LocalVisualizer.canvas) {
+            // Module system handles initialization
+            console.log('🎨 Module-based visualizer ready');
+        }
                     }
                 }
             });

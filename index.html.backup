@@ -675,8 +675,8 @@
         window.changeProjectMPreset = changeProjectMPreset;
         window.toggleProjectMFullscreen = toggleProjectMFullscreen;
         window.toggleVisualizationFullscreen = function() {
-          if (typeof window.LocalVisualizer !== 'undefined') {
-            window.LocalVisualizer.toggleFullscreen();
+          if (typeof LocalVisualizer !== 'undefined') {
+            LocalVisualizer.toggleFullscreen();
           }
         };
         window.resetProjectMVisualizer = resetProjectMVisualizer;
@@ -916,18 +916,1340 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
     });
   </script>
   <!-- Module-based visualization system -->
-  <script type="module">
-    import { initializeVisualizer } from './modules/index.js';
-    
+  <script type="module" src="modules/index.js"></script>
+  <script>
     // Initialize the module system when DOM is ready
     document.addEventListener('DOMContentLoaded', async () => {
       try {
-        await initializeVisualizer();
+        await window.initializeVisualizer();
         console.log('✅ Module-based visualizer system ready');
       } catch (error) {
         console.error('❌ Failed to initialize module system:', error);
       }
     });
   </script>
+            type: 'energyField',
+            description: 'Pulsing energy field with lightning'
+          },
+          {
+            name: 'Crystal Formation',
+            type: 'crystalFormation',
+            description: 'Growing crystal structures'
+          },
+          {
+            name: 'Plasma Storm',
+            type: 'plasmaStorm',
+            description: 'Intense plasma storm effects'
+          },
+          {
+            name: 'Quantum Waves',
+            type: 'quantumWaves',
+            description: 'Quantum wave interference patterns'
+          },
+          {
+            name: 'Stellar Nebula',
+            type: 'stellarNebula',
+            description: 'Cosmic nebula with star formation'
+          },
+          {
+            name: 'Digital Vortex',
+            type: 'digitalVortex',
+            description: 'Digital vortex with data streams'
+          },
+          {
+            name: 'Holographic Display',
+            type: 'holographic',
+            description: '3D holographic projection effects'
+          },
+          {
+            name: 'Neural Network',
+            type: 'neuralNetwork',
+            description: 'Animated neural network connections'
+          },
+          {
+            name: 'Fractal Universe',
+            type: 'fractalUniverse',
+            description: 'Infinite fractal patterns'
+          },
+          {
+            name: 'Solar Flare',
+            type: 'solarFlare',
+            description: 'Intense solar flare effects'
+          },
+          {
+            name: 'Aurora Borealis',
+            type: 'auroraBorealis',
+            description: 'Northern lights simulation'
+          },
+          {
+            name: 'Magnetic Field',
+            type: 'magneticField',
+            description: 'Magnetic field line visualization'
+          },
+          {
+            name: 'Temporal Rift',
+            type: 'temporalRift',
+            description: 'Time distortion effects'
+          },
+          {
+            name: 'Gravity Well',
+            type: 'gravityWell',
+            description: 'Gravitational distortion effects'
+          },
+          {
+            name: 'Quantum Tunnel',
+            type: 'quantumTunnel',
+            description: 'Quantum tunneling visualization'
+          },
+          {
+            name: 'Dark Matter',
+            type: 'darkMatter',
+            description: 'Dark matter particle effects'
+          },
+          {
+            name: 'Light Speed',
+            type: 'lightSpeed',
+            description: 'Relativistic light effects'
+          },
+          {
+            name: 'Wormhole',
+            type: 'wormhole',
+            description: 'Space-time wormhole effects'
+          },
+          {
+            name: 'Supernova',
+            type: 'supernova',
+            description: 'Explosive supernova simulation'
+          }
+        ];
+        
+        this.updatePresetInfo();
+        console.log(`✅ Loaded ${this.presets.length} local presets`);
+      },
+      
+      // Update preset information display
+      updatePresetInfo: function() {
+        const currentPreset = document.getElementById('currentPreset');
+        const totalPresets = document.getElementById('totalPresets');
+        const presetStatus = document.getElementById('presetStatus');
+        
+        if (currentPreset) currentPreset.textContent = this.presets[this.currentPreset].name;
+        if (totalPresets) totalPresets.textContent = this.presets.length + ' Effects';
+        if (presetStatus) presetStatus.textContent = 'Local system ready';
+      },
+      
+      // Start visualization
+      start: function() {
+        if (this.isRunning) return;
+        
+        this.isRunning = true;
+        this.render();
+        console.log('🎬 Local visualizer started');
+      },
+      
+      // Stop visualization
+      stop: function() {
+        this.isRunning = false;
+        console.log('⏹️ Local visualizer stopped');
+      },
+      
+      // Next preset
+      next: function() {
+        this.currentPreset = (this.currentPreset + 1) % this.presets.length;
+        this.updatePresetInfo();
+        console.log(`⏭️ Switched to: ${this.presets[this.currentPreset].name}`);
+      },
+      
+      // Previous preset
+      previous: function() {
+        this.currentPreset = (this.currentPreset - 1 + this.presets.length) % this.presets.length;
+        this.updatePresetInfo();
+        console.log(`⏮️ Switched to: ${this.presets[this.currentPreset].name}`);
+      },
+      
+      // Random preset
+      random: function() {
+        this.currentPreset = Math.floor(Math.random() * this.presets.length);
+        this.updatePresetInfo();
+        console.log(`🎲 Random preset: ${this.presets[this.currentPreset].name}`);
+      },
+      
+      // Toggle visualization fullscreen (not entire site)
+      toggleFullscreen: function() {
+        const canvas = this.canvas;
+        if (!canvas) return;
+        
+        if (!document.fullscreenElement) {
+          // Enter fullscreen
+          if (canvas.requestFullscreen) {
+            canvas.requestFullscreen();
+          } else if (canvas.webkitRequestFullscreen) {
+            canvas.webkitRequestFullscreen();
+          } else if (canvas.msRequestFullscreen) {
+            canvas.msRequestFullscreen();
+          }
+          console.log('🎬 Visualization entered fullscreen');
+        } else {
+          // Exit fullscreen
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+          console.log('🎬 Visualization exited fullscreen');
+        }
+      },
+      
+      // Setup audio reactivity
+      setupAudioReactivity: function() {
+        // Try to connect to current audio if available
+        if (window.currentAudio && window.currentAudio.src) {
+          this.connectToAudio(window.currentAudio);
+        }
+        
+        // Listen for new audio connections
+        window.addEventListener('audioConnected', (event) => {
+          if (event.detail && event.detail.audioElement) {
+            this.connectToAudio(event.detail.audioElement);
+          }
+        });
+        
+        console.log('🎵 Audio reactivity setup complete');
+      },
+      
+      // Connect to audio element for reactivity
+      connectToAudio: function(audioElement) {
+        try {
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const analyser = audioContext.createAnalyser();
+          const source = audioContext.createMediaElementSource(audioElement);
+          
+          analyser.fftSize = 256;
+          analyser.smoothingTimeConstant = 0.8;
+          
+          source.connect(analyser);
+          analyser.connect(audioContext.destination);
+          
+          // Store analyser for data access
+          this.analyser = analyser;
+          
+          console.log('🎵 Connected to audio for reactivity');
+        } catch (error) {
+          console.log('⚠️ Could not connect to audio for reactivity:', error.message);
+        }
+      },
+      
+      // Update audio data for reactivity
+      updateAudioData: function() {
+        if (this.analyser) {
+          this.analyser.getByteFrequencyData(this.audioData.frequency);
+          this.analyser.getByteTimeDomainData(this.audioData.waveform);
+          
+          // Calculate volume, bass, mid, treble
+          let totalVolume = 0;
+          let bassSum = 0;
+          let midSum = 0;
+          let trebleSum = 0;
+          
+          for (let i = 0; i < this.audioData.frequency.length; i++) {
+            totalVolume += this.audioData.frequency[i];
+            
+            if (i < 8) { // Bass frequencies
+              bassSum += this.audioData.frequency[i];
+            } else if (i < 32) { // Mid frequencies
+              midSum += this.audioData.frequency[i];
+            } else { // Treble frequencies
+              trebleSum += this.audioData.frequency[i];
+            }
+          }
+          
+          this.audioData.volume = totalVolume / this.audioData.frequency.length;
+          this.audioData.bass = bassSum / 8;
+          this.audioData.mid = midSum / 24;
+          this.audioData.treble = trebleSum / 96;
+        }
+      },
+      
+      // Safety function to ensure positive values for rendering
+      safeRadius: function(radius) {
+        return Math.max(1, radius);
+      },
+      
+      safeSize: function(size) {
+        return Math.max(1, size);
+      },
+      
+      // Fallback render function if main rendering fails
+      renderFallback: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        // Simple pulsing circle as fallback
+        const pulse = Math.sin(this.time * 2) * 0.5 + 0.5;
+        const radius = 50 + pulse * 30;
+        
+        this.ctx.fillStyle = `rgba(76, 175, 80, ${0.3 + pulse * 0.5})`;
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Add some simple particles
+        for (let i = 0; i < 10; i++) {
+          const angle = (i / 10) * Math.PI * 2 + this.time;
+          const x = centerX + Math.cos(angle) * (radius + 20);
+          const y = centerY + Math.sin(angle) * (radius + 20);
+          const size = 2 + pulse * 3;
+          
+          this.ctx.fillStyle = `rgba(255, 255, 255, ${0.5 + pulse * 0.5})`;
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, size, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      },
+      
+      // Main render loop
+      render: function() {
+        if (!this.isRunning) return;
+        
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        
+        // Update audio data for reactivity
+        this.updateAudioData();
+        
+        // Clear canvas with fade effect
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        this.ctx.fillRect(0, 0, width, height);
+        
+        // Render current preset with error handling
+        try {
+          const preset = this.presets[this.currentPreset];
+          switch(preset.type) {
+            case 'waveform':
+              this.renderWaveform(width, height);
+              break;
+            case 'particles':
+              this.renderParticles(width, height);
+              break;
+            case 'rings':
+              this.renderRings(width, height);
+              break;
+            case 'spectrum':
+              this.renderSpectrum(width, height);
+              break;
+            case 'shapes':
+              this.renderShapes(width, height);
+              break;
+            case 'spiral':
+              this.renderSpiral(width, height);
+              break;
+            case 'matrix':
+              this.renderMatrix(width, height);
+              break;
+            case 'fireworks':
+              this.renderFireworks(width, height);
+              break;
+            case 'neonGrid':
+              this.renderNeonGrid(width, height);
+              break;
+            case 'cosmicDust':
+              this.renderCosmicDust(width, height);
+              break;
+            case 'liquidMetal':
+              this.renderLiquidMetal(width, height);
+              break;
+            case 'energyField':
+              this.renderEnergyField(width, height);
+              break;
+            case 'crystalFormation':
+              this.renderCrystalFormation(width, height);
+              break;
+            case 'plasmaStorm':
+              this.renderPlasmaStorm(width, height);
+              break;
+            case 'quantumWaves':
+              this.renderQuantumWaves(width, height);
+              break;
+            case 'stellarNebula':
+              this.renderStellarNebula(width, height);
+              break;
+            case 'digitalVortex':
+              this.renderDigitalVortex(width, height);
+              break;
+            case 'holographic':
+              this.renderHolographic(width, height);
+              break;
+            case 'neuralNetwork':
+              this.renderNeuralNetwork(width, height);
+              break;
+            case 'fractalUniverse':
+              this.renderFractalUniverse(width, height);
+              break;
+            case 'solarFlare':
+              this.renderSolarFlare(width, height);
+              break;
+            case 'auroraBorealis':
+              this.renderAuroraBorealis(width, height);
+              break;
+            case 'magneticField':
+              this.renderMagneticField(width, height);
+              break;
+            case 'temporalRift':
+              this.renderTemporalRift(width, height);
+              break;
+            case 'gravityWell':
+              this.renderGravityWell(width, height);
+              break;
+            case 'quantumTunnel':
+              this.renderQuantumTunnel(width, height);
+              break;
+            case 'darkMatter':
+              this.renderDarkMatter(width, height);
+              break;
+            case 'lightSpeed':
+              this.renderLightSpeed(width, height);
+              break;
+            case 'wormhole':
+              this.renderWormhole(width, height);
+              break;
+            case 'supernova':
+              this.renderSupernova(width, height);
+              break;
+          }
+        } catch (error) {
+          console.error('🎨 Visualization render error:', error);
+          // Fallback to a simple effect if rendering fails
+          this.renderFallback(width, height);
+        }
+        
+        this.time += 0.02;
+        requestAnimationFrame(() => this.render());
+      },
+      
+      // Waveform rendering with audio reactivity
+      renderWaveform: function(width, height) {
+        const audioIntensity = this.audioData.volume / 128;
+        const bassBoost = this.audioData.bass / 128;
+        
+        this.ctx.strokeStyle = `hsl(${(this.time * 50 + bassBoost * 100) % 360}, 70%, 60%)`;
+        this.ctx.lineWidth = 3 + audioIntensity * 5;
+        this.ctx.beginPath();
+        
+        for (let x = 0; x < width; x += 2) {
+          const progress = x / width;
+          const audioIndex = Math.floor(progress * this.audioData.waveform.length);
+          const audioWave = (this.audioData.waveform[audioIndex] - 128) / 128;
+          
+          const wave1 = Math.sin(this.time + progress * Math.PI * 4) * (50 + audioIntensity * 100);
+          const wave2 = Math.sin(this.time * 0.7 + progress * Math.PI * 8) * (30 + bassBoost * 50);
+          const wave3 = Math.sin(this.time * 0.5 + progress * Math.PI * 2) * (20 + audioWave * 40);
+          const wave4 = Math.sin(this.time * 0.3 + progress * Math.PI * 12) * (15 + audioIntensity * 30);
+          
+          const y = height / 2 + wave1 + wave2 + wave3 + wave4;
+          if (x === 0) {
+            this.ctx.moveTo(x, y);
+          } else {
+            this.ctx.lineTo(x, y);
+          }
+        }
+        
+        this.ctx.stroke();
+      },
+      
+      // Particle system rendering with audio reactivity
+      renderParticles: function(width, height) {
+        const audioIntensity = this.audioData.volume / 128;
+        const bassBoost = this.audioData.bass / 128;
+        const particleCount = 40 + Math.floor(audioIntensity * 20);
+        
+        for (let i = 0; i < particleCount; i++) {
+          const angle = (i / particleCount) * Math.PI * 2 + this.time * 0.5;
+          const baseRadius = 80;
+          const audioRadius = audioIntensity * 100;
+          const animationRadius = Math.sin(this.time * 2 + i * 0.5) * 60;
+          const radius = baseRadius + audioRadius + animationRadius;
+          
+          const x = width / 2 + Math.cos(angle) * radius;
+          const y = height / 2 + Math.sin(angle) * radius;
+          
+          const baseSize = 4;
+          const audioSize = audioIntensity * 6;
+          const animationSize = Math.sin(this.time * 3 + i * 0.3) * 4;
+          const size = baseSize + audioSize + animationSize;
+          
+          const velocityX = Math.sin(this.time + i * 0.2) * (3 + bassBoost * 5);
+          const velocityY = Math.cos(this.time + i * 0.2) * (3 + bassBoost * 5);
+          
+          // Color based on audio and position
+          const hue = (i * 9 + this.time * 30 + bassBoost * 100) % 360;
+          const saturation = 80 + audioIntensity * 20;
+          const lightness = 70 + audioIntensity * 20;
+          
+          this.ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+          this.ctx.beginPath();
+          this.ctx.arc(x + velocityX, y + velocityY, size, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      },
+      
+      // Ring system rendering
+      renderRings: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        for (let ring = 0; ring < 6; ring++) {
+          const ringRadius = (this.time * 25 + ring * 35) % (Math.max(width, height) / 2);
+          const ringOpacity = Math.max(0, 1 - (ringRadius / (Math.max(width, height) / 2)));
+          const ringWidth = Math.max(1, 4 + Math.sin(this.time * 2 + ring) * 3);
+          
+          // Ensure radius is always positive
+          const finalRadius = Math.max(1, ringRadius);
+          
+          this.ctx.strokeStyle = `hsla(${(this.time * 120 + ring * 50) % 360}, 80%, 60%, ${ringOpacity})`;
+          this.ctx.lineWidth = ringWidth;
+          this.ctx.beginPath();
+          this.ctx.arc(centerX, centerY, finalRadius, 0, Math.PI * 2);
+          this.ctx.stroke();
+        }
+      },
+      
+      // Spectrum rendering with audio reactivity
+      renderSpectrum: function(width, height) {
+        const barCount = 25;
+        const barWidth = width / barCount;
+        
+        for (let i = 0; i < barCount; i++) {
+          const x = i * barWidth;
+          const progress = i / barCount;
+          
+          // Get audio frequency data for this bar
+          const audioIndex = Math.floor(progress * this.audioData.frequency.length);
+          const audioIntensity = this.audioData.frequency[audioIndex] / 255;
+          
+          // Base height + audio reactivity + animation
+          const baseHeight = 25;
+          const audioHeight = audioIntensity * 150;
+          const animationHeight = Math.sin(this.time * 2.5 + progress * Math.PI * 5) * 30;
+          const barHeight = baseHeight + audioHeight + animationHeight;
+          
+          const barY = height - barHeight;
+          
+          // Color based on frequency and audio intensity
+          const hue = (progress * 360 + this.time * 120 + audioIntensity * 100) % 360;
+          const saturation = 80 + audioIntensity * 20;
+          const lightness = 60 + audioIntensity * 20;
+          
+          this.ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+          this.ctx.fillRect(x + 1, barY, barWidth - 2, barHeight);
+        }
+      },
+      
+      // Shape rendering
+      renderShapes: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const shapeCount = 8;
+        
+        for (let i = 0; i < shapeCount; i++) {
+          const angle = (i / shapeCount) * Math.PI * 2 + this.time;
+          const radius = 70 + Math.sin(this.time * 1.8 + i * 0.4) * 25;
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius;
+          const size = 18 + Math.sin(this.time * 2.5 + i * 0.3) * 10;
+          
+          this.ctx.fillStyle = `hsl(${(i * 45 + this.time * 100) % 360}, 80%, 60%)`;
+          this.ctx.beginPath();
+          
+          if (i % 4 === 0) {
+            this.ctx.arc(x, y, size, 0, Math.PI * 2);
+          } else if (i % 4 === 1) {
+            this.ctx.rect(x - size, y - size, size * 2, size * 2);
+          } else if (i % 4 === 2) {
+            this.ctx.moveTo(x, y - size);
+            this.ctx.lineTo(x - size, y + size);
+            this.ctx.lineTo(x + size, y + size);
+            this.ctx.closePath();
+          } else {
+            this.ctx.moveTo(x, y - size);
+            this.ctx.lineTo(x - size * 0.7, y + size * 0.7);
+            this.ctx.lineTo(x + size * 0.7, y + size * 0.7);
+            this.ctx.closePath();
+          }
+          
+          this.ctx.fill();
+        }
+      },
+      
+      // Spiral rendering
+      renderSpiral: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const maxRadius = Math.min(width, height) / 2;
+        
+        this.ctx.strokeStyle = `hsl(${(this.time * 80) % 360}, 80%, 60%)`;
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        
+        for (let angle = 0; angle < Math.PI * 8; angle += 0.1) {
+          const radius = (angle / (Math.PI * 8)) * maxRadius;
+          const x = centerX + Math.cos(angle + this.time) * radius;
+          const y = centerY + Math.sin(angle + this.time) * radius;
+          
+          if (angle === 0) {
+            this.ctx.moveTo(x, y);
+          } else {
+            this.ctx.lineTo(x, y);
+          }
+        }
+        
+        this.ctx.stroke();
+      },
+      
+      // Matrix rain rendering
+      renderMatrix: function(width, height) {
+        const columns = 20;
+        const columnWidth = width / columns;
+        
+        for (let col = 0; col < columns; col++) {
+          const x = col * columnWidth;
+          const speed = 0.5 + Math.sin(this.time + col * 0.5) * 0.3;
+          const startY = (this.time * 100 * speed) % height;
+          
+          for (let i = 0; i < 15; i++) {
+            const y = (startY + i * 20) % height;
+            const opacity = Math.max(0, 1 - (i * 0.1));
+            const size = 12 - i * 0.5;
+            
+            this.ctx.fillStyle = `rgba(0, 255, 0, ${opacity})`;
+            this.ctx.font = `${size}px monospace`;
+            this.ctx.fillText('1', x + 5, y);
+          }
+        }
+      },
+      
+      // Fireworks rendering
+      renderFireworks: function(width, height) {
+        const fireworkCount = 3;
+        
+        for (let fw = 0; fw < fireworkCount; fw++) {
+          const centerX = width * 0.3 + (fw * 0.2) * width;
+          const centerY = height * 0.3 + Math.sin(this.time + fw) * 50;
+          const particleCount = 30;
+          
+          for (let p = 0; p < particleCount; p++) {
+            const angle = (p / particleCount) * Math.PI * 2;
+            const velocity = 3 + Math.sin(this.time * 2 + p * 0.2) * 2;
+            const x = centerX + Math.cos(angle) * velocity * (this.time * 20);
+            const y = centerY + Math.sin(angle) * velocity * (this.time * 20);
+            const size = Math.max(1, 3 + Math.sin(this.time * 3 + p * 0.3) * 2);
+            
+            this.ctx.fillStyle = `hsl(${(fw * 120 + p * 12 + this.time * 60) % 360}, 80%, 60%)`;
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, size, 0, Math.PI * 2);
+            this.ctx.fill();
+          }
+        }
+      },
+      
+      // Neon Grid rendering
+      renderNeonGrid: function(width, height) {
+        const gridSize = 30;
+        const pulse = Math.sin(this.time * 3) * 0.5 + 0.5;
+        
+        for (let x = 0; x < width; x += gridSize) {
+          for (let y = 0; y < height; y += gridSize) {
+            const glow = Math.sin(this.time + x * 0.01) * Math.cos(this.time + y * 0.01) * 0.5 + 0.5;
+            const intensity = glow * pulse;
+            
+            this.ctx.strokeStyle = `rgba(0, 255, 255, ${intensity})`;
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(x, y, gridSize, gridSize);
+          }
+        }
+      },
+      
+      // Cosmic Dust rendering
+      renderCosmicDust: function(width, height) {
+        const particleCount = 50;
+        
+        for (let i = 0; i < particleCount; i++) {
+          const x = (i * 7.3) % width;
+          const y = (i * 11.7) % height;
+          const size = 2 + Math.sin(this.time + i * 0.1) * 2;
+          const opacity = Math.sin(this.time * 0.5 + i * 0.1) * 0.5 + 0.5;
+          
+          // Create trail effect
+          for (let trail = 0; trail < 5; trail++) {
+            const trailX = x - trail * 2;
+            const trailY = y - trail * 1;
+            const trailOpacity = opacity * (1 - trail * 0.2);
+            const trailSize = size * (1 - trail * 0.1);
+            
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${trailOpacity})`;
+            this.ctx.beginPath();
+            this.ctx.arc(trailX, trailY, trailSize, 0, Math.PI * 2);
+            this.ctx.fill();
+          }
+        }
+      },
+      
+      // Liquid Metal rendering
+      renderLiquidMetal: function(width, height) {
+        const segments = 100;
+        const centerY = height / 2;
+        
+        this.ctx.strokeStyle = 'rgba(192, 192, 192, 0.8)';
+        this.ctx.lineWidth = 3;
+        this.ctx.beginPath();
+        
+        for (let i = 0; i <= segments; i++) {
+          const x = (i / segments) * width;
+          const progress = i / segments;
+          
+          const wave1 = Math.sin(this.time + progress * Math.PI * 6) * 40;
+          const wave2 = Math.sin(this.time * 0.7 + progress * Math.PI * 12) * 20;
+          const wave3 = Math.sin(this.time * 0.5 + progress * Math.PI * 3) * 15;
+          
+          const y = centerY + wave1 + wave2 + wave3;
+          
+          if (i === 0) {
+            this.ctx.moveTo(x, y);
+          } else {
+            this.ctx.lineTo(x, y);
+          }
+        }
+        
+        this.ctx.stroke();
+        
+        // Add metallic highlights
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
+      },
+      
+      // Energy Field rendering
+      renderEnergyField: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const maxRadius = Math.min(width, height) / 2;
+        
+        // Create energy rings
+        for (let ring = 0; ring < 8; ring++) {
+          const radius = (ring * 30 + this.time * 50) % maxRadius;
+          const pulse = Math.sin(this.time * 4 + ring * 0.5) * 0.5 + 0.5;
+          const opacity = pulse * (1 - radius / maxRadius);
+          
+          this.ctx.strokeStyle = `rgba(0, 255, 0, ${opacity})`;
+          this.ctx.lineWidth = 3 + pulse * 2;
+          this.ctx.beginPath();
+          this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+          this.ctx.stroke();
+        }
+        
+        // Add lightning bolts
+        for (let bolt = 0; bolt < 3; bolt++) {
+          const angle = (bolt * Math.PI * 2 / 3) + this.time;
+          const startX = centerX + Math.cos(angle) * 50;
+          const startY = centerY + Math.sin(angle) * 50;
+          const endX = centerX + Math.cos(angle) * maxRadius;
+          const endY = centerY + Math.sin(angle) * maxRadius;
+          
+          this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+          this.ctx.lineWidth = 2;
+          this.ctx.beginPath();
+          this.ctx.moveTo(startX, startY);
+          this.ctx.lineTo(endX, endY);
+          this.ctx.stroke();
+        }
+      },
+      
+      // Crystal Formation rendering
+      renderCrystalFormation: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const crystalCount = 6;
+        
+        for (let i = 0; i < crystalCount; i++) {
+          const angle = (i / crystalCount) * Math.PI * 2 + this.time * 0.5;
+          const radius = 60 + Math.sin(this.time * 2 + i * 0.5) * 30;
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius;
+          const size = 20 + Math.sin(this.time * 3 + i * 0.3) * 10;
+          
+          this.ctx.fillStyle = `hsl(${(i * 60 + this.time * 50) % 360}, 80%, 60%)`;
+          this.ctx.beginPath();
+          
+          // Draw crystal shape
+          const points = 6;
+          for (let p = 0; p < points; p++) {
+            const pointAngle = (p / points) * Math.PI * 2 + angle;
+            const pointX = x + Math.cos(pointAngle) * size;
+            const pointY = y + Math.sin(pointAngle) * size;
+            
+            if (p === 0) {
+              this.ctx.moveTo(pointX, pointY);
+            } else {
+              this.ctx.lineTo(pointX, pointY);
+            }
+          }
+          
+          this.ctx.closePath();
+          this.ctx.fill();
+        }
+      },
+      
+      // Plasma Storm rendering
+      renderPlasmaStorm: function(width, height) {
+        const stormCount = 5;
+        
+        for (let storm = 0; storm < stormCount; storm++) {
+          const centerX = width * 0.2 + (storm * 0.15) * width;
+          const centerY = height * 0.3 + Math.sin(this.time + storm) * 100;
+          const radius = 40 + Math.sin(this.time * 2 + storm * 0.5) * 20;
+          
+          // Create plasma effect
+          for (let particle = 0; particle < 20; particle++) {
+            const angle = (particle / 20) * Math.PI * 2 + this.time * 2;
+            const distance = radius * (0.5 + Math.random() * 0.5);
+            const x = centerX + Math.cos(angle) * distance;
+            const y = centerY + Math.sin(angle) * distance;
+            const size = 3 + Math.sin(this.time * 3 + particle * 0.2) * 2;
+            
+            this.ctx.fillStyle = `hsl(${(storm * 72 + this.time * 100) % 360}, 100%, 70%)`;
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, size, 0, Math.PI * 2);
+            this.ctx.fill();
+          }
+        }
+      },
+      
+      // Quantum Waves rendering
+      renderQuantumWaves: function(width, height) {
+        const waveCount = 8;
+        const centerY = height / 2;
+        
+        for (let wave = 0; wave < waveCount; wave++) {
+          const amplitude = 30 + Math.sin(this.time + wave * 0.5) * 20;
+          const frequency = 0.02 + wave * 0.01;
+          const phase = wave * Math.PI / 4;
+          
+          this.ctx.strokeStyle = `hsla(${(wave * 45 + this.time * 30) % 360}, 80%, 60%, 0.7)`;
+          this.ctx.lineWidth = 2;
+          this.ctx.beginPath();
+          
+          for (let x = 0; x < width; x += 2) {
+            const y = centerY + Math.sin(x * frequency + this.time + phase) * amplitude;
+            
+            if (x === 0) {
+              this.ctx.moveTo(x, y);
+            } else {
+              this.ctx.lineTo(x, y);
+            }
+          }
+          
+          this.ctx.stroke();
+        }
+      },
+      
+      // Stellar Nebula rendering
+      renderStellarNebula: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const starCount = 100;
+        
+        // Create nebula background
+        const gradient = this.ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.min(width, height) / 2);
+        gradient.addColorStop(0, 'rgba(255, 100, 255, 0.3)');
+        gradient.addColorStop(0.5, 'rgba(100, 100, 255, 0.2)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, width, height);
+        
+        // Add stars
+        for (let i = 0; i < starCount; i++) {
+          const x = (i * 7.3) % width;
+          const y = (i * 11.7) % height;
+          const twinkle = Math.sin(this.time * 2 + i * 0.1) * 0.5 + 0.5;
+          const size = (1 + twinkle) * 2;
+          
+          this.ctx.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, size, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      },
+      
+      // Digital Vortex rendering
+      renderDigitalVortex: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const maxRadius = Math.min(width, height) / 2;
+        
+        // Create spiral data streams
+        for (let stream = 0; stream < 5; stream++) {
+          const streamAngle = (stream / 5) * Math.PI * 2 + this.time;
+          
+          for (let i = 0; i < 50; i++) {
+            const progress = i / 50;
+            const radius = progress * maxRadius;
+            const angle = streamAngle + progress * Math.PI * 4;
+            const x = centerX + Math.cos(angle) * radius;
+            const y = centerY + Math.sin(angle) * radius;
+            const size = 3 + Math.sin(this.time * 3 + i * 0.1) * 2;
+            
+            this.ctx.fillStyle = `hsl(${(stream * 72 + this.time * 50) % 360}, 80%, 60%)`;
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, size, 0, Math.PI * 2);
+            this.ctx.fill();
+          }
+        }
+      },
+      
+      // Holographic Display rendering
+      renderHolographic: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        // Create holographic grid
+        for (let x = 0; x < width; x += 20) {
+          for (let y = 0; y < height; y += 20) {
+            const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
+            const pulse = Math.sin(this.time * 2 + distance * 0.01) * 0.5 + 0.5;
+            const opacity = pulse * (1 - distance / (Math.min(width, height) / 2));
+            
+            this.ctx.strokeStyle = `rgba(0, 255, 255, ${opacity})`;
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(x, y, 20, 20);
+          }
+        }
+        
+        // Add floating holographic elements
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2 + this.time;
+          const radius = 80 + Math.sin(this.time + i * 0.5) * 30;
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius;
+          const size = 15 + Math.sin(this.time * 2 + i * 0.3) * 8;
+          
+          this.ctx.fillStyle = `rgba(255, 0, 255, 0.6)`;
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, size, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      },
+      
+      // Neural Network rendering
+      renderNeuralNetwork: function(width, height) {
+        const nodeCount = 12;
+        const nodes = [];
+        
+        // Create nodes
+        for (let i = 0; i < nodeCount; i++) {
+          const x = 50 + (i % 4) * (width - 100) / 3;
+          const y = 50 + Math.floor(i / 4) * (height - 100) / 2;
+          nodes.push({ x, y, activation: Math.sin(this.time + i * 0.5) * 0.5 + 0.5 });
+        }
+        
+        // Draw connections
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            const weight = Math.sin(this.time + i * j * 0.1) * 0.5 + 0.5;
+            this.ctx.strokeStyle = `rgba(0, 255, 0, ${weight * 0.6})`;
+            this.ctx.lineWidth = weight * 3;
+            this.ctx.beginPath();
+            this.ctx.moveTo(nodes[i].x, nodes[i].y);
+            this.ctx.lineTo(nodes[j].x, nodes[j].y);
+            this.ctx.stroke();
+          }
+        }
+        
+        // Draw nodes
+        nodes.forEach(node => {
+          this.ctx.fillStyle = `rgba(255, 255, 0, ${node.activation})`;
+          this.ctx.beginPath();
+          this.ctx.arc(node.x, node.y, 8, 0, Math.PI * 2);
+          this.ctx.fill();
+        });
+      },
+      
+      // Fractal Universe rendering
+      renderFractalUniverse: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const maxIterations = 8;
+        
+        for (let x = 0; x < width; x += 4) {
+          for (let y = 0; y < height; y += 4) {
+            const x0 = (x - centerX) / 100;
+            const y0 = (y - centerY) / 100;
+            let x1 = x0;
+            let y1 = y0;
+            let iteration = 0;
+            
+            while (x1 * x1 + y1 * y1 < 4 && iteration < maxIterations) {
+              const temp = x1 * x1 - y1 * y1 + x0 + Math.sin(this.time) * 0.1;
+              y1 = 2 * x1 * y1 + y0 + Math.cos(this.time) * 0.1;
+              iteration++;
+            }
+            
+            const color = (iteration / maxIterations) * 360;
+            this.ctx.fillStyle = `hsl(${color}, 80%, 60%)`;
+            this.ctx.fillRect(x, y, 4, 4);
+          }
+        }
+      },
+      
+      // Solar Flare rendering
+      renderSolarFlare: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const flareCount = 6;
+        
+        // Create solar core
+        this.ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, 40, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Create solar flares
+        for (let flare = 0; flare < flareCount; flare++) {
+          const angle = (flare / flareCount) * Math.PI * 2 + this.time;
+          const length = 80 + Math.sin(this.time * 2 + flare * 0.5) * 40;
+          
+          this.ctx.strokeStyle = `rgba(255, 100, 0, 0.8)`;
+          this.ctx.lineWidth = 8;
+          this.ctx.beginPath();
+          this.ctx.moveTo(centerX, centerY);
+          this.ctx.lineTo(
+            centerX + Math.cos(angle) * length,
+            centerY + Math.sin(angle) * length
+          );
+          this.ctx.stroke();
+        }
+      },
+      
+      // Aurora Borealis rendering
+      renderAuroraBorealis: function(width, height) {
+        const auroraCount = 4;
+        
+        for (let aurora = 0; aurora < auroraCount; aurora++) {
+          const baseY = height * 0.3 + aurora * 30;
+          const amplitude = 60 + Math.sin(this.time + aurora * 0.5) * 30;
+          
+          this.ctx.strokeStyle = `hsla(${(aurora * 90 + 120) % 360}, 80%, 60%, 0.6)`;
+          this.ctx.lineWidth = 8;
+          this.ctx.beginPath();
+          
+          for (let x = 0; x < width; x += 2) {
+            const progress = x / width;
+            const y = baseY + Math.sin(progress * Math.PI * 4 + this.time + aurora * 0.3) * amplitude;
+            
+            if (x === 0) {
+              this.ctx.moveTo(x, y);
+            } else {
+              this.ctx.lineTo(x, y);
+            }
+          }
+          
+          this.ctx.stroke();
+        }
+      },
+      
+      // Magnetic Field rendering
+      renderMagneticField: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const fieldStrength = Math.sin(this.time) * 0.5 + 0.5;
+        
+        // Create magnetic field lines
+        for (let line = 0; line < 12; line++) {
+          const angle = (line / 12) * Math.PI * 2;
+          const startX = centerX + Math.cos(angle) * 30;
+          const startY = centerY + Math.sin(angle) * 30;
+          const endX = centerX + Math.cos(angle) * 120;
+          const endY = centerY + Math.sin(angle) * 120;
+          
+          this.ctx.strokeStyle = `rgba(0, 150, 255, ${fieldStrength})`;
+          this.ctx.lineWidth = 3;
+          this.ctx.beginPath();
+          this.ctx.moveTo(startX, startY);
+          this.ctx.lineTo(endX, endY);
+          this.ctx.stroke();
+        }
+        
+        // Add magnetic particles
+        for (let i = 0; i < 20; i++) {
+          const angle = (i / 20) * Math.PI * 2 + this.time;
+          const radius = 60 + Math.sin(this.time * 2 + i * 0.2) * 40;
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius;
+          
+          this.ctx.fillStyle = 'rgba(0, 150, 255, 0.8)';
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, 3, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      },
+      
+      // Temporal Rift rendering
+      renderTemporalRift: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        // Create time distortion effect
+        for (let x = 0; x < width; x += 3) {
+          for (let y = 0; y < height; y += 3) {
+            const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
+            const timeDistortion = Math.sin(this.time + distance * 0.01) * 0.5 + 0.5;
+            const color = (timeDistortion * 300 + this.time * 50) % 360;
+            
+            this.ctx.fillStyle = `hsl(${color}, 80%, 60%)`;
+            this.ctx.fillRect(x, y, 3, 3);
+          }
+        }
+        
+        // Add temporal particles
+        for (let i = 0; i < 15; i++) {
+          const angle = (i / 15) * Math.PI * 2 + this.time * 0.5;
+          const radius = 80 + Math.sin(this.time + i * 0.3) * 30;
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius;
+          const size = 4 + Math.sin(this.time * 2 + i * 0.2) * 3;
+          
+          this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, size, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      },
+      
+      // Gravity Well rendering
+      renderGravityWell: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const wellRadius = 60;
+        
+        // Create gravity well
+        const gradient = this.ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, wellRadius);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
+        gradient.addColorStop(0.7, 'rgba(100, 0, 100, 0.4)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        
+        this.ctx.fillStyle = gradient;
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, wellRadius, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Add orbiting particles
+        for (let i = 0; i < 25; i++) {
+          const angle = (i / 25) * Math.PI * 2 + this.time;
+          const radius = wellRadius + 20 + Math.sin(this.time + i * 0.2) * 10;
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius;
+          const size = 2 + Math.sin(this.time * 2 + i * 0.1) * 1;
+          
+          this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, size, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      },
+      
+      // Quantum Tunnel rendering
+      renderQuantumTunnel: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const tunnelLength = Math.min(width, height);
+        
+        // Create tunnel effect
+        for (let ring = 0; ring < 20; ring++) {
+          const radius = (ring * 15 + this.time * 30) % tunnelLength;
+          const opacity = Math.max(0, 1 - (radius / tunnelLength));
+          const pulse = Math.sin(this.time * 3 + ring * 0.2) * 0.5 + 0.5;
+          
+          this.ctx.strokeStyle = `rgba(0, 255, 255, ${opacity * pulse})`;
+          this.ctx.lineWidth = 2;
+          this.ctx.beginPath();
+          this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+          this.ctx.stroke();
+        }
+        
+        // Add quantum particles
+        for (let i = 0; i < 30; i++) {
+          const angle = (i / 30) * Math.PI * 2 + this.time;
+          const radius = 40 + Math.sin(this.time * 2 + i * 0.2) * 20;
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius;
+          const size = 3 + Math.sin(this.time + i * 0.1) * 2;
+          
+          this.ctx.fillStyle = `hsl(${(i * 12 + this.time * 50) % 360}, 80%, 70%)`;
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, size, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      },
+      
+      // Dark Matter rendering
+      renderDarkMatter: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        // Create dark matter cloud
+        for (let particle = 0; particle < 80; particle++) {
+          const angle = (particle / 80) * Math.PI * 2 + this.time * 0.3;
+          const radius = 50 + Math.sin(this.time + particle * 0.1) * 40;
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius;
+          const size = 2 + Math.sin(this.time * 2 + particle * 0.05) * 1;
+          const opacity = Math.sin(this.time + particle * 0.1) * 0.5 + 0.5;
+          
+          this.ctx.fillStyle = `rgba(100, 0, 150, ${opacity})`;
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, size, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+        
+        // Add dark energy waves
+        for (let wave = 0; wave < 3; wave++) {
+          const waveRadius = 60 + wave * 30 + this.time * 20;
+          const opacity = Math.max(0, 1 - (waveRadius / 200));
+          
+          this.ctx.strokeStyle = `rgba(50, 0, 100, ${opacity * 0.6})`;
+          this.ctx.lineWidth = 2;
+          this.ctx.beginPath();
+          this.ctx.arc(centerX, centerY, waveRadius, 0, Math.PI * 2);
+          this.ctx.stroke();
+        }
+      },
+      
+      // Light Speed rendering
+      renderLightSpeed: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        // Create light speed trails
+        for (let trail = 0; trail < 8; trail++) {
+          const angle = (trail / 8) * Math.PI * 2 + this.time;
+          const length = 100 + Math.sin(this.time * 2 + trail * 0.5) * 50;
+          
+          this.ctx.strokeStyle = `hsla(${(trail * 45 + this.time * 100) % 360}, 100%, 70%, 0.8)`;
+          this.ctx.lineWidth = 4;
+          this.ctx.beginPath();
+          this.ctx.moveTo(centerX, centerY);
+          this.ctx.lineTo(
+            centerX + Math.cos(angle) * length,
+            centerY + Math.sin(angle) * length
+          );
+          this.ctx.stroke();
+        }
+        
+        // Add relativistic effects
+        for (let i = 0; i < 20; i++) {
+          const angle = (i / 20) * Math.PI * 2 + this.time * 0.5;
+          const radius = 30 + Math.sin(this.time + i * 0.2) * 20;
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius;
+          const size = 2 + Math.sin(this.time * 3 + i * 0.1) * 1;
+          
+          this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, size, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      },
+      
+      // Wormhole rendering
+      renderWormhole: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const maxRadius = Math.min(width, height) / 2;
+        
+        // Create wormhole tunnel
+        for (let ring = 0; ring < 25; ring++) {
+          const radius = (ring * 8 + this.time * 40) % maxRadius;
+          const opacity = Math.max(0, 1 - (radius / maxRadius));
+          const distortion = Math.sin(this.time * 2 + ring * 0.1) * 10;
+          
+          // Ensure radius is always positive
+          const finalRadius = Math.max(1, radius + distortion);
+          
+          this.ctx.strokeStyle = `rgba(150, 0, 255, ${opacity})`;
+          this.ctx.lineWidth = 3;
+          this.ctx.beginPath();
+          this.ctx.arc(centerX, centerY, finalRadius, 0, Math.PI * 2);
+          this.ctx.stroke();
+        }
+        
+        // Add space-time distortion particles
+        for (let i = 0; i < 40; i++) {
+          const angle = (i / 40) * Math.PI * 2 + this.time;
+          const radius = 80 + Math.sin(this.time * 1.5 + i * 0.1) * 30;
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius;
+          const size = Math.max(1, 2 + Math.sin(this.time * 2 + i * 0.05) * 1);
+          
+          this.ctx.fillStyle = `hsl(${(i * 9 + this.time * 30) % 360}, 80%, 70%)`;
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, size, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      },
+      
+      // Supernova rendering
+      renderSupernova: function(width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const explosionRadius = 50 + this.time * 30;
+        
+        // Create explosion core
+        const gradient = this.ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, explosionRadius);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        gradient.addColorStop(0.3, 'rgba(255, 255, 0, 0.8)');
+        gradient.addColorStop(0.6, 'rgba(255, 100, 0, 0.6)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        
+        this.ctx.fillStyle = gradient;
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, explosionRadius, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Create shockwave rings
+        for (let ring = 0; ring < 5; ring++) {
+          const ringRadius = explosionRadius + ring * 30;
+          const opacity = Math.max(0, 1 - (ringRadius / 300));
+          
+          this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.6})`;
+          this.ctx.lineWidth = 3;
+          this.ctx.beginPath();
+          this.ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
+          this.ctx.stroke();
+        }
+        
+        // Add debris particles
+        for (let i = 0; i < 60; i++) {
+          const angle = (i / 60) * Math.PI * 2;
+          const velocity = 2 + Math.random() * 3;
+          const x = centerX + Math.cos(angle) * (explosionRadius + velocity * this.time * 10);
+          const y = centerY + Math.sin(angle) * explosionRadius;
+          const size = 2 + Math.random() * 3;
+          
+          this.ctx.fillStyle = `hsl(${(i * 6 + this.time * 50) % 360}, 80%, 70%)`;
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, size, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      }
+    };
+    
+    // Auto-initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof LocalVisualizer !== 'undefined') {
+        LocalVisualizer.init();
+      }
+    });
+  </script>
 </body>
-</html>
+</html> 
