@@ -232,10 +232,10 @@ function drawShape(ctx, shape, x, y, radius, heightRatio = 1.0, rotation = 0) {
       break;
       
     case 'goal':
-      // Goal is drawn as a 2:1 rectangle
+      // Goal is drawn as a vertical rectangle (height:width = 2:1 ratio)
       ctx.beginPath();
-      const goalWidth = radius * 2; // 2:1 ratio
-      const goalHeight = radius;
+      const goalWidth = radius * 0.5; // Narrow width
+      const goalHeight = radius; // Full height
       ctx.rect(-goalWidth/2, -goalHeight/2, goalWidth, goalHeight);
       break;
       
@@ -795,7 +795,25 @@ function clearDrawingOnly() {
       ctx.rotate((a.rotation * Math.PI) / 180);
     }
     ctx.beginPath();
-    ctx.arc(0, 0, a.radius, 0, Math.PI * 2);
+    if (a.shape === 'goal') {
+      // Rectangular clipping for goals
+      const goalWidth = a.radius * 0.5; // 0.5:1 ratio
+      const goalHeight = a.radius;
+      
+      // Account for goal rotation - swap dimensions if rotated 90 degrees
+      let finalGoalWidth = goalWidth;
+      let finalGoalHeight = goalHeight;
+      if (a.rotation === 89 || a.rotation === 271 || a.rotation === 90 || a.rotation === 270) {
+        // If rotated 90 degrees, swap width and height
+        finalGoalWidth = goalHeight;
+        finalGoalHeight = goalWidth;
+      }
+      
+      ctx.rect(-finalGoalWidth/2, -finalGoalHeight/2, finalGoalWidth, finalGoalHeight);
+    } else {
+      // Circular clipping for other shapes
+      ctx.arc(0, 0, a.radius, 0, Math.PI * 2);
+    }
     ctx.clip();
 
     if (a.image) {
@@ -930,7 +948,15 @@ function clearDrawingOnly() {
       ctx.save();
       ctx.translate(a.x, a.y);
       ctx.beginPath();
-      ctx.arc(0, 0, a.radius + 3, 0, Math.PI * 2);
+              if (a.shape === 'goal') {
+          // Rectangular pause border for goals
+          const goalWidth = a.radius * 0.5; // 0.5:1 ratio
+          const goalHeight = a.radius;
+          ctx.rect(-goalWidth/2 - 3, -goalHeight/2 - 3, goalWidth + 6, goalHeight + 6);
+        } else {
+        // Circular pause border for other shapes
+        ctx.arc(0, 0, a.radius + 3, 0, Math.PI * 2);
+      }
       ctx.strokeStyle = "rgba(255, 255, 0, 0.5)";
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
@@ -943,7 +969,15 @@ function clearDrawingOnly() {
       ctx.save();
       ctx.translate(a.x, a.y);
       ctx.beginPath();
-      ctx.arc(0, 0, a.radius + 8, 0, Math.PI * 2);
+      if (a.shape === 'goal') {
+        // Rectangular drag border for goals
+        const goalWidth = a.radius * 0.5; // 0.5:1 ratio
+        const goalHeight = a.radius;
+        ctx.rect(-goalWidth/2 - 8, -goalHeight/2 - 8, goalWidth + 16, goalHeight + 16);
+      } else {
+        // Circular drag border for other shapes
+        ctx.arc(0, 0, a.radius + 8, 0, Math.PI * 2);
+      }
       ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
       ctx.lineWidth = 3;
       ctx.stroke();
@@ -1508,15 +1542,31 @@ function smoothLastLine() {
       ctx.shadowColor = glowColor;
       ctx.shadowBlur = 25;
       ctx.beginPath();
-      ctx.arc(0, 0, a.radius + 3, 0, Math.PI * 2);
-      ctx.strokeStyle = glowColor;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      
-      ctx.globalAlpha = 0.4;
-      ctx.shadowBlur = 15;
-      ctx.beginPath();
-      ctx.arc(0, 0, a.radius + 5, 0, Math.PI * 2);
+              if (a.shape === 'goal') {
+          // Rectangular glow for goals
+          const goalWidth = a.radius * 0.5; // 0.5:1 ratio
+          const goalHeight = a.radius;
+          ctx.rect(-goalWidth/2 - 3, -goalHeight/2 - 3, goalWidth + 6, goalHeight + 6);
+        } else {
+          // Circular glow for other shapes
+          ctx.arc(0, 0, a.radius + 3, 0, Math.PI * 2);
+        }
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.globalAlpha = 0.4;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        if (a.shape === 'goal') {
+          // Outer rectangular glow for goals
+          const goalWidth = a.radius * 0.5; // 0.5:1 ratio
+          const goalHeight = a.radius;
+          ctx.rect(-goalWidth/2 - 5, -goalHeight/2 - 5, goalWidth + 10, goalHeight + 10);
+        } else {
+          // Outer circular glow for other shapes
+          ctx.arc(0, 0, a.radius + 5, 0, Math.PI * 2);
+        }
       ctx.strokeStyle = glowColor;
       ctx.lineWidth = 1;
       ctx.stroke();
@@ -3348,13 +3398,23 @@ function draw() {
           const ballCenterY = a.y;
           const ballRadius = a.radius;
           
-          // Goal dimensions (2:1 ratio)
-          const goalWidth = goal.radius * 2;
+          // Goal dimensions (0.5:1 ratio)
+          const goalWidth = goal.radius * 0.5; // 0.5:1 ratio
           const goalHeight = goal.radius;
-          const goalLeft = goal.x - goalWidth/2;
-          const goalRight = goal.x + goalWidth/2;
-          const goalTop = goal.y - goalHeight/2;
-          const goalBottom = goal.y + goalHeight/2;
+          
+          // Account for goal rotation - swap dimensions if rotated 90 degrees
+          let finalGoalWidth = goalWidth;
+          let finalGoalHeight = goalHeight;
+          if (goal.rotation === 89 || goal.rotation === 271 || goal.rotation === 90 || goal.rotation === 270) {
+            // If rotated 90 degrees, swap width and height
+            finalGoalWidth = goalHeight;
+            finalGoalHeight = goalWidth;
+          }
+          
+          const goalLeft = goal.x - finalGoalWidth/2;
+          const goalRight = goal.x + finalGoalWidth/2;
+          const goalTop = goal.y - finalGoalHeight/2;
+          const goalBottom = goal.y + finalGoalHeight/2;
           
           // Check if ball collides with goal rectangle
           const closestX = Math.max(goalLeft, Math.min(ballCenterX, goalRight));
@@ -3407,13 +3467,23 @@ function draw() {
           const puckCenterY = a.y;
           const puckRadius = a.radius;
           
-          // Goal dimensions (2:1 ratio)
-          const goalWidth = goal.radius * 2;
+          // Goal dimensions (0.5:1 ratio)
+          const goalWidth = goal.radius * 0.5; // 0.5:1 ratio
           const goalHeight = goal.radius;
-          const goalLeft = goal.x - goalWidth/2;
-          const goalRight = goal.x + goalWidth/2;
-          const goalTop = goal.y - goalHeight/2;
-          const goalBottom = goal.y + goalHeight/2;
+          
+          // Account for goal rotation - swap dimensions if rotated 90 degrees
+          let finalGoalWidth = goalWidth;
+          let finalGoalHeight = goalHeight;
+          if (goal.rotation === 89 || goal.rotation === 271 || goal.rotation === 90 || goal.rotation === 270) {
+            // If rotated 90 degrees, swap width and height
+            finalGoalWidth = goalHeight;
+            finalGoalHeight = goalWidth;
+          }
+          
+          const goalLeft = goal.x - finalGoalWidth/2;
+          const goalRight = goal.x + finalGoalWidth/2;
+          const goalTop = goal.y - finalGoalHeight/2;
+          const goalBottom = goal.y + finalGoalHeight/2;
           
           // Check if puck collides with goal rectangle
           const closestX = Math.max(goalLeft, Math.min(puckCenterX, goalRight));
@@ -3629,7 +3699,26 @@ function draw() {
         ctx.strokeStyle = '#00FF00'; // Green border for capture mode
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(0, 0, a.radius * 1.5, 0, Math.PI * 2);
+        if (a.shape === 'goal') {
+          // Rectangular capture boundary for goals
+          const goalWidth = a.radius * 0.5; // 0.5:1 ratio
+          const goalHeight = a.radius;
+          
+          // Account for goal rotation - swap dimensions if rotated 90 degrees
+          let finalGoalWidth = goalWidth;
+          let finalGoalHeight = goalHeight;
+          if (a.rotation === 89 || a.rotation === 271 || a.rotation === 90 || a.rotation === 270) {
+            // If rotated 90 degrees, swap width and height
+            finalGoalWidth = goalHeight;
+            finalGoalHeight = goalWidth;
+          }
+          
+          ctx.rect(-finalGoalWidth/2 - a.radius * 0.5, -finalGoalHeight/2 - a.radius * 0.5, 
+                   finalGoalWidth + a.radius, finalGoalHeight + a.radius);
+        } else {
+          // Circular capture boundary for other shapes
+          ctx.arc(0, 0, a.radius * 1.5, 0, Math.PI * 2);
+        }
         ctx.stroke();
         
         // Draw a dashed line to show the capture boundary more clearly
@@ -3637,11 +3726,31 @@ function draw() {
         ctx.strokeStyle = '#00FF00';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(0, 0, a.radius * 1.5, 0, Math.PI * 2);
+        if (a.shape === 'goal') {
+          // Rectangular dashed capture boundary for goals
+          const goalWidth = a.radius * 0.5; // 0.5:1 ratio
+          const goalHeight = a.radius;
+          
+          // Account for goal rotation - swap dimensions if rotated 90 degrees
+          let finalGoalWidth = goalWidth;
+          let finalGoalHeight = goalHeight;
+          if (a.rotation === 89 || a.rotation === 271 || a.rotation === 90 || a.rotation === 270) {
+            // If rotated 90 degrees, swap width and height
+            finalGoalWidth = goalHeight;
+            finalGoalHeight = goalWidth;
+          }
+          
+          ctx.rect(-finalGoalWidth/2 - a.radius * 0.5, -finalGoalHeight/2 - a.radius * 0.5, 
+                   finalGoalWidth + a.radius, finalGoalHeight + a.radius);
+        } else {
+          // Circular dashed capture boundary for other shapes
+          ctx.arc(0, 0, a.radius * 1.5, 0, Math.PI * 2);
+        }
         ctx.stroke();
         ctx.restore();
       }
-      ctx.clip();
+      // Remove clipping that was creating invisible barriers
+      // ctx.clip(); // This was preventing collisions with Goals
 
     if (a.image) {
       const src = a.image;
@@ -3803,7 +3912,7 @@ function draw() {
       ctx.setLineDash([]);
       
       // Draw flashing border around goal rectangle
-      const goalWidth = a.radius * 2;
+      const goalWidth = a.radius * 0.5; // 0.5:1 ratio
       const goalHeight = a.radius;
       ctx.beginPath();
       ctx.rect(-goalWidth/2, -goalHeight/2, goalWidth, goalHeight);
@@ -3844,7 +3953,15 @@ function draw() {
       ctx.save();
       ctx.translate(a.x, a.y);
       ctx.beginPath();
-      ctx.arc(0, 0, a.radius + 8, 0, Math.PI * 2);
+      if (a.shape === 'goal') {
+        // Rectangular drag border for goals
+        const goalWidth = a.radius * 0.5; // 0.5:1 ratio
+        const goalHeight = a.radius;
+        ctx.rect(-goalWidth/2 - 8, -goalHeight/2 - 8, goalWidth + 16, goalHeight + 16);
+      } else {
+        // Circular drag border for other shapes
+        ctx.arc(0, 0, a.radius + 8, 0, Math.PI * 2);
+      }
       ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
       ctx.lineWidth = 3;
       ctx.stroke();

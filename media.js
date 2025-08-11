@@ -3093,12 +3093,12 @@ function startVideoControlsAutoHide() {
     clearTimeout(videoControlsTimeout);
   }
   
-  // Set new timeout to hide controls after 30 seconds
+  // Set new timeout to hide controls after 10 seconds
   videoControlsTimeout = setTimeout(() => {
     hideVideoControls();
-  }, 30000);
+  }, 10000);
   
-          logger.info('⏰ Video controls auto-hide timer started (30s)');
+          logger.info('⏰ Video controls auto-hide timer started (10s)');
 }
 
 function hideVideoControls() {
