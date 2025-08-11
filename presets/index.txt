@@ -1,0 +1,14 @@
+# ProjectM Preset Index
+# Add your .milk preset files to this folder and list them below
+# One filename per line (without the .milk extension)
+
+# Sample preset (included for demonstration):
+sample_preset.milk
+
+# Example presets (uncomment and rename to your actual files):
+# example1.milk
+# example2.milk
+# my_custom_preset.milk
+
+# Note: The system will automatically load all .milk files listed here
+# Make sure your .milk files are compatible with the WebGL renderer

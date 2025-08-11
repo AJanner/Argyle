@@ -98,6 +98,7 @@
         </div>
         
         <button onclick="loadDefaultPresets()">📁 Load Default Presets</button>
+        <button onclick="refreshPresets()">🔄 Refresh Presets</button>
         <button onclick="toggleAudio()">🎵 Toggle Audio</button>
         <button onclick="nextPreset()">⏭️ Next Preset</button>
         <button onclick="previousPreset()">⏮️ Previous Preset</button>
@@ -147,8 +148,104 @@
                 this.buffers = {};
                 this.webglSupported = false;
                 
+                // Preset management
+                this.presetFolder = 'presets/';
+                this.loadedPresets = new Map();
+                
                 this.init();
                 this.loadDefaultPresets();
+                this.autoLoadPresets();
+            }
+            
+            async autoLoadPresets() {
+                try {
+                    // Try to load presets from the presets folder
+                    await this.loadPresetsFromFolder();
+                } catch (error) {
+                    console.log('Could not auto-load presets from folder, using defaults');
+                }
+            }
+            
+            async loadPresetsFromFolder() {
+                // This function attempts to load presets from a presets folder
+                // It won't interfere with music/video playlists since it's separate
+                
+                try {
+                    // Try to fetch a preset list or index file
+                    const response = await fetch('presets/index.txt');
+                    if (response.ok) {
+                        const presetList = await response.text();
+                        const presetFiles = presetList.trim().split('\n').filter(line => line.trim() && !line.startsWith('#'));
+                        
+                        // Clear existing presets and reload
+                        this.presets = [];
+                        this.loadedPresets.clear();
+                        
+                        for (const presetFile of presetFiles) {
+                            if (presetFile.endsWith('.milk')) {
+                                await this.loadPresetFromFile(presetFile);
+                            }
+                        }
+                        
+                        console.log(`Refreshed and loaded ${this.presets.length} presets from presets folder`);
+                        
+                        // Update UI
+                        this.updatePresetList();
+                        this.updatePresetInfo();
+                    }
+                } catch (error) {
+                    // If we can't load from folder, that's okay - we'll use defaults
+                    console.log('Preset folder not accessible, using default presets');
+                    this.loadDefaultPresets();
+                }
+            }
+            
+            async loadPresetFromFile(filename) {
+                try {
+                    const response = await fetch(`presets/${filename}`);
+                    if (response.ok) {
+                        const content = await response.text();
+                        const preset = new ProjectMPreset(filename.replace('.milk', ''), 'milk', content);
+                        
+                        // Parse preset content for parameters
+                        preset.parameters = this.parseMilkPreset(content);
+                        
+                        this.presets.push(preset);
+                        this.loadedPresets.set(filename, preset);
+                        console.log(`Loaded preset: ${filename} with ${Object.keys(preset.parameters).length} parameters`);
+                        
+                        // Update the UI
+                        this.updatePresetList();
+                        this.updatePresetInfo();
+                    }
+                } catch (error) {
+                    console.warn(`Could not load preset: ${filename}`);
+                }
+            }
+            
+            parseMilkPreset(content) {
+                const parameters = {};
+                const lines = content.split('\n');
+                
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (trimmed && !trimmed.startsWith('#')) {
+                        const parts = trimmed.split(' ');
+                        if (parts.length >= 2) {
+                            const key = parts[0];
+                            const value = parts.slice(1).join(' ').replace(/"/g, '');
+                            
+                            // Try to parse numeric values
+                            if (!isNaN(value)) {
+                                parameters[key] = parseFloat(value);
+                            } else {
+                                parameters[key] = value;
+                            }
+                        }
+                    }
+                }
+                
+                return parameters;
             }
             
             init() {
@@ -450,11 +547,20 @@
                 
                 this.gl.useProgram(this.shaderPrograms.basic);
                 
-                // Create rotation matrix
-                const angle = this.time * 0.5;
+                // Use preset parameters if available
+                let rotationSpeed = 0.5;
+                let scale = 1.0;
+                
+                if (preset.parameters) {
+                    rotationSpeed = preset.parameters.WAVE_SPEED || 0.5;
+                    scale = preset.parameters.WAVE_SCALE || 1.0;
+                }
+                
+                // Create rotation matrix with preset speed
+                const angle = this.time * rotationSpeed;
                 const cos = Math.cos(angle);
                 const sin = Math.sin(angle);
-                const rotation = [cos, -sin, sin, cos];
+                const rotation = [cos * scale, -sin * scale, sin * scale, cos * scale];
                 this.gl.uniformMatrix2fv(this.uniforms.rotation, false, rotation);
                 
                 // Bind buffers and draw
@@ -604,6 +710,10 @@
         // Global functions for external control
         function loadDefaultPresets() {
             visualizer.loadDefaultPresets();
+        }
+        
+        function refreshPresets() {
+            visualizer.loadPresetsFromFolder();
         }
         
         function nextPreset() {
