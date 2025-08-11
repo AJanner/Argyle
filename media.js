@@ -168,6 +168,9 @@ function toggleMusicPanel() {
     // Highlight currently playing track if any
     highlightCurrentTrack();
     
+    // Update now playing info
+    updateNowPlayingInfo();
+    
     // Load PNG images for music control buttons
     setTimeout(() => {
       PNG_CONFIG.musicPanel.forEach(({ dataIcon, file }) => {
@@ -191,6 +194,44 @@ function closeMusicPanel() {
   const musicPanel = document.getElementById('musicPanel');
   if (musicPanel) {
     musicPanel.style.display = 'none';
+  }
+}
+
+function updateNowPlayingInfo() {
+  const nowPlayingInfo = document.getElementById('nowPlayingInfo');
+  if (!nowPlayingInfo) return;
+  
+  if (!window.currentAudio || !window.currentAudio.src) {
+    nowPlayingInfo.textContent = 'No track playing';
+    return;
+  }
+  
+  const src = window.currentAudio.src;
+  
+  // Check if it's a radio stream
+  if (src.includes('http') && (src.includes('stream') || src.includes('radio') || src.includes('live'))) {
+    // For radio streams, try to get metadata or show station info
+    if (window.currentRadioUrl) {
+      // Try to extract station name from URL
+      try {
+        const url = new URL(window.currentRadioUrl);
+        const hostname = url.hostname.replace('www.', '');
+        nowPlayingInfo.textContent = `📻 ${hostname}`;
+      } catch (e) {
+        nowPlayingInfo.textContent = '📻 Radio Stream';
+      }
+    } else {
+      nowPlayingInfo.textContent = '📻 Radio Stream';
+    }
+  } else {
+    // For local music files, show filename
+    try {
+      const filename = src.split('/').pop() || src.split('\\').pop() || 'Unknown Track';
+      const cleanName = filename.replace(/\.(mp3|wav|ogg|m4a)$/i, '');
+      nowPlayingInfo.textContent = `🎵 ${cleanName}`;
+    } catch (e) {
+      nowPlayingInfo.textContent = '🎵 Music Track';
+    }
   }
 }
 
@@ -407,6 +448,7 @@ function playMusic(filename, event) {
   }
 
   window.currentAudio = audio;
+  updateNowPlayingInfo();
 
   // Enhance music playback with better controls and monitoring
   const cleanupEnhancement = enhanceMusicPlayback(audio);
@@ -511,6 +553,9 @@ function stopMusic() {
       if (musicButton && typeof PNGLoader !== 'undefined') {
         PNGLoader.applyPNG(musicButton, 'music.png');
       }
+      
+      // Update now playing info
+      updateNowPlayingInfo();
     }
   } else {
     logger.audio("No music currently loaded");
@@ -522,6 +567,9 @@ function stopMusic() {
     if (musicButton && typeof PNGLoader !== 'undefined') {
       PNGLoader.applyPNG(musicButton, 'music.png');
     }
+    
+    // Update now playing info
+    updateNowPlayingInfo();
   }
 }
 
@@ -812,6 +860,7 @@ function playRadioStreamFromPlaylist(radioUrl, index) {
     });
     
     window.currentAudio = audio;
+    updateNowPlayingInfo();
     audio.play().then(() => {
       logger.audio('Radio station loaded and playing');
       const musicButton = document.querySelector('[data-icon="music"]');
@@ -853,6 +902,7 @@ function nextMusicTrack() {
     // Update highlighting after track change
     setTimeout(() => {
       highlightCurrentTrack();
+      updateNowPlayingInfo();
     }, 100);
   } else if (musicPlaylist.length > 0) {
     // Go to next track in regular playlist
@@ -863,6 +913,7 @@ function nextMusicTrack() {
     // Update highlighting after track change
     setTimeout(() => {
       highlightCurrentTrack();
+      updateNowPlayingInfo();
     }, 100);
   } else {
     // Check if there are music items in the DOM but not in the playlists
@@ -909,6 +960,7 @@ function previousMusicTrack() {
     // Update highlighting after track change
     setTimeout(() => {
       highlightCurrentTrack();
+      updateNowPlayingInfo();
     }, 100);
   } else if (musicPlaylist.length > 0) {
     // Go to previous track in regular playlist
@@ -919,6 +971,7 @@ function previousMusicTrack() {
     // Update highlighting after track change
     setTimeout(() => {
       highlightCurrentTrack();
+      updateNowPlayingInfo();
     }, 100);
   } else {
     // Check if there are music items in the DOM but not in the playlists
@@ -1157,6 +1210,7 @@ function confirmRadioInput() {
       });
       
       window.currentAudio = audio;
+      updateNowPlayingInfo();
       
       // Store current radio info for highlighting
       window.currentRadioUrl = radioUrl;
