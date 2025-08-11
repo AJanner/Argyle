@@ -98,7 +98,7 @@
 // Global variables
 let movementDelayActive = true;
 let backgroundRotation = 0;
-let speedMultiplier = 1;
+let speedMultiplier = 1.3;
 let previousSpeed = 1; // Store the previous speed for toggling
 let originalSpeed = 1; // Store the original speed before any pauses
 let showPauseBorder = false; // Track pause border state (renamed from showCheckeredBorder)
