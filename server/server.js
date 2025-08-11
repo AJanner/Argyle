@@ -3,7 +3,7 @@ const path = require('path');
 const { NewsSourceParser } = require('./fetchNews');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3005;
 
 // Middleware
 app.use(express.json());
