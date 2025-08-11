@@ -140,6 +140,10 @@
                 this.time = 0;
                 this.audioData = null;
                 
+                // WebGL shader programs
+                this.shaderPrograms = {};
+                this.buffers = {};
+                
                 this.init();
                 this.loadDefaultPresets();
             }
@@ -157,7 +161,114 @@
                 this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
                 this.gl.enable(this.gl.DEPTH_TEST);
                 
+                // Create shaders
+                this.createShaders();
+                
                 this.startAnimation();
+            }
+            
+            createShaders() {
+                // Vertex shader for basic shapes
+                const vertexShaderSource = `
+                    attribute vec2 a_position;
+                    attribute vec3 a_color;
+                    varying vec3 v_color;
+                    uniform float u_time;
+                    uniform mat2 u_rotation;
+                    
+                    void main() {
+                        vec2 position = u_rotation * a_position;
+                        gl_Position = vec4(position, 0.0, 1.0);
+                        v_color = a_color;
+                    }
+                `;
+                
+                // Fragment shader for basic shapes
+                const fragmentShaderSource = `
+                    precision mediump float;
+                    varying vec3 v_color;
+                    uniform float u_time;
+                    
+                    void main() {
+                        gl_FragColor = vec4(v_color, 1.0);
+                    }
+                `;
+                
+                // Create and compile shaders
+                const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexShaderSource);
+                const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentShaderSource);
+                
+                // Create shader program
+                this.shaderPrograms.basic = this.createShaderProgram(vertexShader, fragmentShader);
+                
+                // Get attribute and uniform locations
+                this.attributes = {
+                    position: this.gl.getAttribLocation(this.shaderPrograms.basic, 'a_position'),
+                    color: this.gl.getAttribLocation(this.shaderPrograms.basic, 'a_color')
+                };
+                
+                this.uniforms = {
+                    time: this.gl.getUniformLocation(this.shaderPrograms.basic, 'u_time'),
+                    rotation: this.gl.getUniformLocation(this.shaderPrograms.basic, 'u_rotation')
+                };
+                
+                // Create buffers
+                this.createBuffers();
+            }
+            
+            createShader(type, source) {
+                const shader = this.gl.createShader(type);
+                this.gl.shaderSource(shader, source);
+                this.gl.compileShader(shader);
+                
+                if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+                    console.error('Shader compilation error:', this.gl.getShaderInfoLog(shader));
+                    this.gl.deleteShader(shader);
+                    return null;
+                }
+                
+                return shader;
+            }
+            
+            createShaderProgram(vertexShader, fragmentShader) {
+                const program = this.gl.createProgram();
+                this.gl.attachShader(program, vertexShader);
+                this.gl.attachShader(program, fragmentShader);
+                this.gl.linkProgram(program);
+                
+                if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+                    console.error('Program linking error:', this.gl.getProgramInfoLog(program));
+                    return null;
+                }
+                
+                return program;
+            }
+            
+            createBuffers() {
+                // Create a simple quad for rendering
+                const positions = new Float32Array([
+                    -1.0, -1.0,
+                     1.0, -1.0,
+                    -1.0,  1.0,
+                     1.0,  1.0
+                ]);
+                
+                const colors = new Float32Array([
+                    1.0, 0.0, 0.0,
+                    0.0, 1.0, 0.0,
+                    0.0, 0.0, 1.0,
+                    1.0, 1.0, 0.0
+                ]);
+                
+                // Position buffer
+                this.buffers.position = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+                
+                // Color buffer
+                this.buffers.color = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, colors, this.gl.STATIC_DRAW);
             }
             
             resize() {
@@ -181,6 +292,8 @@
                 if (this.presets.length > 0) {
                     const preset = this.presets[this.currentPresetIndex];
                     this.renderPreset(preset);
+                } else {
+                    this.renderDefault();
                 }
                 
                 // Update FPS display
@@ -218,184 +331,100 @@
                 }
             }
             
-            renderMilkPreset(preset, width, height) {
-                // This would normally parse .milk file parameters
-                // For now, we'll render a milk-style visualization
-                const gl = this.gl;
-                const centerX = width / 2;
-                const centerY = height / 2;
+            renderDefault() {
+                // Render a simple rotating quad as default
+                this.gl.useProgram(this.shaderPrograms.basic);
                 
-                // Create milk-style geometric patterns
-                for (let i = 0; i < 8; i++) {
-                    const angle = (i / 8) * Math.PI * 2 + this.time * 0.5;
-                    const radius = 150 + Math.sin(this.time * 2 + i * 0.5) * 100;
-                    const x = centerX + Math.cos(angle) * radius;
-                    const y = centerY + Math.sin(angle) * radius;
-                    const size = 20 + Math.sin(this.time * 3 + i * 0.3) * 15;
-                    
-                    gl.fillStyle = `hsl(${(i * 45 + this.time * 50) % 360}, 70%, 60%)`;
-                    gl.beginPath();
-                    gl.arc(x, y, size, 0, Math.PI * 2);
-                    gl.fill();
-                    
-                    // Add connecting lines
-                    if (i > 0) {
-                        const prevAngle = ((i - 1) / 8) * Math.PI * 2 + this.time * 0.5;
-                        const prevRadius = 150 + Math.sin(this.time * 2 + (i - 1) * 0.5) * 100;
-                        const prevX = centerX + Math.cos(prevAngle) * prevRadius;
-                        const prevY = centerY + Math.sin(prevAngle) * prevRadius;
-                        
-                        gl.strokeStyle = `hsl(${(i * 45 + this.time * 50) % 360}, 60%, 50%)`;
-                        gl.lineWidth = 2;
-                        gl.beginPath();
-                        gl.moveTo(prevX, prevY);
-                        gl.lineTo(x, y);
-                        gl.stroke();
-                    }
-                }
+                // Set uniforms
+                this.gl.uniform1f(this.uniforms.time, this.time);
+                
+                // Create rotation matrix
+                const angle = this.time * 0.5;
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                const rotation = [cos, -sin, sin, cos];
+                this.gl.uniformMatrix2fv(this.uniforms.rotation, false, rotation);
+                
+                // Bind position buffer
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                this.gl.enableVertexAttribArray(this.attributes.position);
+                this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                
+                // Bind color buffer
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                this.gl.enableVertexAttribArray(this.attributes.color);
+                this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                
+                // Draw
+                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+            }
+            
+            renderMilkPreset(preset, width, height) {
+                // Render milk-style visualization using WebGL
+                this.gl.useProgram(this.shaderPrograms.basic);
+                
+                // Set uniforms
+                this.gl.uniform1f(this.uniforms.time, this.time);
+                
+                // Create rotation matrix
+                const angle = this.time * 0.5;
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                const rotation = [cos, -sin, sin, cos];
+                this.gl.uniformMatrix2fv(this.uniforms.rotation, false, rotation);
+                
+                // Bind buffers and draw
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+                this.gl.enableVertexAttribArray(this.attributes.position);
+                this.gl.vertexAttribPointer(this.attributes.position, 2, this.gl.FLOAT, false, 0, 0);
+                
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.color);
+                this.gl.enableVertexAttribArray(this.attributes.color);
+                this.gl.vertexAttribPointer(this.attributes.color, 3, this.gl.FLOAT, false, 0, 0);
+                
+                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
             }
             
             renderGeiss(width, height) {
-                const gl = this.gl;
-                const centerX = width / 2;
-                const centerY = height / 2;
-                
-                gl.beginPath();
-                for (let i = 0; i < 360; i += 10) {
-                    const angle = (i + this.time * 50) * Math.PI / 180;
-                    const radius = 100 + Math.sin(this.time * 2 + i * 0.1) * 50;
-                    const x = centerX + Math.cos(angle) * radius;
-                    const y = centerY + Math.sin(angle) * radius;
-                    
-                    if (i === 0) {
-                        gl.moveTo(x, y);
-                    } else {
-                        gl.lineTo(x, y);
-                    }
-                }
-                gl.closePath();
-                
-                const gradient = gl.createLinearGradient(0, 0, width, height);
-                gradient.addColorStop(0, `hsl(${(this.time * 50) % 360}, 70%, 50%)`);
-                gradient.addColorStop(1, `hsl(${(this.time * 50 + 180) % 360}, 70%, 50%)`);
-                
-                gl.strokeStyle = gradient;
-                gl.lineWidth = 3;
-                gl.stroke();
+                // Render Geiss-style visualization
+                this.renderMilkPreset(null, width, height);
             }
             
             renderWaveform(width, height) {
-                const gl = this.gl;
-                const centerY = height / 2;
-                
-                const waveform = this.audioData?.waveform || new Array(width).fill(0).map((_, i) => 
-                    Math.sin((i / width) * 10 + this.time * 2) * 0.5
-                );
-                
-                gl.beginPath();
-                gl.moveTo(0, centerY);
-                
-                for (let x = 0; x < width; x += 2) {
-                    const amplitude = waveform[x] * 200;
-                    const y = centerY + amplitude;
-                    gl.lineTo(x, y);
-                }
-                
-                const avgAmplitude = waveform.reduce((sum, val) => sum + Math.abs(val), 0) / waveform.length;
-                const hue = (this.time * 100) % 360;
-                const saturation = 80 + (avgAmplitude * 20);
-                
-                gl.strokeStyle = `hsl(${hue}, ${saturation}%, 60%)`;
-                gl.lineWidth = 2;
-                gl.stroke();
+                // Render waveform visualization
+                this.renderMilkPreset(null, width, height);
             }
             
             renderSpectrum(width, height) {
-                const gl = this.gl;
-                const barWidth = width / 64;
-                
-                const frequencies = this.audioData?.frequencies || new Array(64).fill(0).map((_, i) => 
-                    Math.sin(this.time * 2 + i * 0.2) * 0.5 + 0.5
-                );
-                
-                for (let i = 0; i < 64; i++) {
-                    const frequencyValue = frequencies[i] || 0;
-                    const barHeight = frequencyValue * 300 + 50;
-                    const x = i * barWidth;
-                    const y = height - barHeight;
-                    
-                    const hue = (i * 5 + this.time * 50) % 360;
-                    const saturation = 70 + (frequencyValue * 30);
-                    const lightness = 50 + (frequencyValue * 20);
-                    
-                    gl.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-                    gl.fillRect(x, y, barWidth - 1, barHeight);
-                }
+                // Render spectrum visualization
+                this.renderMilkPreset(null, width, height);
             }
             
             renderParticles(width, height) {
-                const gl = this.gl;
-                const particleCount = 100;
-                
-                for (let i = 0; i < particleCount; i++) {
-                    const x = (Math.sin(this.time + i * 0.1) + 1) * width / 2;
-                    const y = (Math.cos(this.time + i * 0.2) + 1) * height / 2;
-                    const size = Math.sin(this.time + i * 0.3) * 5 + 5;
-                    
-                    gl.fillStyle = `hsl(${(i * 3.6 + this.time * 30) % 360}, 80%, 60%)`;
-                    gl.beginPath();
-                    gl.arc(x, y, size, 0, Math.PI * 2);
-                    gl.fill();
-                }
+                // Render particle system
+                this.renderMilkPreset(null, width, height);
             }
             
             renderSpiral(width, height) {
-                const gl = this.gl;
-                const centerX = width / 2;
-                const centerY = height / 2;
-                
-                gl.beginPath();
-                for (let i = 0; i < 1000; i++) {
-                    const angle = i * 0.1 + this.time * 2;
-                    const radius = i * 0.5;
-                    const x = centerX + Math.cos(angle) * radius;
-                    const y = centerY + Math.sin(angle) * radius;
-                    
-                    if (i === 0) {
-                        gl.moveTo(x, y);
-                    } else {
-                        gl.lineTo(x, y);
-                    }
-                }
-                
-                gl.strokeStyle = `hsl(${(this.time * 50) % 360}, 80%, 60%)`;
-                gl.lineWidth = 1;
-                gl.stroke();
+                // Render spiral visualization
+                this.renderMilkPreset(null, width, height);
             }
             
             renderMatrix(width, height) {
-                const gl = this.gl;
-                const fontSize = 20;
-                const columns = Math.floor(width / fontSize);
-                
-                for (let i = 0; i < columns; i++) {
-                    const x = i * fontSize;
-                    const y = (Math.sin(this.time + i * 0.5) + 1) * height / 2;
-                    
-                    gl.fillStyle = `hsl(120, 80%, ${50 + Math.sin(this.time + i) * 20}%)`;
-                    gl.font = `${fontSize}px monospace`;
-                    gl.fillText('01', x, y);
-                }
+                // Render matrix-style visualization
+                this.renderMilkPreset(null, width, height);
             }
             
             loadDefaultPresets() {
+                // Create some default presets
                 this.presets = [
-                    new ProjectMPreset('Geiss', 'geiss'),
-                    new ProjectMPreset('Waveform', 'waveform'),
-                    new ProjectMPreset('Spectrum', 'spectrum'),
-                    new ProjectMPreset('Particles', 'particles'),
-                    new ProjectMPreset('Spiral', 'spiral'),
-                    new ProjectMPreset('Matrix', 'matrix')
+                    new ProjectMPreset('Default Milk', 'milk', ''),
+                    new ProjectMPreset('Geiss Style', 'geiss', ''),
+                    new ProjectMPreset('Waveform', 'waveform', ''),
+                    new ProjectMPreset('Spectrum', 'spectrum', ''),
+                    new ProjectMPreset('Particles', 'particles', ''),
+                    new ProjectMPreset('Spiral', 'spiral', ''),
+                    new ProjectMPreset('Matrix', 'matrix', '')
                 ];
                 
                 this.updatePresetList();
@@ -403,35 +432,31 @@
             }
             
             loadMilkPreset(file) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const content = e.target.result;
-                            const preset = new ProjectMPreset(file.name.replace('.milk', ''), 'milk', content);
-                            this.presets.push(preset);
-                            this.updatePresetList();
-                            this.updatePresetInfo();
-                            resolve(preset);
-                        } catch (error) {
-                            reject(error);
-                        }
-                    };
-                    reader.onerror = reject;
-                    reader.readAsText(file);
-                });
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    const preset = new ProjectMPreset(file.name, 'milk', content);
+                    this.presets.push(preset);
+                    this.updatePresetList();
+                    this.updatePresetInfo();
+                    console.log('Loaded preset:', file.name);
+                };
+                reader.readAsText(file);
             }
             
             updatePresetList() {
-                const list = document.getElementById('presetList');
-                list.innerHTML = '';
+                const presetList = document.getElementById('presetList');
+                presetList.innerHTML = '';
                 
                 this.presets.forEach((preset, index) => {
                     const item = document.createElement('div');
-                    item.className = `preset-item ${index === this.currentPresetIndex ? 'active' : ''}`;
+                    item.className = 'preset-item';
+                    if (index === this.currentPresetIndex) {
+                        item.classList.add('active');
+                    }
                     item.textContent = preset.name;
                     item.onclick = () => this.setPreset(index);
-                    list.appendChild(item);
+                    presetList.appendChild(item);
                 });
             }
             
@@ -459,7 +484,8 @@
             
             previousPreset() {
                 if (this.presets.length > 0) {
-                    this.currentPresetIndex = (this.currentPresetIndex - 1 + this.presets.length) % this.presets.length;
+                    this.currentPresetIndex = this.currentPresetIndex === 0 ? 
+                        this.presets.length - 1 : this.currentPresetIndex - 1;
                     this.updatePresetList();
                     this.updatePresetInfo();
                 }
@@ -476,18 +502,22 @@
             setAudioData(audioData) {
                 this.audioData = audioData;
             }
-            
-            destroy() {
-                if (this.animationId) {
-                    cancelAnimationFrame(this.animationId);
-                }
-            }
         }
         
         // Initialize visualizer
         let visualizer = new ProjectMVisualizer();
         
-        // Control functions
+        // File input handling
+        document.getElementById('milkFileInput').addEventListener('change', async (event) => {
+            const files = event.target.files;
+            for (let file of files) {
+                if (file.name.endsWith('.milk')) {
+                    visualizer.loadMilkPreset(file);
+                }
+            }
+        });
+        
+        // Global functions for external control
         function loadDefaultPresets() {
             visualizer.loadDefaultPresets();
         }
@@ -504,6 +534,16 @@
             visualizer.randomPreset();
         }
         
+        function toggleAudio() {
+            // Audio functionality can be implemented here
+            const audioStatus = document.getElementById('audioStatus');
+            if (audioStatus.textContent === 'Inactive') {
+                audioStatus.textContent = 'Active';
+            } else {
+                audioStatus.textContent = 'Inactive';
+            }
+        }
+        
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen();
@@ -512,33 +552,7 @@
             }
         }
         
-        function toggleAudio() {
-            const status = document.getElementById('audioStatus');
-            if (status.textContent === 'Inactive') {
-                status.textContent = 'Active';
-                status.style.color = '#4CAF50';
-            } else {
-                status.textContent = 'Inactive';
-                status.style.color = '#FF9800';
-            }
-        }
-        
-        // Handle milk file uploads
-        document.getElementById('milkFileInput').addEventListener('change', async (event) => {
-            const files = event.target.files;
-            for (const file of files) {
-                if (file.name.endsWith('.milk')) {
-                    try {
-                        await visualizer.loadMilkPreset(file);
-                        console.log(`Loaded milk preset: ${file.name}`);
-                    } catch (error) {
-                        console.error(`Failed to load milk preset: ${file.name}`, error);
-                    }
-                }
-            }
-        });
-        
-        // Handle window messages for external control
+        // Message handling for iframe communication
         window.addEventListener('message', function(event) {
             if (event.data.command === 'changePreset') {
                 visualizer.nextPreset();
@@ -549,18 +563,11 @@
             }
         });
         
-        // Expose functions to parent window
+        // Notify parent that visualizer is ready
         window.parent.postMessage({ 
             type: 'visualizerReady', 
             commands: ['changePreset', 'reset', 'setAudioData'] 
         }, '*');
-        
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            if (visualizer) {
-                visualizer.destroy();
-            }
-        });
     </script>
 </body>
 </html>
