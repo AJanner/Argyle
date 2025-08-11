@@ -915,19 +915,30 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
       console.log("✅ MindsEye initialization complete");
     });
   </script>
-  <!-- Module-based visualization system -->
+  <!-- Module-based visualization system - Load First -->
   <script type="module">
     import { initializeVisualizer } from './modules/index.js';
     
-    // Initialize the module system when DOM is ready
-    document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize the module system immediately
+    (async () => {
       try {
         await initializeVisualizer();
         console.log('✅ Module-based visualizer system ready');
+        
+        // Dispatch event to notify other systems that visualizer is ready
+        window.dispatchEvent(new CustomEvent('visualizerReady', {
+          detail: { visualizer: window.LocalVisualizer }
+        }));
+        
       } catch (error) {
         console.error('❌ Failed to initialize module system:', error);
+        
+        // Dispatch error event
+        window.dispatchEvent(new CustomEvent('visualizerError', {
+          detail: { error: error.message }
+        }));
       }
-    });
+    })();
   </script>
 </body>
 </html>

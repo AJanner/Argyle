@@ -128,6 +128,17 @@ let visualizerInterval = null;
 let isMusicPlaying = false;
 let currentVisualizerColors = [];
 
+// ===== VISUALIZER READY CHECK =====
+function waitForVisualizer(callback) {
+    if (typeof window.LocalVisualizer !== 'undefined') {
+        callback(window.LocalVisualizer);
+    } else {
+        window.addEventListener('visualizerReady', () => {
+            callback(window.LocalVisualizer);
+        }, { once: true });
+    }
+}
+
 // ===== UTILITY FUNCTIONS =====
 function formatTime(seconds) {
   if (isNaN(seconds)) return '00:00';
@@ -5431,7 +5442,16 @@ function startButterchurn() {
             isVisualizerRunning = true;
             logger.info('🎬 Local visualizer started');
         } else {
-            logger.error('Local visualizer not available');
+            // Wait for visualizer to be ready
+            logger.info('⏳ Waiting for visualizer to be ready...');
+            window.addEventListener('visualizerReady', () => {
+                logger.info('🎬 Visualizer ready, starting now...');
+                if (typeof window.LocalVisualizer !== 'undefined') {
+                    window.LocalVisualizer.start();
+                    isVisualizerRunning = true;
+                    logger.info('🎬 Local visualizer started');
+                }
+            }, { once: true });
         }
         
     } catch (error) {
