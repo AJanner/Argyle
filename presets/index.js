@@ -11,6 +11,7 @@ import { renderQuantumPlasmaStorm } from './effects/quantum-plasma-storm.js';
 import { renderSpirographOrbital } from './effects/spirograph-orbital.js';
 import { renderMilkLike } from './effects/milklike-elephant.js';
 import { renderImageCollage } from './effects/image-collage-visual.js';
+import { renderMatrixRain } from './effects/matrix-rain-visual.js';
 
 // Preset definitions
 export const presets = [
@@ -245,6 +246,13 @@ export const presets = [
     description: 'Professional VJ-style image collage with audio-reactive effects and transitions',
     category: 'Custom',
     custom: true
+  },
+  {
+    name: 'Matrix Digital Rain',
+    type: 'matrixRain',
+    description: 'Classic Matrix-style digital rain with audio-reactive speed, density, and glow effects',
+    category: 'Custom',
+    custom: true
   }
 ];
 
@@ -256,7 +264,8 @@ export const customEffects = {
   quantumPlasmaStorm: renderQuantumPlasmaStorm,
   spirographOrbital: renderSpirographOrbital,
   milkLike: renderMilkLike,
-  imageCollage: renderImageCollage
+  imageCollage: renderImageCollage,
+  matrixRain: renderMatrixRain
 };
 
 // Make customEffects available globally

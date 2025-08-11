@@ -26,7 +26,7 @@ const MATRIX = {
   actx: null,
   atlasScale: 1,
   glyphs: [],
-  rng: mulberry32(0xC0FFEE),
+  rng: matrixMulberry32(0xC0FFEE),
   lastW: 0, lastH: 0,
   lastTime: 0,
   // color palette
@@ -35,7 +35,7 @@ const MATRIX = {
   colHead: 'rgb(220, 255, 220)'
 };
 
-function mulberry32(a) {
+function matrixMulberry32(a) {
   return function() {
     let t = a += 0x6D2B79F5;
     t = Math.imul(t ^ t >>> 15, t | 1);
@@ -62,8 +62,25 @@ function buildAtlas(fontPx){
   const ch = Math.round(fontPx*1.2) + 6*scale;
   const w = cols*cw, h = rows*ch;
 
-  const off = new OffscreenCanvas(w, h);
-  const c = off.getContext('2d');
+  // Use OffscreenCanvas if available, fallback to regular canvas
+  let canvas;
+  try {
+    if (typeof OffscreenCanvas !== 'undefined') {
+      canvas = new OffscreenCanvas(w, h);
+    } else {
+      // Fallback for browsers without OffscreenCanvas support
+      canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+    }
+  } catch (e) {
+    // Ultimate fallback
+    canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+  }
+
+  const c = canvas.getContext('2d');
   c.clearRect(0,0,w,h);
   c.textAlign = 'center';
   c.textBaseline = 'middle';
@@ -86,7 +103,7 @@ function buildAtlas(fontPx){
     c.fillText(g, gx, gy);
   }
 
-  MATRIX.atlas = off;
+  MATRIX.atlas = canvas;
   MATRIX.actx = c;
   MATRIX.atlasScale = scale;
   MATRIX.colWidth = cw;
@@ -188,40 +205,93 @@ function drawRain(ctx, width, height){
 }
 
 export function renderMatrixRain(ctx, time, audioData, width, height){
-  // (Re)build atlas & grid when size or font step changes
-  const fontPx = Math.max(12, Math.round(height / 36)); // scale with height
-  const needAtlas = !MATRIX.atlas || MATRIX.rowHeight < fontPx*1.1 || MATRIX.rowHeight > fontPx*1.6;
-  const resized = (MATRIX.lastW !== width || MATRIX.lastH !== height);
+  try {
+    // (Re)build atlas & grid when size or font step changes
+    const fontPx = Math.max(12, Math.round(height / 36)); // scale with height
+    const needAtlas = !MATRIX.atlas || MATRIX.rowHeight < fontPx*1.1 || MATRIX.rowHeight > fontPx*1.6;
+    const resized = (MATRIX.lastW !== width || MATRIX.lastH !== height);
 
-  if (needAtlas){
-    buildAtlas(fontPx);
-    resetGrid(width, height);
-  } else if (resized){
-    resetGrid(width, height);
+    if (needAtlas){
+      buildAtlas(fontPx);
+      resetGrid(width, height);
+    } else if (resized){
+      resetGrid(width, height);
+    }
+
+    MATRIX.lastW = width; MATRIX.lastH = height;
+    if (!MATRIX.init){ MATRIX.init = true; MATRIX.lastTime = time; }
+
+    // Audio metrics
+    const vol = (audioData && (audioData.volume ?? 0))|0;
+    const bass = (audioData && (audioData.bass ?? 0))|0;
+    const mid  = (audioData && (audioData.mid  ?? 0))|0;
+    const treb = (audioData && (audioData.treble ?? 0))|0;
+    const e01 = Math.max(vol, bass, mid, treb) / 255;
+    const b01 = bass/255, m01 = mid/255, t01 = treb/255;
+
+    // Timing
+    const dt = Math.max(0.001, Math.min(0.05, time - MATRIX.lastTime));
+    MATRIX.lastTime = time;
+
+    // Reactivity: density + fades + occasional burst
+    MATRIX.fade = 0.06 + 0.10*(1-e01); // louder -> longer trails (smaller fade)
+    if (e01 > 0.8 && Math.random() < 0.03){
+      // burst: briefly increase lengths
+      for (let c of MATRIX.cols) c.len = Math.min(40, c.len + 2 + (Math.random()*6|0));
+    }
+
+    tickColumns(dt, e01, b01, m01, t01, height);
+    drawRain(ctx, width, height);
+  } catch (error) {
+    console.warn('⚠️ Matrix Rain render failed, using fallback:', error);
+    renderMatrixRainFallback(ctx, time, audioData, width, height);
   }
+}
 
-  MATRIX.lastW = width; MATRIX.lastH = height;
-  if (!MATRIX.init){ MATRIX.init = true; MATRIX.lastTime = time; }
-
-  // Audio metrics
-  const vol = (audioData && (audioData.volume ?? 0))|0;
-  const bass = (audioData && (audioData.bass ?? 0))|0;
-  const mid  = (audioData && (audioData.mid  ?? 0))|0;
-  const treb = (audioData && (audioData.treble ?? 0))|0;
-  const e01 = Math.max(vol, bass, mid, treb) / 255;
-  const b01 = bass/255, m01 = mid/255, t01 = treb/255;
-
-  // Timing
-  const dt = Math.max(0.001, Math.min(0.05, time - MATRIX.lastTime));
-  MATRIX.lastTime = time;
-
-  // Reactivity: density + fades + occasional burst
-  MATRIX.fade = 0.06 + 0.10*(1-e01); // louder -> longer trails (smaller fade)
-  if (e01 > 0.8 && Math.random() < 0.03){
-    // burst: briefly increase lengths
-    for (let c of MATRIX.cols) c.len = Math.min(40, c.len + 2 + (Math.random()*6|0));
+// 2D Canvas fallback for Matrix Rain
+function renderMatrixRainFallback(ctx, time, audioData, width, height) {
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const t = time * 0.001;
+  
+  // Clear with fade
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+  ctx.fillRect(0, 0, width, height);
+  
+  // Audio-reactive parameters
+  const volume = (audioData && audioData.volume) ? audioData.volume / 255 : 0.5;
+  const bass = (audioData && audioData.bass) ? audioData.bass / 255 : 0.5;
+  
+  // Draw Matrix-style digital rain
+  const cols = Math.floor(width / 20);
+  const speed = 2 + volume * 3;
+  const density = 0.3 + bass * 0.4;
+  
+  ctx.font = '16px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  
+  for (let i = 0; i < cols; i++) {
+    if (Math.random() > density) continue;
+    
+    const x = i * 20;
+    const y = (t * speed * 100 + i * 50) % (height + 100) - 50;
+    
+    // Trail effect
+    for (let j = 0; j < 8; j++) {
+      const alpha = (1 - j / 8) * 0.8;
+      const trailY = y - j * 20;
+      
+      if (trailY < -20 || trailY > height) continue;
+      
+      ctx.fillStyle = `rgba(0, 255, 140, ${alpha})`;
+      ctx.fillText('01', x, trailY);
+      
+      // Glow effect
+      ctx.shadowColor = 'rgba(0, 255, 140, 0.5)';
+      ctx.shadowBlur = 10;
+      ctx.fillText('01', x, trailY);
+      ctx.shadowBlur = 0;
+    }
   }
-
-  tickColumns(dt, e01, b01, m01, t01, height);
-  drawRain(ctx, width, height);
 }
