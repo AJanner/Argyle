@@ -960,7 +960,7 @@ button[data-png="bucheck"].has-png {
   position: fixed;
   top: 130px;
   left: 20px;
-  width: 450px;
+  width: 300px; /* Match video playlist width */
   background: rgba(34, 34, 34, 0.95);
   color: white;
   padding: 20px;
