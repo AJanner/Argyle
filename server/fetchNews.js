@@ -114,6 +114,9 @@ class NewsSourceParser {
                 case 'plymouth-herald-sports':
                     sources.push({ type: 'plymouth-herald-sports', url });
                     break;
+                case 'tweets-file':
+                    sources.push({ type: 'tweets-file', url });
+                    break;
                 case 'list':
                     const listPath = path.resolve(path.dirname(indexPath), url);
                     try {
@@ -537,6 +540,27 @@ class NewsSourceParser {
         }
     }
 
+    async loadTweetsFromFile(filePath) {
+        try {
+            const fullPath = path.resolve(process.cwd(), filePath);
+            const data = await fs.readFile(fullPath, 'utf8');
+            const tweets = JSON.parse(data);
+            
+            // Ensure we have an array of tweets
+            if (Array.isArray(tweets)) {
+                return tweets;
+            } else if (tweets.tweets && Array.isArray(tweets.tweets)) {
+                return tweets.tweets;
+            } else {
+                console.error('Invalid tweets file format');
+                return [];
+            }
+        } catch (error) {
+            console.error('Failed to load tweets from file:', error.message);
+            return [];
+        }
+    }
+
     async fetchHeadlines(sources, opts = {}) {
         const allHeadlines = [];
         const seenIds = new Set();
@@ -580,6 +604,15 @@ class NewsSourceParser {
                             item.url,
                             item.source,
                             item.ts
+                        ));
+                        break;
+                    case 'tweets-file':
+                        const rawTweets = await this.loadTweetsFromFile(source.url);
+                        headlines = rawTweets.map(item => new Headline(
+                            `${item.hashtag} @${item.username}: ${item.comment}`,
+                            `https://twitter.com/${item.username}`,
+                            'Twitter',
+                            Date.now()
                         ));
                         break;
                 }
