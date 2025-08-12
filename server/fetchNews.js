@@ -108,6 +108,9 @@ class NewsSourceParser {
                 case 'plymouth-argyle':
                     sources.push({ type: 'plymouth-argyle', url });
                     break;
+                case 'plymouth-herald':
+                    sources.push({ type: 'plymouth-herald', url });
+                    break;
                 case 'list':
                     const listPath = path.resolve(path.dirname(indexPath), url);
                     try {
@@ -313,6 +316,115 @@ class NewsSourceParser {
         }
     }
 
+    async scrapePlymouthHeraldNews() {
+        try {
+            const response = await axios.get('https://www.plymouthherald.co.uk/news/', {
+                timeout: 15000,
+                headers: {
+                    'User-Agent': USER_AGENT
+                }
+            });
+
+            const $ = cheerio.load(response.data);
+            const newsItems = [];
+            
+            // Look for news article links with better filtering
+            $('a[href*="/news/"]').each((index, element) => {
+                if (index < 100) { // Get more items to filter
+                    const $el = $(element);
+                    const href = $el.attr('href');
+                    const title = $el.text().trim();
+                    
+                    // Filter out navigation, ads, and non-news items
+                    if (href && title && 
+                        !title.includes('View all news') && 
+                        !title.includes('More news') &&
+                        !title.includes('Subscribe') &&
+                        !title.includes('Sign up') &&
+                        !title.includes('Advertise') &&
+                        !title.includes('Contact us') &&
+                        !title.includes('About us') &&
+                        !title.includes('Privacy Policy') &&
+                        !title.includes('Cookie Policy') &&
+                        !title.includes('Terms & Conditions') &&
+                        !title.includes('Latest News') &&
+                        !title.includes('Plymouth News') &&
+                        !title.includes('Celebs & TV') &&
+                        !title.includes('Devon News') &&
+                        !title.includes('Cornwall News') &&
+                        !title.includes('UK & World News') &&
+                        title.length > 10 && // Filter out very short titles
+                        href.includes('/news/') && // Ensure it's a news article
+                        !href.includes('/subscribe/') && // Exclude subscription pages
+                        !href.includes('/advertise/') && // Exclude advertising pages
+                        !href.includes('/contact/') && // Exclude contact pages
+                        !href.includes('/plymouth-news/') && // Exclude category pages
+                        !href.includes('/devon-news/') && // Exclude category pages
+                        !href.includes('/cornwall-news/') && // Exclude category pages
+                        !href.includes('/celebs-tv/') && // Exclude category pages
+                        !href.includes('/uk-world-news/') // Exclude category pages
+                    ) {
+                        const fullUrl = href.startsWith('http') ? href : `https://www.plymouthherald.co.uk${href}`;
+                        newsItems.push({
+                            title: title,
+                            url: fullUrl,
+                            source: 'www.plymouthherald.co.uk',
+                            ts: Date.now()
+                        });
+                    }
+                }
+            });
+
+            // If we didn't find enough news items, try alternative selectors
+            if (newsItems.length < 8) {
+                $('h2, h3, h4, .news-title, .article-title, .headline, .title, .card__title').each((index, element) => {
+                    if (newsItems.length < 8) {
+                        const $el = $(element);
+                        const title = $el.text().trim();
+                        const parent = $el.closest('a');
+                        
+                        if (title && parent.length > 0 && title.length > 10) {
+                            const href = parent.attr('href');
+                            if (href && href.includes('/news/') && 
+                                !title.includes('Subscribe') &&
+                                !title.includes('Sign up') &&
+                                !title.includes('Advertise')) {
+                                const fullUrl = href.startsWith('http') ? href : `https://www.plymouthherald.co.uk${href}`;
+                                newsItems.push({
+                                    title: title,
+                                    url: fullUrl,
+                                    source: 'www.plymouthherald.co.uk',
+                                    ts: Date.now()
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Filter out duplicates and return top 3
+            const uniqueItems = [];
+            const seenTitles = new Set();
+            const seenUrls = new Set();
+            
+            for (const item of newsItems) {
+                const normalizedTitle = item.title.toLowerCase().replace(/\s+/g, ' ').trim();
+                const normalizedUrl = item.url.split('?')[0]; // Remove query parameters
+                
+                if (!seenTitles.has(normalizedTitle) && !seenUrls.has(normalizedUrl)) {
+                    seenTitles.add(normalizedTitle);
+                    seenUrls.add(normalizedUrl);
+                    uniqueItems.push(item);
+                }
+            }
+
+            return uniqueItems.slice(0, 8); // Ensure we only return 8 items
+        } catch (error) {
+            console.error('Failed to scrape Plymouth Herald news:', error.message);
+            return [];
+        }
+    }
+
     async fetchHeadlines(sources, opts = {}) {
         const allHeadlines = [];
         const seenIds = new Set();
@@ -334,6 +446,15 @@ class NewsSourceParser {
                     case 'plymouth-argyle':
                         const rawHeadlines = await this.scrapePlymouthArgyleNews();
                         headlines = rawHeadlines.map(item => new Headline(
+                            item.title,
+                            item.url,
+                            item.source,
+                            item.ts
+                        ));
+                        break;
+                    case 'plymouth-herald':
+                        const rawHeraldHeadlines = await this.scrapePlymouthHeraldNews();
+                        headlines = rawHeraldHeadlines.map(item => new Headline(
                             item.title,
                             item.url,
                             item.source,

@@ -1,24 +1,45 @@
 [
   {
-    "title": "Ars Technica",
-    "url": "https://arstechnica.com/",
-    "source": "arstechnica.com",
-    "ts": 1754960472886,
-    "id": "31e0abdd7fd351b67994316e6142aa3732087e39"
-  },
-  {
     "title": "Breaking: Release v1.0 is live",
     "url": "https://example.com/blog/v1",
     "source": "manual",
-    "ts": 1754960472886,
+    "ts": 1754961155732,
     "id": "d63f98d1c252d223ff69e8e19d69eb6ed6016d5f"
+  },
+  {
+    "title": "Ars Technica",
+    "url": "https://arstechnica.com/",
+    "source": "arstechnica.com",
+    "ts": 1754961155731,
+    "id": "31e0abdd7fd351b67994316e6142aa3732087e39"
   },
   {
     "title": "TechCrunch | Startup and Technology News",
     "url": "https://techcrunch.com/",
     "source": "techcrunch.com",
-    "ts": 1754960471110,
+    "ts": 1754961153749,
     "id": "54a52f42923695097803548617423cd2230cb587"
+  },
+  {
+    "title": "Bloomberg UK",
+    "url": "https://www.bloomberg.com/uk",
+    "source": "www.bloomberg.com",
+    "ts": 1754961153526,
+    "id": "4751ff980ff180aa1d4f8e12730314f9f9837ac4"
+  },
+  {
+    "title": "Explosion at Pennsylvania steel plant leaves one dead and 10 injured",
+    "url": "https://www.bbc.com/news/articles/ckgjj49neldo?at_medium=RSS&at_campaign=rss",
+    "source": "feeds.bbci.co.uk",
+    "ts": 1754960842000,
+    "id": "8e2b2d8bd536e8890cbb1a67479768c8400ef2a9"
+  },
+  {
+    "title": "US and China extend tariff truce deadline to November",
+    "url": "https://www.bbc.com/news/articles/cg7jjkvzmkxo?at_medium=RSS&at_campaign=rss",
+    "source": "feeds.bbci.co.uk",
+    "ts": 1754960393000,
+    "id": "12c5c9f4a2d9cad1afa6a3e7b546bb3b007391fd"
   },
   {
     "title": "Trump picks conservative economist to lead jobs data agency",
@@ -131,13 +152,6 @@
     "source": "feeds.bbci.co.uk",
     "ts": 1754946497000,
     "id": "c6a2afa031d5a4d2d701719405709ec7d174a982"
-  },
-  {
-    "title": "US Steel plant explosion in Pennsylvania leaves one dead and 10 injured",
-    "url": "https://www.bbc.com/news/articles/ckgjj49neldo?at_medium=RSS&at_campaign=rss",
-    "source": "feeds.bbci.co.uk",
-    "ts": 1754946030000,
-    "id": "ec929f82aaeb12aba427eebde160bcf07d389c07"
   },
   {
     "title": "Zelensky could still attend Trump-Putin meeting, but rest of Europe is shut out",
@@ -439,13 +453,6 @@
     "source": "www.engadget.com",
     "ts": 1754915722000,
     "id": "4b4ea8e9a8528de686c48f4c9837c747f6356300"
-  },
-  {
-    "title": "EasyJet pilot suspended after 'drunk and naked' incident",
-    "url": "https://www.bbc.com/news/articles/c80dd15378eo?at_medium=RSS&at_campaign=rss",
-    "source": "feeds.bbci.co.uk",
-    "ts": 1754913828000,
-    "id": "4ec7426904b8e52fb9d53767506d3574a7e8996f"
   },
   {
     "title": "NVIDIA may give US government a cut of its profits to sell AI chips to China",
