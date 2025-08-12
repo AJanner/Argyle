@@ -6,6 +6,8 @@ headline "Plymouth Harbour: Cruise Ship Season Begins" https://www.plymouth.gov.
 
 # Local News Feeds
 feed https://www.plymouthherald.co.uk/news/rss.xml
+feed https://www.plymouthherald.co.uk/news/plymouth-news/rss.xml
+feed https://www.plymouthherald.co.uk/news/devon-news/rss.xml
 feed https://www.plymouth.gov.uk/news/rss.xml
 site https://www.plymouthlive.co.uk
 site https://www.bbc.co.uk/news/england/devon
