@@ -68,6 +68,11 @@
     box-shadow: 0 4px 12px rgba(143, 224, 74, 0.4);
 }
 
+.news-service-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(143, 224, 74, 0.3);
+}
+
 .news-service-button.active {
     background: linear-gradient(135deg, #8FE04A 0%, #7dd03a 100%);
     color: #000;
@@ -76,18 +81,18 @@
 
 .news-service-dropdown {
     position: absolute;
-    top: 100%;
+    bottom: 100%;
     left: 0;
     background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
     border: 2px solid #8FE04A;
     border-radius: 6px;
     padding: 8px 0;
-    margin-top: 5px;
+    margin-bottom: 5px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
     min-width: 120px;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-10px);
+    transform: translateY(10px);
     transition: all 0.2s ease;
     z-index: 999999;
 }

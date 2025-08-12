@@ -107,10 +107,14 @@ class NewsTicker {
         const dropdown = this.container.querySelector('#news-service-dropdown');
         const options = this.container.querySelectorAll('.news-service-option');
 
+        console.log('Setting up service selector:', { serviceBtn, dropdown, options });
+
         // Toggle dropdown
         serviceBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            console.log('Service button clicked, toggling dropdown');
             dropdown.classList.toggle('show');
+            console.log('Dropdown show class:', dropdown.classList.contains('show'));
         });
 
         // Handle option selection
@@ -118,6 +122,7 @@ class NewsTicker {
             option.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const service = option.dataset.service;
+                console.log('Service option clicked:', service);
                 this.selectService(service);
                 dropdown.classList.remove('show');
             });
