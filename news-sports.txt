@@ -1,8 +1,8 @@
 # Sports News Sources
 # Plymouth Argyle Headlines (Priority)
-headline "Plymouth Argyle: Home Park Stadium Expansion Plans Announced" https://www.pafc.co.uk/news/2024/stadium-expansion
-headline "Plymouth Argyle: New Signing Expected This Week - Manager Confirms" https://www.pafc.co.uk/news/2024/new-signing
-headline "Plymouth Argyle: Match Report - Greens Secure Vital Three Points" https://www.pafc.co.uk/news/2024/match-report
+headline "Fans' Guide | Queens Park Rangers (H)" https://www.pafc.co.uk/news/fans-guide-queens-park-rangers-cc2526
+headline "rch Fire Systems become sleeve sponsor for QPR game" https://www.pafc.co.uk/news/arch-fire-systems-become-sleeve-sponsor-qpr-game
+headline "Report | Bolton Wanderers 2-0 Argyle" https://www.pafc.co.uk/news/report-bolton-wanderers-2-0-argyle
 
 # General Sports Feeds
 feed https://www.bbc.co.uk/sport/rss.xml

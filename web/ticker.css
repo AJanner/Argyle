@@ -42,8 +42,8 @@
     background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
     border: none;
     color: #8FE04A;
-    padding: 6px 16px;
-    border-radius: 4px;
+    padding: 0 16px;
+    border-radius: 0;
     font-family: 'Courier New', monospace;
     font-size: 12px;
     font-weight: bold;
@@ -51,8 +51,8 @@
     transition: all 0.2s ease;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    height: 28px;
-    line-height: 16px;
+    height: 100%;
+    line-height: 36px;
     white-space: nowrap;
     min-width: 80px;
     text-align: center;
@@ -104,6 +104,13 @@
     height: 100%;
     overflow: hidden;
     padding-right: 100px; /* Make space for the button on the right */
+    transition: opacity 0.3s ease;
+}
+
+/* Hidden state styling */
+.news-ticker-content.hidden {
+    opacity: 0;
+    pointer-events: none;
 }
 
 .news-ticker-track {

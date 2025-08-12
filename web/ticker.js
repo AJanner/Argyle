@@ -117,10 +117,23 @@ class NewsTicker {
         this.currentServiceIndex = 0; // Start with Sports
         this.currentService = 'sports';
 
-        // Handle button click to cycle through services
+        // Handle button click to cycle through services or show ticker if hidden
         serviceBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            this.cycleToNextService();
+            
+            // If ticker is hidden (showing 📤), show it back
+            if (this.container.querySelector('.news-ticker-content').classList.contains('hidden')) {
+                this.toggleTickerVisibility();
+            } else {
+                // Otherwise cycle through services
+                this.cycleToNextService();
+            }
+        });
+
+        // Double click hides/shows the ticker content (but keeps button visible)
+        serviceBtn.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            this.toggleTickerVisibility();
         });
     }
 
@@ -285,6 +298,34 @@ class NewsTicker {
     resume() {
         this.isPaused = false;
         this.container.classList.remove('paused');
+    }
+
+    toggleTickerVisibility() {
+        const tickerContent = this.container.querySelector('.news-ticker-content');
+        const tickerContainer = this.container.querySelector('.news-ticker-container');
+        const serviceBtn = this.container.querySelector('#news-service-btn');
+        const isHidden = tickerContent.classList.contains('hidden');
+        
+        if (isHidden) {
+            // Show ticker content and background
+            tickerContent.classList.remove('hidden');
+            tickerContainer.style.background = '';
+            tickerContainer.style.border = '';
+            // Restore original button text and styling
+            const currentService = this.serviceCycle[this.currentServiceIndex];
+            serviceBtn.textContent = currentService.label;
+            serviceBtn.style.border = '';
+            console.log('News ticker content shown');
+        } else {
+            // Hide ticker content and background but keep button visible
+            tickerContent.classList.add('hidden');
+            tickerContainer.style.background = 'transparent';
+            tickerContainer.style.border = 'none';
+            // Show indicator that ticker is hidden and restore button border
+            serviceBtn.textContent = '📤';
+            serviceBtn.style.border = '2px solid #8FE04A';
+            console.log('News ticker content hidden');
+        }
     }
 
     destroy() {
