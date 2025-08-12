@@ -111,6 +111,9 @@ class NewsSourceParser {
                 case 'plymouth-herald':
                     sources.push({ type: 'plymouth-herald', url });
                     break;
+                case 'plymouth-herald-sports':
+                    sources.push({ type: 'plymouth-herald-sports', url });
+                    break;
                 case 'list':
                     const listPath = path.resolve(path.dirname(indexPath), url);
                     try {
@@ -425,6 +428,115 @@ class NewsSourceParser {
         }
     }
 
+    async scrapePlymouthHeraldSports() {
+        try {
+            const response = await axios.get('https://www.plymouthherald.co.uk/sport/football/', {
+                timeout: 15000,
+                headers: {
+                    'User-Agent': USER_AGENT
+                }
+            });
+
+            const $ = cheerio.load(response.data);
+            const sportsItems = [];
+            
+            // Look for football article links with better filtering
+            $('a[href*="/sport/"]').each((index, element) => {
+                if (index < 50) { // Get more items to filter
+                    const $el = $(element);
+                    const href = $el.attr('href');
+                    const title = $el.text().trim();
+                    
+                    // Filter out navigation, ads, and non-sports items
+                    if (href && title && 
+                        !title.includes('View all sport') && 
+                        !title.includes('More sport') &&
+                        !title.includes('Subscribe') &&
+                        !title.includes('Sign up') &&
+                        !title.includes('Advertise') &&
+                        !title.includes('Contact us') &&
+                        !title.includes('About us') &&
+                        !title.includes('Privacy Policy') &&
+                        !title.includes('Cookie Policy') &&
+                        !title.includes('Terms & Conditions') &&
+                        !title.includes('Latest Sport') &&
+                        !title.includes('UK Sports News') &&
+                        !title.includes('Sport Opinion') &&
+                        !title.includes('Football') &&
+                        !title.includes('Rugby') &&
+                        !title.includes('Cricket') &&
+                        !title.includes('Athletics') &&
+                        title.length > 10 && // Filter out very short titles
+                        href.includes('/sport/') && // Ensure it's a sport article
+                        !href.includes('/subscribe/') && // Exclude subscription pages
+                        !href.includes('/advertise/') && // Exclude advertising pages
+                        !href.includes('/contact/') && // Exclude contact pages
+                        !href.includes('/sport/football/') && // Exclude category pages
+                        !href.includes('/sport/rugby/') && // Exclude category pages
+                        !href.includes('/sport/cricket/') && // Exclude category pages
+                        !href.includes('/sport/athletics/') // Exclude category pages
+                    ) {
+                        const fullUrl = href.startsWith('http') ? href : `https://www.plymouthherald.co.uk${href}`;
+                        sportsItems.push({
+                            title: title,
+                            url: fullUrl,
+                            source: 'www.plymouthherald.co.uk',
+                            ts: Date.now()
+                        });
+                    }
+                }
+            });
+
+            // If we didn't find enough sports items, try alternative selectors
+            if (sportsItems.length < 3) {
+                $('h2, h3, h4, .sport-title, .article-title, .headline, .title, .card__title').each((index, element) => {
+                    if (sportsItems.length < 3) {
+                        const $el = $(element);
+                        const title = $el.text().trim();
+                        const parent = $el.closest('a');
+                        
+                        if (title && parent.length > 0 && title.length > 10) {
+                            const href = parent.attr('href');
+                            if (href && href.includes('/sport/') && 
+                                !title.includes('Subscribe') &&
+                                !title.includes('Sign up') &&
+                                !title.includes('Advertise')) {
+                                const fullUrl = href.startsWith('http') ? href : `https://www.plymouthherald.co.uk${href}`;
+                                sportsItems.push({
+                                    title: title,
+                                    url: fullUrl,
+                                    source: 'www.plymouthherald.co.uk',
+                                    ts: Date.now()
+                        });
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Filter out duplicates and return top 3
+            const uniqueItems = [];
+            const seenTitles = new Set();
+            const seenUrls = new Set();
+            
+            for (const item of sportsItems) {
+                const normalizedTitle = item.title.toLowerCase().replace(/\s+/g, ' ').trim();
+                const normalizedUrl = item.url.split('?')[0]; // Remove query parameters
+                
+                if (!seenTitles.has(normalizedTitle) && !seenUrls.has(normalizedUrl)) {
+                    seenTitles.add(normalizedTitle);
+                    seenUrls.add(normalizedUrl);
+                    uniqueItems.push(item);
+                }
+            }
+
+            return uniqueItems.slice(0, 3); // Ensure we only return 3 items
+        } catch (error) {
+            console.error('Failed to scrape Plymouth Herald sports:', error.message);
+            return [];
+        }
+    }
+
     async fetchHeadlines(sources, opts = {}) {
         const allHeadlines = [];
         const seenIds = new Set();
@@ -455,6 +567,15 @@ class NewsSourceParser {
                     case 'plymouth-herald':
                         const rawHeraldHeadlines = await this.scrapePlymouthHeraldNews();
                         headlines = rawHeraldHeadlines.map(item => new Headline(
+                            item.title,
+                            item.url,
+                            item.source,
+                            item.ts
+                        ));
+                        break;
+                    case 'plymouth-herald-sports':
+                        const rawHeraldSportsHeadlines = await this.scrapePlymouthHeraldSports();
+                        headlines = rawHeraldSportsHeadlines.map(item => new Headline(
                             item.title,
                             item.url,
                             item.source,
