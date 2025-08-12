@@ -6,11 +6,11 @@
       "rateLimit": 300000
     },
     "techcrunch.com": {
-      "lastFetch": 1754955125124,
+      "lastFetch": 1754960471048,
       "rateLimit": 300000
     },
     "arstechnica.com": {
-      "lastFetch": 1754955127032,
+      "lastFetch": 1754960472840,
       "rateLimit": 300000
     }
   },

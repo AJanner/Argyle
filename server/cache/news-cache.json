@@ -3,29 +3,36 @@
     "title": "Ars Technica",
     "url": "https://arstechnica.com/",
     "source": "arstechnica.com",
-    "ts": 1754955127072,
+    "ts": 1754960472886,
     "id": "31e0abdd7fd351b67994316e6142aa3732087e39"
   },
   {
     "title": "Breaking: Release v1.0 is live",
     "url": "https://example.com/blog/v1",
     "source": "manual",
-    "ts": 1754955127072,
+    "ts": 1754960472886,
     "id": "d63f98d1c252d223ff69e8e19d69eb6ed6016d5f"
   },
   {
     "title": "TechCrunch | Startup and Technology News",
     "url": "https://techcrunch.com/",
     "source": "techcrunch.com",
-    "ts": 1754955125179,
+    "ts": 1754960471110,
     "id": "54a52f42923695097803548617423cd2230cb587"
   },
   {
-    "title": "Bloomberg UK",
-    "url": "https://www.bloomberg.com/uk",
-    "source": "www.bloomberg.com",
-    "ts": 1754955124902,
-    "id": "4751ff980ff180aa1d4f8e12730314f9f9837ac4"
+    "title": "Trump picks conservative economist to lead jobs data agency",
+    "url": "https://www.bbc.com/news/articles/c93ddrp17zko?at_medium=RSS&at_campaign=rss",
+    "source": "feeds.bbci.co.uk",
+    "ts": 1754959836000,
+    "id": "7610bad6fdf7be8fdef686fbcaa3ff394cc4d7d0"
+  },
+  {
+    "title": "Hot weather to peak amid water shortage fears",
+    "url": "https://www.bbc.com/news/articles/czerrzdewzxo?at_medium=RSS&at_campaign=rss",
+    "source": "feeds.bbci.co.uk",
+    "ts": 1754957716000,
+    "id": "1b96dce366c10297a310ce60c6cd20bfe29a8533"
   },
   {
     "title": "iPhone 17 release is rumored for September: Everything you need to know about the 'thinnest iPhone ever' and the Apple fall event",
@@ -371,13 +378,6 @@
     "id": "753937be0a9ab78a427a081a91bd3837c05c47b3"
   },
   {
-    "title": "Councillor was rabble rousing crowd, court hears",
-    "url": "https://www.bbc.com/news/articles/cj6yyw13w4jo?at_medium=RSS&at_campaign=rss",
-    "source": "feeds.bbci.co.uk",
-    "ts": 1754923565000,
-    "id": "3b84e62ad7238a42a41094dcb544030c65a2eaa7"
-  },
-  {
     "title": "Sony Bravia Theater Bar 6 review: Great sound, greater frustration",
     "url": "https://www.engadget.com/home/home-theater/sony-bravia-theater-bar-6-review-great-sound-greater-frustration-144512450.html?src=rss",
     "source": "www.engadget.com",
@@ -441,11 +441,11 @@
     "id": "4b4ea8e9a8528de686c48f4c9837c747f6356300"
   },
   {
-    "title": "EasyJet pilot suspended after being seen 'drunk and naked'",
+    "title": "EasyJet pilot suspended after 'drunk and naked' incident",
     "url": "https://www.bbc.com/news/articles/c80dd15378eo?at_medium=RSS&at_campaign=rss",
     "source": "feeds.bbci.co.uk",
     "ts": 1754913828000,
-    "id": "b4379086f30aaf5d66ca2258d4bc761c1aa5c6c3"
+    "id": "4ec7426904b8e52fb9d53767506d3574a7e8996f"
   },
   {
     "title": "NVIDIA may give US government a cut of its profits to sell AI chips to China",
@@ -453,13 +453,6 @@
     "source": "www.engadget.com",
     "ts": 1754913603000,
     "id": "503eed953ec238a6434e196fb46dfea94bc6cdc3"
-  },
-  {
-    "title": "Amber health alerts as heatwave temperatures set to hit 34C",
-    "url": "https://www.bbc.com/weather/articles/cz60081dpyxo?at_medium=RSS&at_campaign=rss",
-    "source": "feeds.bbci.co.uk",
-    "ts": 1754906551000,
-    "id": "559f3a1c59205848996ecddc4d3624df645d1138"
   },
   {
     "title": "British man who perished in Antarctic glacier found 65 years later",

@@ -1,8 +1,6 @@
 # Sports News Sources
-# Plymouth Argyle Headlines (Priority)
-headline "Fans' Guide | Queens Park Rangers (H)" https://www.pafc.co.uk/news/fans-guide-queens-park-rangers-cc2526
-headline "rch Fire Systems become sleeve sponsor for QPR game" https://www.pafc.co.uk/news/arch-fire-systems-become-sleeve-sponsor-qpr-game
-headline "Report | Bolton Wanderers 2-0 Argyle" https://www.pafc.co.uk/news/report-bolton-wanderers-2-0-argyle
+# Plymouth Argyle News (Auto-scraped from website)
+plymouth-argyle https://www.pafc.co.uk/news
 
 # General Sports Feeds
 feed https://www.bbc.co.uk/sport/rss.xml

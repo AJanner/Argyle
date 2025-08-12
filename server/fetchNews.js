@@ -105,6 +105,9 @@ class NewsSourceParser {
                         sources.push({ type: 'headline', title, url: headlineUrl });
                     }
                     break;
+                case 'plymouth-argyle':
+                    sources.push({ type: 'plymouth-argyle', url });
+                    break;
                 case 'list':
                     const listPath = path.resolve(path.dirname(indexPath), url);
                     try {
@@ -216,6 +219,100 @@ class NewsSourceParser {
         }
     }
 
+        async scrapePlymouthArgyleNews() {
+        try {
+            const response = await axios.get('https://www.pafc.co.uk/news', {
+                timeout: 15000,
+                headers: {
+                    'User-Agent': USER_AGENT
+                }
+            });
+
+            const $ = cheerio.load(response.data);
+            const newsItems = [];
+            
+            // Look for news article links with better filtering
+            $('a[href*="/news/"]').each((index, element) => {
+                if (index < 20) { // Get more items to filter
+                    const $el = $(element);
+                    const href = $el.attr('href');
+                    const title = $el.text().trim();
+                    
+                    // Filter out navigation, FAQ, and non-news items
+                    if (href && title && 
+                        !title.includes('View all news') && 
+                        !title.includes('More news') &&
+                        !title.includes('Help and FAQs') &&
+                        !title.includes('Travel Club') &&
+                        !title.includes('Hospitality') &&
+                        !title.includes('Argyle TV') &&
+                        !title.includes('Seasonal') &&
+                        !title.includes('Miles Away') &&
+                        !title.includes('Latest News') &&
+                        !title.includes('homeparkstadium.com') &&
+                        title.length > 10 && // Filter out very short titles
+                        href.includes('/news/') && // Ensure it's a news article
+                        !href.includes('/argyle-tv/') && // Exclude TV section
+                        !href.includes('/travel/') && // Exclude travel section
+                        !href.includes('/hospitality/') && // Exclude hospitality section
+                        !href.includes('homeparkstadium.com') // Exclude external links
+                    ) {
+                        const fullUrl = href.startsWith('http') ? href : `https://www.pafc.co.uk${href}`;
+                        newsItems.push({
+                            title: title,
+                            url: fullUrl,
+                            source: 'www.pafc.co.uk',
+                            ts: Date.now()
+                        });
+                    }
+                }
+            });
+
+            // If we didn't find enough news items, try alternative selectors
+            if (newsItems.length < 3) {
+                $('h2, h3, h4, .news-title, .article-title, .headline, .title').each((index, element) => {
+                    if (newsItems.length < 3) {
+                        const $el = $(element);
+                        const title = $el.text().trim();
+                        const parent = $el.closest('a');
+                        
+                        if (title && parent.length > 0 && title.length > 10) {
+                            const href = parent.attr('href');
+                            if (href && href.includes('/news/') && 
+                                !title.includes('Help and FAQs') &&
+                                !title.includes('Travel Club') &&
+                                !title.includes('Hospitality')) {
+                                const fullUrl = href.startsWith('http') ? href : `https://www.pafc.co.uk${href}`;
+                                newsItems.push({
+                                    title: title,
+                                    url: fullUrl,
+                                    source: 'www.pafc.co.uk',
+                                    ts: Date.now()
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Filter out duplicates and return top 3
+            const uniqueItems = [];
+            const seenTitles = new Set();
+            
+            for (const item of newsItems) {
+                if (!seenTitles.has(item.title.toLowerCase())) {
+                    seenTitles.add(item.title.toLowerCase());
+                    uniqueItems.push(item);
+                }
+            }
+
+            return uniqueItems.slice(0, 3); // Ensure we only return 3 items
+        } catch (error) {
+            console.error('Failed to scrape Plymouth Argyle news:', error.message);
+            return [];
+        }
+    }
+
     async fetchHeadlines(sources, opts = {}) {
         const allHeadlines = [];
         const seenIds = new Set();
@@ -233,6 +330,15 @@ class NewsSourceParser {
                         break;
                     case 'headline':
                         headlines = [new Headline(source.title, source.url, 'manual')];
+                        break;
+                    case 'plymouth-argyle':
+                        const rawHeadlines = await this.scrapePlymouthArgyleNews();
+                        headlines = rawHeadlines.map(item => new Headline(
+                            item.title,
+                            item.url,
+                            item.source,
+                            item.ts
+                        ));
                         break;
                 }
 
