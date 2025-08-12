@@ -132,7 +132,7 @@
 .news-ticker-item {
     display: inline-flex;
     align-items: center;
-    margin-right: 48px;
+    margin-right: 15px;
     padding: 0 8px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 4px;
@@ -167,10 +167,11 @@
 }
 
 .news-title {
-    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-family: 'Trebuchet MS', 'Trebuchet', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif;
     color: #ffffff;
     margin-right: 12px;
     max-width: 300px;
+    Font-size:16px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

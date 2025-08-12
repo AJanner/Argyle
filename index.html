@@ -919,12 +919,26 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
   <link rel="stylesheet" href="web/ticker.css">
   <div id="news-ticker"></div>
   
-  <!-- Module-based visualization system - Load First -->
+  <!-- Load presets first -->
+  <script type="module" src="./presets/index.js"></script>
+  
+  <!-- Module-based visualization system - Load Second -->
   <script type="module">
     import { initializeVisualizer } from './modules/index.js';
     
-    // Initialize the module system immediately
-    (async () => {
+    // Wait for presets to be loaded
+    const waitForPresets = () => {
+      if (window.globalPresets) {
+        console.log('✅ Presets loaded, initializing visualizer...');
+        initializeVisualizerSystem();
+      } else {
+        console.log('⏳ Waiting for presets to load...');
+        setTimeout(waitForPresets, 100);
+      }
+    };
+    
+    // Initialize the module system after presets are loaded
+    const initializeVisualizerSystem = async () => {
       try {
         await initializeVisualizer();
         console.log('✅ Module-based visualizer system ready');
@@ -942,7 +956,10 @@ window.uploadMusicPlaylist = uploadMusicPlaylist;
           detail: { error: error.message }
         }));
       }
-    })();
+    };
+    
+    // Start waiting for presets
+    waitForPresets();
   </script>
   
   <!-- News Ticker Script -->

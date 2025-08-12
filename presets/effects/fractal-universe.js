@@ -4,14 +4,20 @@
  */
 
 export function renderFractalUniverse(canvas, ctx, audioData, time) {
+    // Safety checks
+    if (!canvas || !ctx) {
+        console.warn('Fractal Universe: Missing canvas or context');
+        return;
+    }
+    
     const { width, height } = canvas;
     const centerX = width / 2;
     const centerY = height / 2;
     
-    // Audio reactivity
-    const bass = audioData.bass || 0;
-    const treble = audioData.treble || 0;
-    const overall = audioData.overall || 0;
+    // Audio reactivity with fallbacks
+    const bass = (audioData && audioData.bass) || 0;
+    const treble = (audioData && audioData.treble) || 0;
+    const overall = (audioData && audioData.overall) || 0;
     
     // Clear canvas with space background
     const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height));
@@ -108,13 +114,13 @@ function drawCosmicParticles(ctx, width, height, time, overall) {
     for (let i = 0; i < numParticles; i++) {
         const x = (Math.sin(time * 0.01 + i * 0.1) + 1) * width * 0.5;
         const y = (Math.cos(time * 0.015 + i * 0.15) + 1) * height * 0.5;
-        const size = 1 + Math.sin(time * 0.1 + i) * 2;
-        const alpha = 0.3 + Math.sin(time * 0.2 + i * 0.5) * 0.3;
+        const size = Math.max(0.5, 1 + Math.sin(time * 0.1 + i) * 2); // Ensure positive size
+        const alpha = Math.max(0.1, Math.min(1, 0.3 + Math.sin(time * 0.2 + i * 0.5) * 0.3)); // Clamp alpha
         const color = getParticleColor(i, time);
         
         // Particle glow
         ctx.shadowColor = color;
-        ctx.shadowBlur = size * 2;
+        ctx.shadowBlur = Math.max(0, size * 2);
         
         // Particle
         ctx.fillStyle = color.replace(')', `, ${alpha})`);

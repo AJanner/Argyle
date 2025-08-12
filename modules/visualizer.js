@@ -83,12 +83,27 @@ class LocalVisualizer {
   // Load local preset definitions
   async loadLocalPresets() {
     try {
-      // Try to import and load custom presets
+      console.log('🔍 Attempting to load custom presets...');
+      
+      // First try to get presets from global object
+      if (typeof window !== 'undefined' && window.globalPresets) {
+        this.presets = window.globalPresets;
+        console.log(`✅ Loaded ${this.presets.length} presets from global object (including ${this.presets.filter(p => p.custom).length} custom)`);
+        console.log('📋 Preset names:', this.presets.map(p => p.name));
+        return;
+      }
+      
+      // Fallback: Try to import and load custom presets
+      console.log('📦 Global presets not found, trying dynamic import...');
       const customPresets = await import('../presets/index.js');
+      console.log('📦 Import result:', customPresets);
+      
       if (customPresets && customPresets.presets) {
         this.presets = customPresets.presets;
-        console.log(`✅ Loaded ${this.presets.length} presets (including ${customPresets.presets.filter(p => p.custom).length} custom)`);
+        console.log(`✅ Loaded ${this.presets.length} presets from import (including ${customPresets.presets.filter(p => p.custom).length} custom)`);
+        console.log('📋 Preset names:', this.presets.map(p => p.name));
       } else {
+        console.warn('⚠️ No presets found in customPresets, using built-in');
         // Fallback to built-in presets
         this.loadBuiltInPresets();
       }

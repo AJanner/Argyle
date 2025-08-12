@@ -317,6 +317,9 @@ export const customEffects = {
 if (typeof window !== 'undefined') {
   window.customEffects = customEffects;
   
+  // Make presets available globally
+  window.globalPresets = presets;
+  
   // Make effect count functions available globally
   window.effectCounts = {
     total: getTotalEffectsCount(),
@@ -328,6 +331,13 @@ if (typeof window !== 'undefined') {
   window.getTotalEffectsCount = getTotalEffectsCount;
   window.getCustomEffectsCount = getCustomEffectsCount;
   window.getBuiltInEffectsCount = getBuiltInEffectsCount;
+  
+  console.log('🌍 Global presets loaded:', {
+    total: presets.length,
+    custom: presets.filter(p => p.custom).length,
+    builtIn: presets.filter(p => !p.custom).length,
+    names: presets.map(p => p.name)
+  });
 }
 
 // Get presets by category
