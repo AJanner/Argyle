@@ -93,11 +93,9 @@ function attachEffects(visualizer) {
   visualizer.renderQuantumWaves = (width, height) => Effects.renderQuantumWaves(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
   visualizer.renderStellarNebula = (width, height) => Effects.renderStellarNebula(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
   visualizer.renderDigitalVortex = (width, height) => Effects.renderDigitalVortex(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
-  visualizer.renderHolographic = (width, height) => Effects.renderHolographic(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
-  visualizer.renderNeuralNetwork = (width, height) => Effects.renderNeuralNetwork(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
-  visualizer.renderFractalUniverse = (width, height) => Effects.renderFractalUniverse(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
-  visualizer.renderSolarFlare = (width, height) => Effects.renderSolarFlare(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
-  visualizer.renderAuroraBorealis = (width, height) => Effects.renderAuroraBorealis(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
+  // Note: Holographic is now a custom effect and will be attached by the attachCustomEffects function below
+  // Note: NeuralNetwork, FractalUniverse, SolarFlare, and AuroraBorealis are now custom effects
+  // and will be attached by the attachCustomEffects function below
   visualizer.renderMagneticField = (width, height) => Effects.renderMagneticField(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
   visualizer.renderTemporalRift = (width, height) => Effects.renderTemporalRift(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
   visualizer.renderGravityWell = (width, height) => Effects.renderGravityWell(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
@@ -109,20 +107,35 @@ function attachEffects(visualizer) {
   
   // Attach custom effects from presets
   const attachCustomEffects = () => {
-    if (typeof window.customEffects !== 'undefined') {
+    console.log('🔍 Checking for custom effects...', {
+      customEffects: typeof window.customEffects,
+      customEffectsValue: window.customEffects
+    });
+    
+    if (typeof window.customEffects !== 'undefined' && window.customEffects) {
+      console.log('📦 Found custom effects:', Object.keys(window.customEffects));
       Object.entries(window.customEffects).forEach(([type, renderFunc]) => {
         const methodName = `render${type.charAt(0).toUpperCase() + type.slice(1)}`;
-        visualizer[methodName] = (width, height) => renderFunc(visualizer.ctx, visualizer.time, visualizer.audioData, width, height);
+        visualizer[methodName] = (width, height) => {
+          console.log(`🎨 Rendering custom effect: ${methodName}`, {
+            canvas: visualizer.canvas,
+            ctx: visualizer.ctx,
+            audioData: visualizer.audioData,
+            time: visualizer.time * 0.001
+          });
+          return renderFunc(visualizer.canvas, visualizer.ctx, visualizer.audioData, visualizer.time * 0.001);
+        };
         console.log(`✅ Custom effect attached: ${methodName}`);
       });
     } else {
+      console.log('⏳ Custom effects not yet available, retrying in 100ms...');
       // Wait for customEffects to be available
       setTimeout(attachCustomEffects, 100);
     }
   };
   
-  // Start attaching custom effects
-  attachCustomEffects();
+  // Start attaching custom effects with a delay to ensure presets are loaded
+  setTimeout(attachCustomEffects, 200);
   
   console.log('✅ All effects attached to visualizer');
 }

@@ -4,14 +4,25 @@
  */
 
 export function renderAuroraBorealis(canvas, ctx, audioData, time) {
+    // Safety checks
+    if (!canvas || !ctx) {
+        console.warn('Aurora Borealis: Missing canvas or context');
+        return;
+    }
+    
+    if (!ctx.createRadialGradient) {
+        console.warn('Aurora Borealis: Context does not support createRadialGradient');
+        return;
+    }
+    
     const { width, height } = canvas;
     const centerX = width / 2;
     const centerY = height / 2;
     
-    // Audio reactivity
-    const bass = audioData.bass || 0;
-    const treble = audioData.treble || 0;
-    const overall = audioData.overall || 0;
+    // Audio reactivity with fallbacks
+    const bass = (audioData && audioData.bass) || 0;
+    const treble = (audioData && audioData.treble) || 0;
+    const overall = (audioData && audioData.overall) || 0;
     
     // Clear canvas with gradient background
     const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height));

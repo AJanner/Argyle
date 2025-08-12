@@ -314,7 +314,10 @@ class LocalVisualizer {
       const treble = this.calculateTreble(frequencyData);
       const volume = this.calculateVolume(timeData);
       
-      this.audioData = { bass, mid, treble, volume };
+      // Calculate overall intensity (average of all frequencies)
+      const overall = (bass + mid + treble) / 3;
+      
+      this.audioData = { bass, mid, treble, volume, overall };
       
       // Make audio data globally available
       window.globalAudioData = this.audioData;
@@ -331,7 +334,7 @@ class LocalVisualizer {
     for (let i = 0; i < bassRange; i++) {
       sum += frequencyData[i];
     }
-    return sum / bassRange;
+    return (sum / bassRange) / 255; // Normalize to 0-1
   }
 
   // Calculate mid frequencies (60-250Hz)
@@ -342,7 +345,7 @@ class LocalVisualizer {
     for (let i = start; i < end; i++) {
       sum += frequencyData[i];
     }
-    return sum / (end - start);
+    return (sum / (end - start)) / 255; // Normalize to 0-1
   }
 
   // Calculate treble frequencies (250Hz+)
@@ -352,7 +355,7 @@ class LocalVisualizer {
     for (let i = start; i < frequencyData.length; i++) {
       sum += frequencyData[i];
     }
-    return sum / (frequencyData.length - start);
+    return (sum / (frequencyData.length - start)) / 255; // Normalize to 0-1
   }
 
   // Calculate overall volume
@@ -361,7 +364,7 @@ class LocalVisualizer {
     for (let i = 0; i < timeData.length; i++) {
       sum += Math.abs(timeData[i] - 128);
     }
-    return sum / timeData.length;
+    return (sum / timeData.length) / 128; // Normalize to 0-1
   }
 
   // Safety functions for radius and size
