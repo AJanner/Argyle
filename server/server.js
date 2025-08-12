@@ -79,10 +79,11 @@ app.get('/api/health', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 News ticker server running on port ${PORT}`);
     console.log(`📰 News API: http://localhost:${PORT}/api/news`);
     console.log(`🌐 Web interface: http://localhost:${PORT}/`);
+    console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
 });
 
 module.exports = app;
