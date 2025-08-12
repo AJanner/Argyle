@@ -12,6 +12,11 @@ import { renderSpirographOrbital } from './effects/spirograph-orbital.js';
 import { renderMilkLike } from './effects/milklike-elephant.js';
 import { renderImageCollage } from './effects/image-collage-visual.js';
 import { renderMatrixRain } from './effects/matrix-rain-visual.js';
+import { renderAuroraBorealis } from './effects/aurora-borealis.js';
+import { renderNeuralNetwork } from './effects/neural-network.js';
+import { renderFractalUniverse } from './effects/fractal-universe.js';
+import { renderHolographicDisplay } from './effects/holographic-display.js';
+import { renderSolarFlare } from './effects/solar-flare.js';
 
 // Preset definitions
 export const presets = [
@@ -253,6 +258,41 @@ export const presets = [
     description: 'Classic Matrix-style digital rain with audio-reactive speed, density, and glow effects',
     category: 'Custom',
     custom: true
+  },
+  {
+    name: 'Aurora Borealis',
+    type: 'auroraBorealis',
+    description: 'Beautiful flowing aurora ribbons with audio-reactive colors and movement',
+    category: 'Custom',
+    custom: true
+  },
+  {
+    name: 'Neural Network',
+    type: 'neuralNetwork',
+    description: 'Dynamic neural network with animated connections and data flow',
+    category: 'Custom',
+    custom: true
+  },
+  {
+    name: 'Fractal Universe',
+    type: 'fractalUniverse',
+    description: 'Infinite fractal patterns with audio-reactive zoom and cosmic particles',
+    category: 'Custom',
+    custom: true
+  },
+  {
+    name: 'Holographic Display',
+    type: 'holographicDisplay',
+    description: 'Futuristic 3D holographic projections with scan lines and glitch effects',
+    category: 'Custom',
+    custom: true
+  },
+  {
+    name: 'Solar Flare',
+    type: 'solarFlare',
+    description: 'Intense solar flare with explosive energy and plasma streams',
+    category: 'Custom',
+    custom: true
   }
 ];
 
@@ -265,7 +305,12 @@ export const customEffects = {
   spirographOrbital: renderSpirographOrbital,
   milkLike: renderMilkLike,
   imageCollage: renderImageCollage,
-  matrixRain: renderMatrixRain
+  matrixRain: renderMatrixRain,
+  auroraBorealis: renderAuroraBorealis,
+  neuralNetwork: renderNeuralNetwork,
+  fractalUniverse: renderFractalUniverse,
+  holographicDisplay: renderHolographicDisplay,
+  solarFlare: renderSolarFlare
 };
 
 // Make customEffects available globally
@@ -291,4 +336,19 @@ export function getCustomPresets() {
 // Get built-in presets
 export function getBuiltInPresets() {
   return presets.filter(preset => !preset.custom);
+}
+
+// Get total count of all effects
+export function getTotalEffectsCount() {
+  return presets.length;
+}
+
+// Get total count of custom effects
+export function getCustomEffectsCount() {
+  return presets.filter(preset => preset.custom).length;
+}
+
+// Get total count of built-in effects
+export function getBuiltInEffectsCount() {
+  return presets.filter(preset => !preset.custom).length;
 }
