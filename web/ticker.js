@@ -108,15 +108,15 @@ class NewsTicker {
 
         // Define the cycling order
         this.serviceCycle = [
-            { service: 'tweets', label: 'Tweets', emoji: '🐦' },
             { service: 'sports', label: 'Sports', emoji: '⚽' },
             { service: 'local', label: 'Local', emoji: '🏠' },
             { service: 'news', label: 'News', emoji: '📰' },
-            { service: 'weather', label: 'Weather', emoji: '🌤️' }
+            { service: 'weather', label: 'Weather', emoji: '🌤️' },
+            { service: 'tweets', label: 'Tweets', emoji: '🐦' }
         ];
         
-        this.currentServiceIndex = 0; // Start with Tweets
-        this.currentService = 'tweets';
+        this.currentServiceIndex = 0; // Start with Sports
+        this.currentService = 'sports';
 
         // Handle button click to cycle through services or show ticker if hidden
         serviceBtn.addEventListener('click', (e) => {
