@@ -1,4 +1,10 @@
 # Plymouth Local News Sources
+# Manual Local Headlines (Priority)
+headline "Plymouth City Centre: New Shopping Development Approved" https://www.plymouth.gov.uk/news/2024/shopping-development
+headline "Plymouth University: New Research Facility Opens" https://www.plymouth.ac.uk/news/2024/research-facility
+headline "Plymouth Harbour: Cruise Ship Season Begins" https://www.plymouth.gov.uk/news/2024/cruise-season
+
+# Local News Feeds
 feed https://www.plymouthherald.co.uk/news/rss.xml
 feed https://www.plymouth.gov.uk/news/rss.xml
 site https://www.plymouthlive.co.uk

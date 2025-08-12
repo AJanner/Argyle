@@ -1,6 +1,11 @@
 # Weather News Sources
+# Manual Weather Headlines (Priority)
+headline "Plymouth Weather: Sunny Spells Expected This Week" https://www.metoffice.gov.uk/weather/forecast/gcqt9b1te
+headline "Devon Weather Alert: Heavy Rain Warning Issued" https://www.bbc.co.uk/weather/2649808
+headline "South West Weather: Coastal Fog Expected Tomorrow" https://www.metoffice.gov.uk/weather/forecast/gcqt9b1te
+
+# Weather Feeds
 feed https://www.bbc.co.uk/weather/rss/forecast/2649808.xml
-feed https://www.metoffice.gov.uk/public/weather/forecast/gcqt9b1te
 site https://www.accuweather.com/en/gb/plymouth/pl1-1/weather-forecast/328328
 site https://www.weather.com
 headline "Weather Updates" https://example.com/weather

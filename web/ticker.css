@@ -31,103 +31,71 @@
 .news-service-selector {
     position: absolute;
     top: 0;
-    left: 0;
-    z-index: 99999;
+    right: 0;
     height: 100%;
+    z-index: 99999;
+    background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+    border-left: 2px solid #8FE04A;
 }
 
 .news-service-button {
     background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
     border: none;
-    border-right: 2px solid #8FE04A;
     color: #8FE04A;
-    padding: 0 16px;
-    height: 100%;
-    border-radius: 0;
+    padding: 6px 16px;
+    border-radius: 4px;
     font-family: 'Courier New', monospace;
     font-size: 12px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: none;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    /* Force visibility and layering */
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    transform: translateZ(0);
-    will-change: transform;
-    line-height: 36px;
+    height: 28px;
+    line-height: 16px;
+    white-space: nowrap;
+    min-width: 80px;
+    text-align: center;
 }
 
-.news-service-button:hover {
-    background: linear-gradient(135deg, #8FE04A 0%, #7dd03a 100%);
-    color: #000;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(143, 224, 74, 0.4);
-}
+
 
 .news-service-button:active {
     transform: translateY(0);
     box-shadow: 0 2px 8px rgba(143, 224, 74, 0.3);
 }
 
-.news-service-button.active {
+.news-service-option-btn {
+    background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+    border: 2px solid #8FE04A;
+    color: #8FE04A;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    min-width: 60px;
+    text-align: center;
+    height: 28px;
+    line-height: 20px;
+}
+
+.news-service-option-btn:hover {
+    background: linear-gradient(135deg, #8FE04A 0%, #7dd03a 100%);
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(143, 224, 74, 0.4);
+}
+
+.news-service-option-btn.active {
     background: linear-gradient(135deg, #8FE04A 0%, #7dd03a 100%);
     color: #000;
     box-shadow: 0 0 15px rgba(143, 224, 74, 0.6);
-}
-
-.news-service-dropdown {
-    position: absolute;
-    bottom: 100%;
-    left: 0;
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    border: 2px solid #8FE04A;
-    border-radius: 6px;
-    padding: 8px 0;
-    margin-bottom: 5px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
-    min-width: 120px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.2s ease;
-    z-index: 999999;
-}
-
-.news-service-dropdown.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.news-service-option {
-    padding: 8px 16px;
-    color: #ffffff;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 12px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid rgba(143, 224, 74, 0.2);
-}
-
-.news-service-option:last-child {
-    border-bottom: none;
-}
-
-.news-service-option:hover {
-    background: rgba(143, 224, 74, 0.2);
-    color: #8FE04A;
-}
-
-.news-service-option.active {
-    background: rgba(143, 224, 74, 0.3);
-    color: #8FE04A;
-    border-left: 3px solid #8FE04A;
 }
 
 .news-ticker-content {
@@ -135,6 +103,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    padding-right: 100px; /* Make space for the button on the right */
 }
 
 .news-ticker-track {
@@ -198,6 +167,14 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+.news-title-link {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.2s ease;
+}
+
+
 
 .news-time {
     color: #888;
@@ -325,15 +302,16 @@
         font-size: 10px;
     }
     
-    .news-service-selector {
-        top: 0;
-        left: 0;
+    .news-ticker-content {
+        padding-right: 80px; /* Smaller padding for mobile */
     }
     
     .news-service-button {
-        padding: 0 12px;
-        font-size: 11px;
-        line-height: 32px;
+        padding: 4px 12px;
+        font-size: 10px;
+        min-width: 70px;
+        height: 24px;
+        line-height: 16px;
     }
     
     .news-service-dropdown {

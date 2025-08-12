@@ -65,23 +65,22 @@ class NewsTicker {
         // Create ticker structure
         this.container.innerHTML = `
             <div class="news-ticker-container">
-                <div class="news-service-selector">
-                    <button class="news-service-button" id="news-service-btn">News</button>
-                    <div class="news-service-dropdown" id="news-service-dropdown">
-                        <div class="news-service-option active" data-service="news">📰 News</div>
-                        <div class="news-service-option" data-service="local">🏠 Local</div>
-                        <div class="news-service-option" data-service="sports">⚽ Sports</div>
-                        <div class="news-service-option" data-service="weather">🌤️ Weather</div>
-                    </div>
-                </div>
                 <div class="news-ticker-content">
                     <div class="news-ticker-track">
                         <div class="news-ticker-list"></div>
                     </div>
                 </div>
+                <div class="news-service-selector">
+                    <button class="news-service-button" id="news-service-btn">Sports</button>
+                </div>
                 <div class="news-ticker-offline" style="display: none;">📡 Offline</div>
             </div>
         `;
+
+        console.log('Ticker HTML created, checking elements...');
+        console.log('Service options container:', this.container.querySelector('.news-service-options'));
+        console.log('Service option buttons:', this.container.querySelectorAll('.news-service-option-btn'));
+        console.log('Main service button:', this.container.querySelector('#news-service-btn'));
 
         this.ticker = this.container.querySelector('.news-ticker-track');
         this.tickerList = this.container.querySelector('.news-ticker-list');
@@ -104,62 +103,44 @@ class NewsTicker {
 
     setupServiceSelector() {
         const serviceBtn = this.container.querySelector('#news-service-btn');
-        const dropdown = this.container.querySelector('#news-service-dropdown');
-        const options = this.container.querySelectorAll('.news-service-option');
+        
+        console.log('Setting up service selector:', { serviceBtn });
 
-        console.log('Setting up service selector:', { serviceBtn, dropdown, options });
+        // Define the cycling order
+        this.serviceCycle = [
+            { service: 'sports', label: 'Sports', emoji: '⚽' },
+            { service: 'local', label: 'Local', emoji: '🏠' },
+            { service: 'news', label: 'News', emoji: '📰' },
+            { service: 'weather', label: 'Weather', emoji: '🌤️' }
+        ];
+        
+        this.currentServiceIndex = 0; // Start with Sports
+        this.currentService = 'sports';
 
-        // Toggle dropdown
+        // Handle button click to cycle through services
         serviceBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            console.log('Service button clicked, toggling dropdown');
-            dropdown.classList.toggle('show');
-            console.log('Dropdown show class:', dropdown.classList.contains('show'));
-        });
-
-        // Handle option selection
-        options.forEach(option => {
-            option.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const service = option.dataset.service;
-                console.log('Service option clicked:', service);
-                this.selectService(service);
-                dropdown.classList.remove('show');
-            });
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', () => {
-            dropdown.classList.remove('show');
-        });
-
-        // Prevent dropdown from closing when clicking inside
-        dropdown.addEventListener('click', (e) => {
-            e.stopPropagation();
+            this.cycleToNextService();
         });
     }
 
-    selectService(service) {
-        // Update active state
-        const options = this.container.querySelectorAll('.news-service-option');
-        options.forEach(option => {
-            option.classList.remove('active');
-            if (option.dataset.service === service) {
-                option.classList.add('active');
-            }
-        });
-
-        // Update button text
+    cycleToNextService() {
+        // Move to next service in cycle
+        this.currentServiceIndex = (this.currentServiceIndex + 1) % this.serviceCycle.length;
+        const nextService = this.serviceCycle[this.currentServiceIndex];
+        
+        // Update button text and current service
         const serviceBtn = this.container.querySelector('#news-service-btn');
-        const activeOption = this.container.querySelector(`[data-service="${service}"]`);
-        serviceBtn.textContent = activeOption.textContent.split(' ')[1]; // Remove emoji
-
-        // Update current service
-        this.currentService = service;
-
-        // Load headlines for selected service
+        serviceBtn.textContent = nextService.label;
+        this.currentService = nextService.service;
+        
+        console.log('Cycled to service:', nextService.service);
+        
+        // Load headlines for the new service
         this.loadHeadlines();
     }
+
+
 
     async loadHeadlines() {
         try {
@@ -226,15 +207,11 @@ class NewsTicker {
             element.innerHTML = `
                 <span class="news-source">${this.sanitizeText(headline.source)}</span>
                 <span class="news-separator">•</span>
-                <span class="news-title">${this.sanitizeText(headline.title)}</span>
+                <a href="${headline.url}" target="_blank" class="news-title-link">
+                    <span class="news-title">${this.sanitizeText(headline.title)}</span>
+                </a>
                 <span class="news-time">${this.formatTimeAgo(headline.ts)}</span>
             `;
-            
-            // Make clickable
-            element.style.cursor = 'pointer';
-            element.addEventListener('click', () => {
-                window.open(headline.url, '_blank');
-            });
             
             return element;
         });
