@@ -316,6 +316,18 @@ export const customEffects = {
 // Make customEffects available globally
 if (typeof window !== 'undefined') {
   window.customEffects = customEffects;
+  
+  // Make effect count functions available globally
+  window.effectCounts = {
+    total: getTotalEffectsCount(),
+    custom: getCustomEffectsCount(),
+    builtIn: getBuiltInEffectsCount()
+  };
+  
+  // Make individual count functions available
+  window.getTotalEffectsCount = getTotalEffectsCount;
+  window.getCustomEffectsCount = getCustomEffectsCount;
+  window.getBuiltInEffectsCount = getBuiltInEffectsCount;
 }
 
 // Get presets by category
