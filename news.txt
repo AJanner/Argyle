@@ -10,4 +10,4 @@ url  https://techcrunch.com
 list lists/tech.txt
 
 # Manual pin
-headline "Breaking: Release v1.0 is live" https://example.com/blog/v1
+headline "Breaking: Release v5.0 is live" https://example.com/blog/v1
