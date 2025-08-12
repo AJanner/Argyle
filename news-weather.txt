@@ -7,5 +7,5 @@ headline "Weekend: Partly cloudy. Very warm. High 26°C. Winds E at 5 to 10 mph.
 # Weather Feeds
 feed https://www.bbc.co.uk/weather/rss/forecast/2649808.xml
 site https://www.accuweather.com/en/gb/plymouth/pl1-1/weather-forecast/328328
-site https://www.weather.com
-headline "Weather Updates" https://example.com/weather
+site https://weather.com/en-GB/weather/tenday/l/Plymouth+England?canonicalCityId=d01fdfebc69b4957147bb34938eaedcc
+headline "Weather Updates" https://www.accuweather.com/en/gb/plymouth/pl1-1/weather-forecast/330353
